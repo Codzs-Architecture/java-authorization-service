@@ -1,0 +1,11 @@
+spring:
+  # Start: Spring Config Client
+  config:
+    import: optional:configserver:${config.server.url}
+  cloud:
+    config:
+      profile: ${spring.profiles.active}
+      label: main
+      username: config-service-user
+      password: ${config.password}
+  # End: Spring Config Client

@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: java-authorization-service
+
+  security:
+    user:
+      name: authorization-service-user
+      password: password
+      roles: MANAGEMENT_ADMIN
+
+  boot:
+    admin:
+      client:
+        instance:
+          management-base-url: https://local.codzs.com:6003
+
+  profiles:
+    include: keystore,config-service
+
+# Entry to show this information on spring boot admin
+#info:
+#  app:
+#    encoding: @project.build.sourceEncoding@
+#    java:
+#      source: @java.version@
+#      target: @java.version@
+
+management:
+  server:
+    port: 6003
+
+server:
+  port: 5003
+
