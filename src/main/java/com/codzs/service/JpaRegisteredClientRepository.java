@@ -84,10 +84,10 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
                 .postLogoutRedirectUris((uris) -> uris.addAll(postLogoutRedirectUris))
                 .scopes((scopes) -> scopes.addAll(clientScopes));
 
-        Map<String, Object> clientSettingsMap = JsonUtils.fromJson(client.getClientSettings());
+        Map<String, Object> clientSettingsMap = JsonUtils.fromJson(this.objectMapper, client.getClientSettings());
         builder.clientSettings(ClientSettings.withSettings(clientSettingsMap).build());
 
-        Map<String, Object> tokenSettingsMap = JsonUtils.fromJson(client.getTokenSettings());
+        Map<String, Object> tokenSettingsMap = JsonUtils.fromJson(this.objectMapper, client.getTokenSettings());
         builder.tokenSettings(TokenSettings.withSettings(tokenSettingsMap).build());
 
         return builder.build();
@@ -114,8 +114,8 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         entity.setRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getRedirectUris()));
         entity.setPostLogoutRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris()));
         entity.setScopes(StringUtils.collectionToCommaDelimitedString(registeredClient.getScopes()));
-        entity.setClientSettings(JsonUtils.toJson(registeredClient.getClientSettings().getSettings()));
-        entity.setTokenSettings(JsonUtils.toJson(registeredClient.getTokenSettings().getSettings()));
+        entity.setClientSettings(JsonUtils.toJson(this.objectMapper, registeredClient.getClientSettings().getSettings()));
+        entity.setTokenSettings(JsonUtils.toJson(this.objectMapper, registeredClient.getTokenSettings().getSettings()));
 
         return entity;
     }
@@ -128,7 +128,7 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
 //            throw new IllegalArgumentException(ex.getMessage(), ex);
 //        }
 //    }
-
+//
 //    private String writeMap(Map<String, Object> data) {
 //        try {
 //            return this.objectMapper.writeValueAsString(data);

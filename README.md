@@ -77,7 +77,7 @@ Make sure you have the following installed:
     To start the `config server`, follow the instructions in the [Config Server](https://github.com/khaitan-nitin/java-config-service) repository.
 8.  Set up the `authorization server database` in mysql using the script below (change the values as per your environment):
     ```
-    mvn clean flyway:migrate -Dflyway.user=root -Dflyway.password=Testing@123 -Dflyway.schemas=authorization -Dflyway.url=jdbc:mysql://127.0.0.1:3306/configuration
+    mvn clean flyway:migrate -Dflyway.user=root -Dflyway.password=Testing@123 -Dflyway.schemas=authorization -Dflyway.url=jdbc:mysql://127.0.0.1:3306/authorization
     ```
 9.  Run the Authorization Server:
     ```

@@ -105,7 +105,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                 .principalName(entity.getPrincipalName())
                 .authorizationGrantType(resolveAuthorizationGrantType(entity.getAuthorizationGrantType()))
                 .authorizedScopes(StringUtils.commaDelimitedListToSet(entity.getAuthorizedScopes()))
-                .attributes(attributes -> attributes.putAll(JsonUtils.fromJson(entity.getAttributes())));
+                .attributes(attributes -> attributes.putAll(JsonUtils.fromJson(this.objectMapper, entity.getAttributes())));
         if (entity.getState() != null) {
             builder.attribute(OAuth2ParameterNames.STATE, entity.getState());
         }
@@ -115,7 +115,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                     entity.getAuthorizationCodeValue(),
                     entity.getAuthorizationCodeIssuedAt(),
                     entity.getAuthorizationCodeExpiresAt());
-            builder.token(authorizationCode, metadata -> metadata.putAll(JsonUtils.fromJson(entity.getAuthorizationCodeMetadata())));
+            builder.token(authorizationCode, metadata -> metadata.putAll(JsonUtils.fromJson(this.objectMapper, entity.getAuthorizationCodeMetadata())));
         }
 
         if (entity.getAccessTokenValue() != null) {
@@ -125,7 +125,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                     entity.getAccessTokenIssuedAt(),
                     entity.getAccessTokenExpiresAt(),
                     StringUtils.commaDelimitedListToSet(entity.getAccessTokenScopes()));
-            builder.token(accessToken, metadata -> metadata.putAll(JsonUtils.fromJson(entity.getAccessTokenMetadata())));
+            builder.token(accessToken, metadata -> metadata.putAll(JsonUtils.fromJson(this.objectMapper, entity.getAccessTokenMetadata())));
         }
 
         if (entity.getRefreshTokenValue() != null) {
@@ -133,7 +133,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                     entity.getRefreshTokenValue(),
                     entity.getRefreshTokenIssuedAt(),
                     entity.getRefreshTokenExpiresAt());
-            builder.token(refreshToken, metadata -> metadata.putAll(JsonUtils.fromJson(entity.getRefreshTokenMetadata())));
+            builder.token(refreshToken, metadata -> metadata.putAll(JsonUtils.fromJson(this.objectMapper, entity.getRefreshTokenMetadata())));
         }
 
         if (entity.getOidcIdTokenValue() != null) {
@@ -141,9 +141,9 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                     entity.getOidcIdTokenValue(),
                     entity.getOidcIdTokenIssuedAt(),
                     entity.getOidcIdTokenExpiresAt(),
-                    JsonUtils.fromJson(entity.getOidcIdTokenClaims())
+                    JsonUtils.fromJson(this.objectMapper, entity.getOidcIdTokenClaims())
             );
-            builder.token(idToken, metadata -> metadata.putAll(JsonUtils.fromJson(entity.getOidcIdTokenMetadata())));
+            builder.token(idToken, metadata -> metadata.putAll(JsonUtils.fromJson(this.objectMapper, entity.getOidcIdTokenMetadata())));
         }
 
         if (entity.getUserCodeValue() != null) {
@@ -151,7 +151,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                     entity.getUserCodeValue(),
                     entity.getUserCodeIssuedAt(),
                     entity.getUserCodeExpiresAt());
-            builder.token(userCode, metadata -> metadata.putAll(JsonUtils.fromJson(entity.getUserCodeMetadata())));
+            builder.token(userCode, metadata -> metadata.putAll(JsonUtils.fromJson(this.objectMapper, entity.getUserCodeMetadata())));
         }
 
         if (entity.getDeviceCodeValue() != null) {
@@ -159,7 +159,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                     entity.getDeviceCodeValue(),
                     entity.getDeviceCodeIssuedAt(),
                     entity.getDeviceCodeExpiresAt());
-            builder.token(deviceCode, metadata -> metadata.putAll(JsonUtils.fromJson(entity.getDeviceCodeMetadata())));
+            builder.token(deviceCode, metadata -> metadata.putAll(JsonUtils.fromJson(this.objectMapper, entity.getDeviceCodeMetadata())));
         }
 
         return builder.build();
@@ -172,7 +172,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         entity.setPrincipalName(authorization.getPrincipalName());
         entity.setAuthorizationGrantType(authorization.getAuthorizationGrantType().getValue());
         entity.setAuthorizedScopes(StringUtils.collectionToDelimitedString(authorization.getAuthorizedScopes(), ","));
-        entity.setAttributes(JsonUtils.toJson(authorization.getAttributes()));
+        entity.setAttributes(JsonUtils.toJson(this.objectMapper, authorization.getAttributes()));
         entity.setState(authorization.getAttribute(OAuth2ParameterNames.STATE));
 
         OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
@@ -218,7 +218,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
                 entity::setOidcIdTokenMetadata
         );
         if (oidcIdToken != null) {
-            entity.setOidcIdTokenClaims(JsonUtils.toJson(oidcIdToken.getClaims()));
+            entity.setOidcIdTokenClaims(JsonUtils.toJson(this.objectMapper, oidcIdToken.getClaims()));
         }
 
         OAuth2Authorization.Token<OAuth2UserCode> userCode =
@@ -255,19 +255,18 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
             tokenValueConsumer.accept(oAuth2Token.getTokenValue());
             issuedAtConsumer.accept(oAuth2Token.getIssuedAt());
             expiresAtConsumer.accept(oAuth2Token.getExpiresAt());
-            metadataConsumer.accept(JsonUtils.toJson(token.getMetadata()));
+            metadataConsumer.accept(JsonUtils.toJson(this.objectMapper, token.getMetadata()));
         }
     }
 
 //    private Map<String, Object> parseMap(String data) {
 //        try {
-//            return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {
-//            });
+//            return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
 //        } catch (Exception ex) {
 //            throw new IllegalArgumentException(ex.getMessage(), ex);
 //        }
 //    }
-//
+
 //    private String writeMap(Map<String, Object> metadata) {
 //        try {
 //            return this.objectMapper.writeValueAsString(metadata);
