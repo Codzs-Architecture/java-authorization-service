@@ -85,14 +85,12 @@ Make sure you have the following installed:
     -Dspring.profiles.active=local 
     -Dconfig.server.url=https://local.codzs.com:5002
     -Dconfig.password=password 
-    -Dauthorization.server.url=https://local.codzs.com:5003
     -Dserver.ssl.keystore=/path/to/java-codzs-resource/<environment>/local.codzs.com.p12 
     -Dserver.ssl.password=localpassword
     ```
     * `spring.profiles.active`: current active profile as per the environment
     * `config.server.url`: Config server base URL
     * `config.password`: Config server password
-    * `authorization.server.url`: Admin server base URL
     * `server.ssl.keystore`: Path to the ssl key store file
     * `server.ssl.password`: SSL Key store password
 
@@ -100,7 +98,7 @@ Make sure you have the following installed:
     ```
     -Dspring.profiles.active=local
     
-    config.server.url=https://local.codzs.com:5002; config.password=password; authorization.server.url=https://local.codzs.com:5003; server.ssl.keystore=/path/to/java-codzs-resource/<environment>/local.codzs.com.p12; server.ssl.password=localpassword
+    config.server.url=https://local.codzs.com:5002; config.password=password; server.ssl.keystore=/path/to/java-codzs-resource/<environment>/local.codzs.com.p12; server.ssl.password=localpassword
     ```
 
 10.  Set up the Admin Server using the instructions in the Admin Server repository README. using the link: https://github.com/khaitan-nitin/java-admin-service.git

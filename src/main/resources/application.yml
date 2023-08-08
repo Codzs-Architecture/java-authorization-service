@@ -5,14 +5,8 @@ spring:
   security:
     user:
       name: authorization-service-user
-      password: password
+      password: ${authorization.password}
       roles: MANAGEMENT_ADMIN
-
-  boot:
-    admin:
-      client:
-        instance:
-          management-base-url: https://local.codzs.com:6003
 
   profiles:
     include: keystore,config-service

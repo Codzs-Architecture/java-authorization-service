@@ -3,7 +3,6 @@ package com.codzs.service;
 import com.codzs.entity.Client;
 import com.codzs.repository.ClientRepository;
 import com.codzs.utility.JsonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -119,23 +118,6 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
 
         return entity;
     }
-
-//    private Map<String, Object> parseMap(String data) {
-//        try {
-//            return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {
-//            });
-//        } catch (Exception ex) {
-//            throw new IllegalArgumentException(ex.getMessage(), ex);
-//        }
-//    }
-//
-//    private String writeMap(Map<String, Object> data) {
-//        try {
-//            return this.objectMapper.writeValueAsString(data);
-//        } catch (Exception ex) {
-//            throw new IllegalArgumentException(ex.getMessage(), ex);
-//        }
-//    }
 
     private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
         if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {

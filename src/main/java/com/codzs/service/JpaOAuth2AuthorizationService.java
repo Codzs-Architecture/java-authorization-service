@@ -3,7 +3,6 @@ package com.codzs.service;
 import com.codzs.entity.Authorization;
 import com.codzs.repository.AuthorizationRepository;
 import com.codzs.utility.JsonUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
@@ -25,7 +24,6 @@ import com.fasterxml.jackson.databind.Module;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -258,22 +256,6 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
             metadataConsumer.accept(JsonUtils.toJson(this.objectMapper, token.getMetadata()));
         }
     }
-
-//    private Map<String, Object> parseMap(String data) {
-//        try {
-//            return this.objectMapper.readValue(data, new TypeReference<Map<String, Object>>() {});
-//        } catch (Exception ex) {
-//            throw new IllegalArgumentException(ex.getMessage(), ex);
-//        }
-//    }
-
-//    private String writeMap(Map<String, Object> metadata) {
-//        try {
-//            return this.objectMapper.writeValueAsString(metadata);
-//        } catch (Exception ex) {
-//            throw new IllegalArgumentException(ex.getMessage(), ex);
-//        }
-//    }
 
     private static AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
         if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {

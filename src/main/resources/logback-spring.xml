@@ -29,12 +29,12 @@
         </rollingPolicy>
     </appender>
 
-    <root level="trace">
+    <root level="debug">
         <appender-ref ref="RollingFile" />
         <appender-ref ref="Console" />
     </root>
 
-    <logger name="com.codzs" level="trace" additivity="false">
+    <logger name="com.codzs" level="debug" additivity="false">
         <appender-ref ref="RollingFile" />
         <appender-ref ref="Console" />
     </logger>
