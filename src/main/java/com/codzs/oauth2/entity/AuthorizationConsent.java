@@ -1,9 +1,13 @@
-package com.codzs.entity;
-
-import jakarta.persistence.*;
+package com.codzs.oauth2.entity;
 
 import java.io.Serializable;
 import java.util.Objects;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "`oauth2_authorization_consent`")

@@ -11,6 +11,20 @@ spring:
   profiles:
     include: keystore,config-service
 
+  # Spring WebMVC configuration to handle exception conflicts
+  mvc:
+    problemdetails:
+      enabled: false
+
+  # Exclude conflicting auto-configurations  
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
+
+  # # Disable problematic beans
+  # main:
+  #   allow-bean-definition-overriding: true
+
 # Entry to show this information on spring boot admin
 #info:
 #  app:
@@ -19,10 +33,25 @@ spring:
 #      source: @java.version@
 #      target: @java.version@
 
+# Management-specific configuration
 management:
   server:
     port: 6003
+  endpoints:
+    web:
+      exposure:
+        exclude: "restResponseEntityExceptionHandler"
 
 server:
   port: 5003
 
+# Logging configuration to suppress specific warnings
+logging:
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+    org.springframework.web.method.HandlerMethodMappingNamingStrategy: ERROR
+    
+acl:
+  redis:
+    cache:
+      key: com.codzs.acl.cache.local

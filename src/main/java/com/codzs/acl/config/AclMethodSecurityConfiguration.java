@@ -1,4 +1,4 @@
-package com.codzs.config;
+package com.codzs.acl.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;

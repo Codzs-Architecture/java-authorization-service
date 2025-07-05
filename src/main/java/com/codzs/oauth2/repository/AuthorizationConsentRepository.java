@@ -1,10 +1,11 @@
-package com.codzs.repository;
+package com.codzs.oauth2.repository;
 
-import com.codzs.entity.AuthorizationConsent;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.codzs.oauth2.entity.AuthorizationConsent;
 
 @Repository
 public interface AuthorizationConsentRepository extends JpaRepository<AuthorizationConsent, AuthorizationConsent.AuthorizationConsentId> {

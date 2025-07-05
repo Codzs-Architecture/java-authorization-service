@@ -81,12 +81,7 @@ Make sure you have the following installed:
     ```
 9.  Run the Authorization Server:
     ```
-    java -jar target/java-authorization-service.jar 
-    -Dspring.profiles.active=local 
-    -Dconfig.server.url=https://local.codzs.com:5002
-    -Dconfig.password=password 
-    -Dserver.ssl.keystore=/path/to/java-codzs-resource/<environment>/local.codzs.com.p12 
-    -Dserver.ssl.password=localpassword
+    java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=4003 -Dspring.profiles.active=local -Dconfig.server.url=https://local.codzs.com:5002 -Dconfig.password=password -Dserver.ssl.keystore=./../java-codzs-resource/local/local.codzs.com.p12 -Dserver.ssl.password=localpassword -jar target/java-authorization-service.jar 
     ```
     * `spring.profiles.active`: current active profile as per the environment
     * `config.server.url`: Config server base URL

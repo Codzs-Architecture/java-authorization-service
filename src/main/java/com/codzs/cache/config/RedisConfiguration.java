@@ -1,4 +1,4 @@
-package com.codzs.config;
+package com.codzs.cache.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

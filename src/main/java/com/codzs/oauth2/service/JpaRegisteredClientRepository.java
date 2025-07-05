@@ -1,9 +1,10 @@
-package com.codzs.service;
+package com.codzs.oauth2.service;
 
-import com.codzs.entity.Client;
-import com.codzs.repository.ClientRepository;
-import com.codzs.utility.JsonUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -15,12 +16,12 @@ import org.springframework.security.oauth2.server.authorization.settings.TokenSe
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-import com.fasterxml.jackson.databind.Module;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import com.codzs.oauth2.entity.Client;
+import com.codzs.oauth2.repository.ClientRepository;
+import com.codzs.utility.JsonUtils;
+import com.fasterxml.jackson.databind.Module;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class JpaRegisteredClientRepository implements RegisteredClientRepository {

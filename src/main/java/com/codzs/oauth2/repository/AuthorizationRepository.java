@@ -1,12 +1,13 @@
-package com.codzs.repository;
+package com.codzs.oauth2.repository;
 
-import com.codzs.entity.Authorization;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.codzs.oauth2.entity.Authorization;
 
 @Repository
 public interface AuthorizationRepository extends JpaRepository<Authorization, String> {
