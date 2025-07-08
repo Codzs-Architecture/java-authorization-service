@@ -7,7 +7,7 @@ INSERT INTO `oauth2_registered_client` VALUES (
                                                'articles-client',
                                                'client_secret_basic',
                                                'refresh_token,client_credentials,authorization_code',
-                                               'https://local.codzs.com:8001/authorized,https://local.codzs.com:8001/login/oauth2/code/articles-client-oidc',
+                                               'https://local.codzs.com:8001/authorized,https://local.codzs.com:8001/login/oauth2/code/articles-client-oidc,https://local.codzs.com:8001/login/oauth2/code/articles-client-authorization-code',
                                                'https://local.codzs.com:8001/',
                                                'articles.read,openid',
                                                '{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"settings.client.require-proof-key\":false,\"settings.client.require-authorization-consent\":false}',

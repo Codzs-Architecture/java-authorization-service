@@ -3,23 +3,48 @@ spring:
     name: java-authorization-service
 
   security:
-    user:
-      name: authorization-service-user
-      password: ${authorization.password}
-      roles: MANAGEMENT_ADMIN
+    # user:
+    #   name: authorization-service-user
+    #   password: ${authorization.password}
+    #   roles: MANAGEMENT_ADMIN
+    oauth2:
+      client:
+        registration:
+          google-idp:
+            provider: google
+            client-id: ${GOOGLE_CLIENT_ID:google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:google-client-secret}
+            scope: openid, https://www.googleapis.com/auth/userinfo.profile, https://www.googleapis.com/auth/userinfo.email
+            client-name: Sign in with Google
+          github-idp:
+            provider: github
+            client-id: ${GITHUB_CLIENT_ID:github-client-id}
+            client-secret: ${GITHUB_CLIENT_SECRET:github-client-secret}
+            scope: user:email, read:user
+            client-name: Sign in with GitHub
+        provider:
+          google:
+            user-name-attribute: email
+          github:
+            user-name-attribute: login
 
   profiles:
     include: keystore,config-service
 
+  # Flyway configuration to handle existing schemas  
+  # flyway:
+  #   baseline-on-migrate: true
+  #   baseline-version: 0
+
   # Spring WebMVC configuration to handle exception conflicts
-  mvc:
-    problemdetails:
-      enabled: false
+  # mvc:
+  #   problemdetails:
+  #     enabled: false
 
   # Exclude conflicting auto-configurations  
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
+  # autoconfigure:
+  #   exclude:
+  #     - org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration
 
   # # Disable problematic beans
   # main:
@@ -48,9 +73,13 @@ server:
 # Logging configuration to suppress specific warnings
 logging:
   level:
+    root: INFO
     org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
     org.springframework.web.method.HandlerMethodMappingNamingStrategy: ERROR
-    
+    org.springframework.web: INFO
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: INFO
+
 acl:
   redis:
     cache:
