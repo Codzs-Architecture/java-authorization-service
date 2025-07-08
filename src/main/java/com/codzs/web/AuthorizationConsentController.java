@@ -24,27 +24,36 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.codzs.service.authentication.AuthenticationService;
+import com.codzs.validation.ValidationService;
 import com.codzs.web.consent.ConsentService;
 import com.codzs.web.consent.ConsentService.ConsentData;
 import com.codzs.web.consent.ScopeDescriptionService;
 
 /**
  * Controller for handling OAuth2 authorization consent.
- * This controller has been refactored to use separate services for consent logic and scope descriptions.
+ * This controller has been refactored to use separate services for consent logic,
+ * scope descriptions, and authentication handling.
  * 
  * @author Daniel Garnier-Moiroux
- * @author Refactored for SOLID principles
+ * @author Refactored for SOLID principles and service layer integration
  */
 @Controller
 public class AuthorizationConsentController {
 	
 	private final ConsentService consentService;
 	private final ScopeDescriptionService scopeDescriptionService;
+	private final AuthenticationService authenticationService;
+	private final ValidationService validationService;
 
 	public AuthorizationConsentController(ConsentService consentService, 
-			ScopeDescriptionService scopeDescriptionService) {
+			ScopeDescriptionService scopeDescriptionService,
+			AuthenticationService authenticationService,
+			ValidationService validationService) {
 		this.consentService = consentService;
 		this.scopeDescriptionService = scopeDescriptionService;
+		this.authenticationService = authenticationService;
+		this.validationService = validationService;
 	}
 
 	/**
@@ -66,6 +75,21 @@ public class AuthorizationConsentController {
 			@RequestParam(OAuth2ParameterNames.STATE) String state,
 			@RequestParam(name = OAuth2ParameterNames.USER_CODE, required = false) String userCode) {
 
+		// Validate user authentication
+		if (!authenticationService.isUserAuthenticated(principal)) {
+			throw new IllegalStateException("User must be authenticated to access consent page");
+		}
+
+		// Validate OAuth2 parameters
+		validationService.validateClientId(clientId);
+		validationService.validateScope(scope);
+		validationService.validateRequiredParameter("state", state);
+		
+		// Validate user code if provided (for device flow)
+		if (StringUtils.hasText(userCode)) {
+			validationService.validateUserCode(userCode);
+		}
+
 		// Process consent request to determine scope approval requirements
 		ConsentData consentData = consentService.processConsentRequest(principal, clientId, scope);
 
@@ -74,7 +98,7 @@ public class AuthorizationConsentController {
 		model.addAttribute("state", state);
 		model.addAttribute("scopes", scopeDescriptionService.withDescription(consentData.getScopesToApprove()));
 		model.addAttribute("previouslyApprovedScopes", scopeDescriptionService.withDescription(consentData.getPreviouslyApprovedScopes()));
-		model.addAttribute("principalName", principal.getName());
+		model.addAttribute("principalName", authenticationService.getUserDisplayName(principal));
 		model.addAttribute("userCode", userCode);
 		
 		// Determine request URI based on flow type

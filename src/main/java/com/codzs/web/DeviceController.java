@@ -18,30 +18,74 @@ package com.codzs.web;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.util.StringUtils;
+
+import com.codzs.service.device.DeviceService;
+import com.codzs.validation.ValidationService;
 
 /**
+ * Controller for handling OAuth2 device flow endpoints.
+ * This controller has been refactored to use the DeviceService for business logic,
+ * improving separation of concerns and testability.
+ * 
  * @author Steve Riesenberg
+ * @author Refactored for service layer integration
  * @since 1.1
  */
 @Controller
 public class DeviceController {
 
+	private final DeviceService deviceService;
+	private final ValidationService validationService;
+
+	public DeviceController(DeviceService deviceService, ValidationService validationService) {
+		this.deviceService = deviceService;
+		this.validationService = validationService;
+	}
+
+	/**
+	 * Handle device activation requests.
+	 * This endpoint processes device activation with optional user code
+	 * and handles appropriate redirection or view display.
+	 * 
+	 * @param userCode the user code from the device activation request (optional)
+	 * @return the appropriate view name or redirect instruction
+	 */
 	@GetMapping("/activate")
 	public String activate(@RequestParam(value = "user_code", required = false) String userCode) {
-		if (userCode != null) {
-			return "redirect:/oauth2/device_verification?user_code=" + userCode;
+		// Validate user code if provided
+		if (StringUtils.hasText(userCode)) {
+			validationService.validateUserCode(userCode);
 		}
-		return "device-activate";
+		
+		DeviceService.DeviceActivationResult result = deviceService.processDeviceActivation(userCode);
+		
+		if (result.isRedirect()) {
+			return "redirect:" + result.getDestination();
+		} else {
+			return result.getDestination();
+		}
 	}
 
+	/**
+	 * Handle device activation success.
+	 * This endpoint displays the success page after device activation.
+	 * 
+	 * @return the device activation success view name
+	 */
 	@GetMapping("/activated")
 	public String activated() {
-		return "device-activated";
+		return deviceService.processDeviceActivationSuccess();
 	}
 
+	/**
+	 * Handle device success callback.
+	 * This endpoint handles success callback scenarios for device flow.
+	 * 
+	 * @return the device success view name
+	 */
 	@GetMapping(value = "/", params = "success")
 	public String success() {
-		return "device-activated";
+		return deviceService.processDeviceSuccessCallback();
 	}
-
 }

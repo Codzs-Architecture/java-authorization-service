@@ -15,38 +15,49 @@
  */
 package com.codzs.web;
 
-import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.codzs.service.error.ErrorService;
+
 /**
+ * Controller for handling application errors.
+ * This controller has been refactored to use the ErrorService for business logic,
+ * improving separation of concerns and testability.
+ * 
  * @author Steve Riesenberg
+ * @author Refactored for service layer integration
  * @since 1.1
  */
 @Controller
 public class DefaultErrorController implements ErrorController {
 
+	private final ErrorService errorService;
+
+	public DefaultErrorController(ErrorService errorService) {
+		this.errorService = errorService;
+	}
+
+	/**
+	 * Handle error requests.
+	 * This endpoint processes error information and prepares the error model
+	 * for display to the user.
+	 * 
+	 * @param model the Spring MVC model for the error view
+	 * @param request the HTTP request containing error information
+	 * @return the error view name
+	 */
 	@RequestMapping("/error")
 	public String handleError(Model model, HttpServletRequest request) {
-		String errorMessage = getErrorMessage(request);
-		if (errorMessage.startsWith("[access_denied]")) {
-			model.addAttribute("errorTitle", "Access Denied");
-			model.addAttribute("errorMessage", "You have denied access.");
-		} else {
-			model.addAttribute("errorTitle", "Error");
-			model.addAttribute("errorMessage", errorMessage);
-		}
+		ErrorService.ErrorModel errorModel = errorService.processError(request);
+		
+		model.addAttribute("errorTitle", errorModel.getErrorTitle());
+		model.addAttribute("errorMessage", errorModel.getErrorMessage());
+		
 		return "error";
 	}
-
-	private String getErrorMessage(HttpServletRequest request) {
-		String errorMessage = (String) request.getAttribute(RequestDispatcher.ERROR_MESSAGE);
-		return StringUtils.hasText(errorMessage) ? errorMessage : "";
-	}
-
 }
