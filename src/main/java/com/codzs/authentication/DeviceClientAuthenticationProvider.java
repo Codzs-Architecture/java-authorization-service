@@ -14,6 +14,16 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.util.Assert;
 
+import com.codzs.oauth2.authentication.device.error.DeviceAuthenticationErrorHandler;
+
+/**
+ * An {@link AuthenticationProvider} implementation for device client authentication.
+ * This provider has been enhanced to use DeviceAuthenticationErrorHandler for better
+ * separation of concerns while maintaining backward compatibility.
+ * 
+ * @author Enhanced to use DeviceAuthenticationErrorHandler
+ * @since 1.1
+ */
 public final class DeviceClientAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-3.2.1";
 	private final Log logger = LogFactory.getLog(getClass());
@@ -36,7 +46,8 @@ public final class DeviceClientAuthenticationProvider implements AuthenticationP
 		String clientId = deviceClientAuthentication.getPrincipal().toString();
 		RegisteredClient registeredClient = this.registeredClientRepository.findByClientId(clientId);
 		if (registeredClient == null) {
-			throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
+			// Use the new error handler for better separation of concerns
+			DeviceAuthenticationErrorHandler.throwInvalidClient(OAuth2ParameterNames.CLIENT_ID);
 		}
 
 		if (this.logger.isTraceEnabled()) {
@@ -45,7 +56,8 @@ public final class DeviceClientAuthenticationProvider implements AuthenticationP
 
 		if (!registeredClient.getClientAuthenticationMethods().contains(
 				deviceClientAuthentication.getClientAuthenticationMethod())) {
-			throwInvalidClient("authentication_method");
+			// Use the new error handler for better separation of concerns
+			DeviceAuthenticationErrorHandler.throwInvalidClient("authentication_method");
 		}
 
 		if (this.logger.isTraceEnabled()) {
@@ -65,6 +77,11 @@ public final class DeviceClientAuthenticationProvider implements AuthenticationP
 		return DeviceClientAuthenticationToken.class.isAssignableFrom(authentication);
 	}
 
+	/**
+	 * @deprecated Use DeviceAuthenticationErrorHandler.throwInvalidClient() instead.
+	 * This method is kept for backward compatibility.
+	 */
+	@Deprecated
 	private static void throwInvalidClient(String parameterName) {
 		OAuth2Error error = new OAuth2Error(
 				OAuth2ErrorCodes.INVALID_CLIENT,

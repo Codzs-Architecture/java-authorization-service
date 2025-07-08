@@ -31,18 +31,29 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
+
+import com.codzs.oauth2.authentication.federation.token.ClaimExtractor;
 // end::imports[]
 
 /**
  * An {@link OAuth2TokenCustomizer} to map claims from a federated identity to
  * the {@code id_token} produced by this authorization server.
+ * 
+ * This class has been enhanced to use ClaimExtractor for better separation
+ * of concerns and improved testability.
  *
  * @author Steve Riesenberg
+ * @author Enhanced to use ClaimExtractor
  * @since 1.1
  */
 // tag::class[]
 public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> {
 
+	/**
+	 * @deprecated Use ClaimExtractor.STANDARD_ID_TOKEN_CLAIMS instead.
+	 * This field is kept for backward compatibility.
+	 */
+	@Deprecated
 	private static final Set<String> ID_TOKEN_CLAIMS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
 			IdTokenClaimNames.ISS,
 			IdTokenClaimNames.SUB,
@@ -61,13 +72,14 @@ public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCust
 	@Override
 	public void customize(JwtEncodingContext context) {
 		if (OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())) {
-			Map<String, Object> thirdPartyClaims = extractClaims(context.getPrincipal());
+			// Use the new ClaimExtractor utility for better separation of concerns
+			Map<String, Object> thirdPartyClaims = ClaimExtractor.extractClaims(context.getPrincipal());
 			context.getClaims().claims(existingClaims -> {
 				// Remove conflicting claims set by this authorization server
 				existingClaims.keySet().forEach(thirdPartyClaims::remove);
 
 				// Remove standard id_token claims that could cause problems with clients
-				ID_TOKEN_CLAIMS.forEach(thirdPartyClaims::remove);
+				ClaimExtractor.STANDARD_ID_TOKEN_CLAIMS.forEach(thirdPartyClaims::remove);
 
 				// Add all other claims directly to id_token
 				existingClaims.putAll(thirdPartyClaims);
@@ -75,6 +87,11 @@ public final class FederatedIdentityIdTokenCustomizer implements OAuth2TokenCust
 		}
 	}
 
+	/**
+	 * @deprecated Use ClaimExtractor.extractClaims() instead.
+	 * This method is kept for backward compatibility.
+	 */
+	@Deprecated
 	private Map<String, Object> extractClaims(Authentication principal) {
 		Map<String, Object> claims;
 		if (principal.getPrincipal() instanceof OidcUser oidcUser) {
