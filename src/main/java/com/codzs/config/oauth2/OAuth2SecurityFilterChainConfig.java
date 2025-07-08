@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codzs.config.security.oauth2;
+package com.codzs.config.oauth2;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,7 +30,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
-import com.codzs.authentication.DeviceClientAuthenticationProvider;
+import com.codzs.oauth2.authentication.device.DeviceClientAuthenticationProvider;
 import com.codzs.web.authentication.DeviceClientAuthenticationConverter;
 
 /**

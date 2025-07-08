@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,16 @@
  */
 package com.codzs.config;
 
+import java.util.UUID;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import com.codzs.config.security.database.OAuth2DatabaseConfig;
-import com.codzs.config.security.oauth2.OAuth2ClientRegistrationConfig;
-import com.codzs.config.security.oauth2.OAuth2SecurityFilterChainConfig;
-import com.codzs.config.security.oauth2.OAuth2ServiceConfig;
-import com.codzs.config.security.oauth2.OAuth2TokenConfig;
+import com.codzs.config.security.OAuth2DatabaseConfig;
+import com.codzs.config.oauth2.OAuth2ClientRegistrationConfig;
+import com.codzs.config.oauth2.OAuth2SecurityFilterChainConfig;
+import com.codzs.config.oauth2.OAuth2ServiceConfig;
+import com.codzs.config.oauth2.OAuth2TokenConfig;
 
 /**
  * Main configuration class for OAuth2 Authorization Server.

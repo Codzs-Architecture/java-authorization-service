@@ -1,8 +1,8 @@
 package com.codzs.oauth2.authentication.federation.config;
 
-import com.codzs.federation.FederatedIdentityAuthenticationSuccessHandler;
-import com.codzs.federation.FederatedIdentityIdTokenCustomizer;
-import com.codzs.federation.UserRepositoryOAuth2UserHandler;
+import com.codzs.oauth2.authentication.federation.FederatedIdentityAuthenticationSuccessHandler;
+import com.codzs.oauth2.authentication.federation.FederatedIdentityIdTokenCustomizer;
+import com.codzs.oauth2.authentication.federation.UserRepositoryOAuth2UserHandler;
 import com.codzs.oauth2.authentication.federation.repository.DefaultFederatedUserHandler;
 import com.codzs.oauth2.authentication.federation.repository.FederatedUserHandler;
 import com.codzs.oauth2.authentication.federation.token.ClaimExtractor;

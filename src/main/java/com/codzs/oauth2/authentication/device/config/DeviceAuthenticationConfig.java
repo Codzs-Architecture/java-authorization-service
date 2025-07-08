@@ -1,6 +1,6 @@
 package com.codzs.oauth2.authentication.device.config;
 
-import com.codzs.authentication.DeviceClientAuthenticationProvider;
+import com.codzs.oauth2.authentication.device.DeviceClientAuthenticationProvider;
 import com.codzs.oauth2.authentication.device.error.DeviceAuthenticationErrorHandler;
 import com.codzs.web.authentication.DeviceClientAuthenticationConverter;
 import org.springframework.context.annotation.Bean;

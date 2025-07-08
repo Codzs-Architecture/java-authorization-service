@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codzs.authentication;
+package com.codzs.oauth2.authentication.device;
 
 import java.util.Map;
 

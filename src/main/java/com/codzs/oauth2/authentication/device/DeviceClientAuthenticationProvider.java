@@ -1,4 +1,4 @@
-package com.codzs.authentication;
+package com.codzs.oauth2.authentication.device;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

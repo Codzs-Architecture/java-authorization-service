@@ -17,7 +17,7 @@ package com.codzs.web.authentication;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import com.codzs.authentication.DeviceClientAuthenticationToken;
+import com.codzs.oauth2.authentication.device.DeviceClientAuthenticationToken;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.lang.Nullable;

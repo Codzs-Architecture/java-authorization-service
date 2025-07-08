@@ -29,7 +29,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
-import com.codzs.federation.FederatedIdentityAuthenticationSuccessHandler;
+import com.codzs.oauth2.authentication.federation.FederatedIdentityAuthenticationSuccessHandler;
 
 /**
  * @author Joe Grandja

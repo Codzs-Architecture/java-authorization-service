@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codzs.config.security.oauth2;
+package com.codzs.config.oauth2;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

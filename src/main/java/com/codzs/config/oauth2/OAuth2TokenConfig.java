@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codzs.config.security.oauth2;
+package com.codzs.config.oauth2;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,7 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 
-import com.codzs.federation.FederatedIdentityIdTokenCustomizer;
+import com.codzs.oauth2.authentication.federation.FederatedIdentityIdTokenCustomizer;
 import com.codzs.jose.Jwks;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
