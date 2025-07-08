@@ -103,10 +103,14 @@
 			<groupId>com.codzs</groupId>
 			<artifactId>config-client-service</artifactId>
 		</dependency>
-		<dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+		<!-- <dependency>
 			<groupId>com.codzs</groupId>
 			<artifactId>auth-user-detail-service</artifactId>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>com.codzs</groupId>
 			<artifactId>redis-cache</artifactId>
