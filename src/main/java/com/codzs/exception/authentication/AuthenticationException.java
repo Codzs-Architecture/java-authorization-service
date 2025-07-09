@@ -7,7 +7,7 @@ import com.codzs.exception.AuthorizationServiceException;
  * This exception is specific to the authorization service authentication operations
  * and provides additional context for authentication failures.
  * 
- * @author Authentication Exception Hierarchy
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class AuthenticationException extends AuthorizationServiceException {

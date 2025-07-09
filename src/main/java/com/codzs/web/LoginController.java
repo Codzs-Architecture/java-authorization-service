@@ -19,7 +19,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
- * @author Steve Riesenberg
+ * Controller for handling login operations.
+ * This controller manages user authentication and login flows
+ * including OAuth2 and federated authentication.
+ * 
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Controller

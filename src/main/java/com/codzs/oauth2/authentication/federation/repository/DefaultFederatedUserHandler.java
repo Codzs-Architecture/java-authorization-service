@@ -7,13 +7,10 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 /**
  * Default implementation of {@link FederatedUserHandler}.
- * This implementation provides basic logging and can be extended for
- * more sophisticated user handling strategies.
+ * This handler provides basic federated user management including
+ * user creation, linking, and synchronization.
  * 
- * This implementation is safe and doesn't modify any existing functionality,
- * serving as a demonstration of the strategy pattern.
- * 
- * @author Default Federation User Handler
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class DefaultFederatedUserHandler implements FederatedUserHandler {

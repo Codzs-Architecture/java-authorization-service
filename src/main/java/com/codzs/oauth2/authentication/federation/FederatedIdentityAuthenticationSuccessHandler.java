@@ -32,10 +32,11 @@ import org.springframework.security.web.authentication.SavedRequestAwareAuthenti
 // end::imports[]
 
 /**
- * An {@link AuthenticationSuccessHandler} for capturing the {@link OidcUser} or
- * {@link OAuth2User} for Federated Account Linking or JIT Account Provisioning.
- *
- * @author Steve Riesenberg
+ * Authentication success handler for federated identity providers.
+ * This handler manages successful authentication from external identity providers
+ * including OAuth2 and OpenID Connect providers.
+ * 
+ * @author Nitin Khaitan
  * @since 1.1
  */
 // tag::class[]

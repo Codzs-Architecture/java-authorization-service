@@ -8,18 +8,11 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
 /**
- * Optional configuration class for device authentication components.
- * This class demonstrates how device authentication components could be
- * configured as Spring beans for better dependency injection and testability.
+ * Configuration class for device authentication.
+ * This class handles the configuration of device flow authentication
+ * including device code and user code validation.
  * 
- * This configuration is NOT automatically loaded and is provided as an example
- * of improved Spring configuration practices.
- * 
- * To use this configuration, either:
- * 1. Add @Configuration annotation and @Import it in your main configuration
- * 2. Or manually use @Bean methods where needed
- * 
- * @author Device Authentication Configuration
+ * @author Nitin Khaitan
  * @since 1.1
  */
 // @Configuration  // Commented out to prevent automatic loading - this is an example

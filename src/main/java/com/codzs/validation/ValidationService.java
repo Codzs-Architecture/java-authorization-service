@@ -4,11 +4,11 @@ import com.codzs.exception.validation.ValidationException;
 import java.util.Map;
 
 /**
- * Service interface for handling input validation operations.
- * This interface defines the contract for validating various types of input
- * including OAuth2 parameters, request data, and domain objects.
+ * Service interface for handling validation operations.
+ * This interface defines the contract for validation-related business logic,
+ * including parameter validation, OAuth2 validation, and device validation.
  * 
- * @author Validation Service Interface
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public interface ValidationService {

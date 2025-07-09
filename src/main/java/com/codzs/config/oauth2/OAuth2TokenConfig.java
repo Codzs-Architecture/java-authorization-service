@@ -30,10 +30,11 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
 /**
- * Configuration class for OAuth2 token and JWT handling.
- * This class handles the configuration of JWT encoding, decoding, and token customization.
+ * Configuration class for OAuth2 token customization and JWT settings.
+ * This class handles the configuration of JWT token customization and
+ * OAuth2 token generation settings.
  * 
- * @author Refactored from AuthorizationServerConfig
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)

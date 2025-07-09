@@ -16,10 +16,10 @@ import java.util.Map;
 
 /**
  * Default implementation of {@link ValidationService}.
- * This service provides comprehensive validation for OAuth2 parameters,
- * request data, and domain objects with detailed error reporting.
+ * This service handles validation operations including parameter validation,
+ * OAuth2 validation, and device validation.
  * 
- * @author Default Validation Service Implementation
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Service

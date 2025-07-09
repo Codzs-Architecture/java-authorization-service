@@ -3,11 +3,11 @@ package com.codzs.exception.device;
 import com.codzs.exception.oauth2.OAuth2Exception;
 
 /**
- * Base exception class for OAuth2 device flow related errors.
- * This exception extends OAuth2Exception and provides device flow-specific
- * error handling capabilities.
+ * Exception thrown when device flow operations fail.
+ * This exception is specific to the authorization service device flow operations
+ * and provides additional context for device flow failures.
  * 
- * @author Device Flow Exception Hierarchy
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class DeviceFlowException extends OAuth2Exception {

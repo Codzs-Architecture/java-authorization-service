@@ -9,10 +9,10 @@ import com.codzs.validation.ValidationService;
 
 /**
  * Default implementation of {@link DeviceService}.
- * This service handles OAuth2 device flow operations including device activation,
- * verification, and success handling.
+ * This service handles device flow operations including device code generation,
+ * user code validation, and device flow management.
  * 
- * @author Default Device Service Implementation
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Service

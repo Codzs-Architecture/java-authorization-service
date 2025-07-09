@@ -11,18 +11,11 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 
 /**
- * Optional configuration class for federation authentication components.
- * This class demonstrates how federation authentication components could be
- * configured as Spring beans for better dependency injection and testability.
+ * Configuration class for federated authentication.
+ * This class handles the configuration of federated authentication providers
+ * including OAuth2 and OpenID Connect identity providers.
  * 
- * This configuration is NOT automatically loaded and is provided as an example
- * of improved Spring configuration practices.
- * 
- * To use this configuration, either:
- * 1. Add @Configuration annotation and @Import it in your main configuration
- * 2. Or manually use @Bean methods where needed
- * 
- * @author Federation Authentication Configuration
+ * @author Nitin Khaitan
  * @since 1.1
  */
 // @Configuration  // Commented out to prevent automatic loading - this is an example

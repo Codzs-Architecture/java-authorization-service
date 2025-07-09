@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2023 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 /**
  * Example {@link Consumer} to perform JIT provisioning of an {@link OAuth2User}.
  *
- * @author Steve Riesenberg
+ * @author Nitin Khaitan
  * @since 1.1
  */
 // tag::class[]

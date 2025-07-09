@@ -32,9 +32,17 @@ spring:
     include: keystore,config-service
 
   # Flyway configuration to handle existing schemas  
-  # flyway:
-  #   baseline-on-migrate: true
-  #   baseline-version: 0
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: false
+    clean-disabled: false
+    # Handle existing databases by checking if tables exist
+    baseline-description: "Baseline existing database"
+    # Only apply new migrations
+    out-of-order: true
 
   # Spring WebMVC configuration to handle exception conflicts
   # mvc:

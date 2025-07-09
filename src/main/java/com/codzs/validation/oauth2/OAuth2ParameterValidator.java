@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  * This class provides validation logic for OAuth2 parameters including
  * client IDs, scopes, redirect URIs, and device flow codes.
  * 
- * @author OAuth2 Parameter Validator
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class OAuth2ParameterValidator {

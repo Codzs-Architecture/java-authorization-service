@@ -1,11 +1,11 @@
 package com.codzs.exception.handler;
 
 /**
- * Represents device flow context details.
+ * Represents device context details.
  * This class provides specific information about device flow errors
- * including device codes and user codes.
+ * including device code, user code, and device flow metadata.
  * 
- * @author Device Context Details Model
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class DeviceContextDetails {

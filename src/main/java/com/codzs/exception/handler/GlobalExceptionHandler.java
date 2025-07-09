@@ -30,7 +30,7 @@ import java.util.UUID;
  * This class handles all exceptions thrown by the application and provides
  * consistent error responses with appropriate HTTP status codes.
  * 
- * @author Global Exception Handler
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @ControllerAdvice

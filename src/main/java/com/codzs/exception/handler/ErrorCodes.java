@@ -1,11 +1,11 @@
 package com.codzs.exception.handler;
 
 /**
- * Constants for error codes used throughout the OAuth2 Authorization Service.
- * This class provides standardized error codes for consistent error handling
- * and client error identification.
+ * Constants for error codes used throughout the application.
+ * This class provides centralized error code definitions for consistent
+ * error handling across the authorization service.
  * 
- * @author Error Codes Constants
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public final class ErrorCodes {

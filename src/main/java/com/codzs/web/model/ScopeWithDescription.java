@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2024 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.springframework.security.oauth2.core.oidc.OidcScopes;
  * Model class representing an OAuth2 scope with its human-readable description.
  * This class is used to display scopes and their descriptions in the consent UI.
  * 
- * @author Extracted from AuthorizationConsentController
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class ScopeWithDescription {

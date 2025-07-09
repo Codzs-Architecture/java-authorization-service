@@ -24,12 +24,11 @@ import com.codzs.service.device.DeviceService;
 import com.codzs.validation.ValidationService;
 
 /**
- * Controller for handling OAuth2 device flow endpoints.
- * This controller has been refactored to use the DeviceService for business logic,
- * improving separation of concerns and testability.
+ * Controller for handling OAuth2 device authorization flow.
+ * This controller manages device flow operations including device activation,
+ * user code verification, and device flow completion.
  * 
- * @author Steve Riesenberg
- * @author Refactored for service layer integration
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Controller

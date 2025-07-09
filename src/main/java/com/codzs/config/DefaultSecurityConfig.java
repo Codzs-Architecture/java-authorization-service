@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2023 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.codzs.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.session.SessionRegistry;
@@ -24,16 +25,23 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import com.codzs.oauth2.authentication.federation.FederatedIdentityAuthenticationSuccessHandler;
 
+import java.util.Map;
+
 /**
- * @author Joe Grandja
- * @author Steve Riesenberg
+ * Configuration class for default security settings.
+ * This class handles the configuration of security filter chains,
+ * user details service, and authentication providers.
+ * 
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @EnableWebSecurity
@@ -68,17 +76,30 @@ public class DefaultSecurityConfig {
 		return new FederatedIdentityAuthenticationSuccessHandler();
 	}
 
-	// @formatter:off
+	/**
+	 * Configure the UserDetailsService to fetch users from database.
+	 * This service loads user details from the 'users' and 'authorities' tables.
+	 * 
+	 * @param jdbcTemplate the JDBC template for database operations
+	 * @param passwordEncoder the password encoder for password validation
+	 * @return UserDetailsService that loads users from database
+	 */
 	@Bean
-	public UserDetailsService users() {
-		UserDetails user = User.withDefaultPasswordEncoder()
-				.username("user1")
-				.password("password")
-				.roles("USER")
-				.build();
-		return new InMemoryUserDetailsManager(user);
+	public UserDetailsService userDetailsService(JdbcTemplate jdbcTemplate, PasswordEncoder passwordEncoder) {
+		return new JdbcUserDetailsService(jdbcTemplate, passwordEncoder);
 	}
-	// @formatter:on
+
+	/**
+	 * Configure the password encoder for password hashing and validation.
+	 * Uses BCrypt for secure password storage and validation.
+	 * 
+	 * @return PasswordEncoder using BCrypt
+	 */
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new org.springframework.security.crypto.password.DelegatingPasswordEncoder("bcrypt", 
+			Map.of("bcrypt", new BCryptPasswordEncoder()));
+	}
 
 	@Bean
 	public SessionRegistry sessionRegistry() {
@@ -90,4 +111,65 @@ public class DefaultSecurityConfig {
 		return new HttpSessionEventPublisher();
 	}
 
+	/**
+	 * JDBC-based UserDetailsService implementation.
+	 * Fetches user details from the database using the 'users' and 'authorities' tables.
+	 */
+	private static class JdbcUserDetailsService implements UserDetailsService {
+		
+		private final JdbcTemplate jdbcTemplate;
+		private final PasswordEncoder passwordEncoder;
+
+		public JdbcUserDetailsService(JdbcTemplate jdbcTemplate, PasswordEncoder passwordEncoder) {
+			this.jdbcTemplate = jdbcTemplate;
+			this.passwordEncoder = passwordEncoder;
+		}
+
+		@Override
+		public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+			// Query user from database
+			String sql = "SELECT username, password, enabled FROM users WHERE username = ?";
+			
+			try {
+				UserDetails user = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+					String dbUsername = rs.getString("username");
+					String rawPassword = rs.getString("password");
+					boolean enabled = rs.getBoolean("enabled");
+					
+					// Query user authorities
+					String authoritiesSql = "SELECT authority FROM authorities WHERE username = ?";
+					var authorities = jdbcTemplate.queryForList(authoritiesSql, String.class, dbUsername);
+					
+					// Convert authorities to Spring Security format
+					var grantedAuthorities = authorities.stream()
+						.map(authority -> {
+							// Ensure authority starts with ROLE_ if it doesn't already
+							if (!authority.startsWith("ROLE_")) {
+								return "ROLE_" + authority;
+							}
+							return authority;
+						})
+						.map(org.springframework.security.core.authority.SimpleGrantedAuthority::new)
+						.toList();
+					
+					// Create UserDetails with proper password handling
+					return User.builder()
+						.username(dbUsername)
+						.password(rawPassword) // Keep the original password format from database
+						.disabled(!enabled)
+						.authorities(grantedAuthorities)
+						.build();
+				}, username);
+				
+				if (user == null) {
+					throw new UsernameNotFoundException("User not found: " + username);
+				}
+				
+				return user;
+				
+			} catch (Exception e) {
+				throw new UsernameNotFoundException("Error loading user: " + username, e);
+			}
+		}
+	}
 }

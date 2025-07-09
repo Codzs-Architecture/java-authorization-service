@@ -3,10 +3,11 @@ package com.codzs.exception.oauth2;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 
 /**
- * Exception thrown when an OAuth2 client is invalid or unauthorized.
- * This corresponds to the OAuth2 error code "invalid_client".
+ * Exception thrown when OAuth2 client validation fails.
+ * This exception is specific to the authorization service OAuth2 client operations
+ * and provides additional context for client validation failures.
  * 
- * @author OAuth2 Exception Hierarchy
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class InvalidClientException extends OAuth2Exception {

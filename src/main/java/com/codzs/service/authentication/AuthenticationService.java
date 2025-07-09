@@ -7,7 +7,7 @@ import java.security.Principal;
  * This interface defines the contract for authentication-related business logic,
  * including user validation, authentication state management, and security operations.
  * 
- * @author Authentication Service Interface
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public interface AuthenticationService {

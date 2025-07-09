@@ -3,11 +3,11 @@ package com.codzs.service.error;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * Service interface for handling error processing operations.
- * This interface defines the contract for error message processing,
- * formatting, and model preparation for error views.
+ * Service interface for handling error operations.
+ * This interface defines the contract for error-related business logic,
+ * including error creation, formatting, and response generation.
  * 
- * @author Error Service Interface
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public interface ErrorService {

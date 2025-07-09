@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2020-2025 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.util.UUID;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import com.codzs.config.security.OAuth2DatabaseConfig;
+// import com.codzs.config.security.OAuth2DatabaseConfig; // Removed - using MySQL from config server
 import com.codzs.config.oauth2.OAuth2ClientRegistrationConfig;
 import com.codzs.config.oauth2.OAuth2SecurityFilterChainConfig;
 import com.codzs.config.oauth2.OAuth2ServiceConfig;
@@ -33,21 +33,18 @@ import com.codzs.config.oauth2.OAuth2TokenConfig;
  * 
  * The configuration has been decomposed into separate concerns:
  * - OAuth2ClientRegistrationConfig: Client registration and management
- * - OAuth2DatabaseConfig: Database configuration for OAuth2 data storage
+ * - OAuth2DatabaseConfig: Database configuration for OAuth2 data storage (removed - using MySQL from config server)
  * - OAuth2SecurityFilterChainConfig: Security filter chain for OAuth2 endpoints
  * - OAuth2ServiceConfig: Authorization services and server settings
  * - OAuth2TokenConfig: JWT/token configuration and customization
  * 
- * @author Joe Grandja
- * @author Daniel Garnier-Moiroux
- * @author Steve Riesenberg
- * @author Refactored for SOLID principles
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)
 @Import({
 	OAuth2ClientRegistrationConfig.class,
-	OAuth2DatabaseConfig.class,
+	// OAuth2DatabaseConfig.class, // Removed - using MySQL from config server
 	OAuth2SecurityFilterChainConfig.class,
 	OAuth2ServiceConfig.class,
 	OAuth2TokenConfig.class

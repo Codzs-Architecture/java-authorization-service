@@ -4,10 +4,10 @@ import com.codzs.exception.AuthorizationServiceException;
 
 /**
  * Base exception class for OAuth2-related errors.
- * This exception extends the authorization service base exception
- * and provides OAuth2-specific error handling capabilities.
+ * This exception serves as the root of the OAuth2 exception hierarchy
+ * for all OAuth2-related errors in the authorization service.
  * 
- * @author OAuth2 Exception Hierarchy
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class OAuth2Exception extends AuthorizationServiceException {

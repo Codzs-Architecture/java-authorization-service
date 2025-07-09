@@ -4,11 +4,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Standard error response format for the OAuth2 Authorization Service.
- * This class provides a consistent structure for all error responses
- * with detailed information for debugging and client handling.
+ * Represents a standardized error response.
+ * This class provides a consistent structure for error responses
+ * including error details, timestamps, and contextual information.
  * 
- * @author Error Response Model
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class ErrorResponse {

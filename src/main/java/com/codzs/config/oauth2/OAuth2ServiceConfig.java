@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2024 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
  * Configuration class for OAuth2 authorization services and server settings.
  * This class handles the configuration of OAuth2 authorization services and server settings.
  * 
- * @author Refactored from AuthorizationServerConfig
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)

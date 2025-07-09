@@ -17,11 +17,11 @@ import org.springframework.util.Assert;
 import com.codzs.oauth2.authentication.device.error.DeviceAuthenticationErrorHandler;
 
 /**
- * An {@link AuthenticationProvider} implementation for device client authentication.
- * This provider has been enhanced to use DeviceAuthenticationErrorHandler for better
- * separation of concerns while maintaining backward compatibility.
+ * Authentication provider for device client authentication.
+ * This provider handles device flow client authentication using
+ * device codes and user codes for OAuth2 device authorization.
  * 
- * @author Enhanced to use DeviceAuthenticationErrorHandler
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public final class DeviceClientAuthenticationProvider implements AuthenticationProvider {

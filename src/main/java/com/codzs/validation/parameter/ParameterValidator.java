@@ -11,7 +11,7 @@ import java.util.regex.PatternSyntaxException;
  * This class provides common validation logic for parameters including
  * required field validation, pattern matching, and length validation.
  * 
- * @author Parameter Validator
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class ParameterValidator {

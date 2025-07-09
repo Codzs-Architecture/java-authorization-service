@@ -14,11 +14,11 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 /**
- * Utility class for extracting claims from federated identities.
- * This class encapsulates claim extraction logic for better separation
- * of concerns and improved testability.
+ * Utility class for extracting claims from OAuth2 and OIDC users.
+ * This class provides centralized claim extraction logic for
+ * federated identity integration and token customization.
  * 
- * @author Claim Extraction Utility
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class ClaimExtractor {

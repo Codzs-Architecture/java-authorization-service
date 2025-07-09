@@ -11,10 +11,10 @@ import java.util.UUID;
 
 /**
  * Factory class for creating standardized error responses.
- * This class provides convenient methods for creating consistent error responses
- * with proper error codes, messages, and context information.
+ * This class provides utility methods for creating consistent error responses
+ * with appropriate HTTP status codes and error details.
  * 
- * @author Error Response Factory
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public final class ErrorResponseFactory {

@@ -1,11 +1,11 @@
 package com.codzs.exception.handler;
 
 /**
- * Represents a field-specific validation error.
- * This class provides detailed information about validation failures
- * including the field name, error message, and rejected value.
+ * Represents a field-specific error.
+ * This class provides detailed information about validation errors
+ * for specific fields in request data.
  * 
- * @author Field Error Model
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class FieldError {

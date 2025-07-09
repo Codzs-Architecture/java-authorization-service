@@ -2,10 +2,10 @@ package com.codzs.exception.handler;
 
 /**
  * Represents OAuth2-specific error details.
- * This class provides structured information about OAuth2 errors
- * following the OAuth2 specification error response format.
+ * This class provides detailed information about OAuth2 errors
+ * including error codes, descriptions, and OAuth2-specific metadata.
  * 
- * @author OAuth2 Error Details Model
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class OAuth2ErrorDetails {

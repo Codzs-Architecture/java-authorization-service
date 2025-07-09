@@ -10,10 +10,10 @@ import org.springframework.util.StringUtils;
 
 /**
  * Default implementation of {@link ErrorService}.
- * This service handles error processing operations including error message
- * extraction, formatting, and model preparation for error views.
+ * This service handles error operations including error creation,
+ * formatting, and response generation.
  * 
- * @author Default Error Service Implementation
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Service

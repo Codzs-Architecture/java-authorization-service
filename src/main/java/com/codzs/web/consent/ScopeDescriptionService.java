@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2024 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.codzs.web.model.ScopeWithDescription;
  * Service class for handling OAuth2 scope descriptions.
  * This service provides functionality to convert scopes to their human-readable descriptions.
  * 
- * @author Extracted from AuthorizationConsentController
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Service

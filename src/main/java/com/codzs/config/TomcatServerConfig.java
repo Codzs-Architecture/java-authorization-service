@@ -23,8 +23,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 /**
- * @author Joe Grandja
- * @since 1.3
+ * Configuration class for Tomcat server settings.
+ * This class handles the configuration of Tomcat server properties
+ * including SSL settings, port configuration, and server customization.
+ * 
+ * @author Nitin Khaitan
+ * @since 1.1
  */
 @Profile("!test")	// Exclude this from DemoAuthorizationServerApplicationTests and DemoAuthorizationServerConsentTests
 @Configuration(proxyBeanMethods = false)

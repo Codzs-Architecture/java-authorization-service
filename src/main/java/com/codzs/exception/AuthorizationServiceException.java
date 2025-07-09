@@ -5,7 +5,7 @@ package com.codzs.exception;
  * This exception serves as the root of the custom exception hierarchy
  * for all authorization service related errors.
  * 
- * @author Authorization Service Exception Hierarchy
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class AuthorizationServiceException extends RuntimeException {

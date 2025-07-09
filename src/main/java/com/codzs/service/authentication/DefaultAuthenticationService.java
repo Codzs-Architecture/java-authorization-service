@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * This service handles authentication operations including user validation,
  * authentication state management, and security operations.
  * 
- * @author Default Authentication Service Implementation
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Service

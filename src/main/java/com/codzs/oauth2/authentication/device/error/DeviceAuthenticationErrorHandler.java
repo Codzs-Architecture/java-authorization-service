@@ -5,11 +5,11 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 
 /**
- * Utility class for handling device authentication errors.
- * This class encapsulates error handling logic for device authentication,
- * following the Single Responsibility Principle.
+ * Handler for device authentication errors.
+ * This class provides centralized error handling for device flow
+ * authentication failures with detailed error reporting.
  * 
- * @author Device Authentication Error Handler
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class DeviceAuthenticationErrorHandler {

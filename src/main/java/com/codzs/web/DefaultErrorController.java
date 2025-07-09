@@ -25,12 +25,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.codzs.service.error.ErrorService;
 
 /**
- * Controller for handling application errors.
- * This controller has been refactored to use the ErrorService for business logic,
- * improving separation of concerns and testability.
+ * Default error controller for handling application errors.
+ * This controller provides centralized error handling and custom error pages
+ * for the OAuth2 authorization service.
  * 
- * @author Steve Riesenberg
- * @author Refactored for service layer integration
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Controller

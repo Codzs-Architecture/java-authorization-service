@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2024 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.codzs.web.authentication.DeviceClientAuthenticationConverter;
  * Configuration class for OAuth2 authorization server security filter chain.
  * This class handles the configuration of the security filter chain for OAuth2 authorization endpoints.
  * 
- * @author Refactored from AuthorizationServerConfig
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Configuration(proxyBeanMethods = false)

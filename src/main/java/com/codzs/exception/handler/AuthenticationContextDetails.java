@@ -5,7 +5,7 @@ package com.codzs.exception.handler;
  * This class provides specific information about authentication errors
  * including username, authentication type, and realm.
  * 
- * @author Authentication Context Details Model
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class AuthenticationContextDetails {

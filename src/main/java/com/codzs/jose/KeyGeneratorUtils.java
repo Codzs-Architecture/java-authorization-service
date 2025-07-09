@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2023 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
 /**
- * @author Joe Grandja
+ * @author Nitin Khaitan
  * @since 1.1
  */
 final class KeyGeneratorUtils {

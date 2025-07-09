@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2024 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import com.codzs.validation.ValidationService;
  * Service class for handling OAuth2 consent business logic.
  * This service manages the consent flow including scope analysis and consent determination.
  * 
- * @author Extracted from AuthorizationConsentController
+ * @author Nitin Khaitan
  * @since 1.1
  */
 @Service

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 the original author or authors.
+ * Copyright 2020-2023 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ import com.codzs.web.consent.ScopeDescriptionService;
  * This controller has been refactored to use separate services for consent logic,
  * scope descriptions, and authentication handling.
  * 
- * @author Daniel Garnier-Moiroux
- * @author Refactored for SOLID principles and service layer integration
+ * @author Nitin Khaitan
+ * @since 1.1
  */
 @Controller
 public class AuthorizationConsentController {

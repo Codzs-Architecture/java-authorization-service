@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2020-2025 Nitin Khaitan.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,7 @@ import com.codzs.oauth2.authentication.federation.token.ClaimExtractor;
  * This class has been enhanced to use ClaimExtractor for better separation
  * of concerns and improved testability.
  *
- * @author Steve Riesenberg
- * @author Enhanced to use ClaimExtractor
+ * @author Nitin Khaitan
  * @since 1.1
  */
 // tag::class[]

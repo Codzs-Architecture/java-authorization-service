@@ -6,11 +6,11 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Exception thrown when input validation fails.
- * This exception provides detailed information about validation failures
- * including field-specific errors and validation messages.
+ * Exception thrown when validation fails.
+ * This exception is specific to the authorization service validation operations
+ * and provides additional context for validation failures.
  * 
- * @author Validation Exception Hierarchy
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public class ValidationException extends AuthorizationServiceException {

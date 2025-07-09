@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
  * Implementations of this interface can provide different strategies for
  * handling federated users (e.g., in-memory, database, external service).
  * 
- * @author Federation User Handler Strategy
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public interface FederatedUserHandler {

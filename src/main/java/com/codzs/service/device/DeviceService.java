@@ -1,11 +1,11 @@
 package com.codzs.service.device;
 
 /**
- * Service interface for handling OAuth2 device flow operations.
- * This interface defines the contract for device activation, verification,
- * and success handling business logic.
+ * Service interface for handling device flow operations.
+ * This interface defines the contract for device flow business logic,
+ * including device code generation, user code validation, and device flow management.
  * 
- * @author Device Flow Service Interface
+ * @author Nitin Khaitan
  * @since 1.1
  */
 public interface DeviceService {
