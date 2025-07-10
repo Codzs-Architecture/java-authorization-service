@@ -3,16 +3,16 @@
 
 -- Messaging Client (messaging-client)
 INSERT IGNORE INTO `oauth2_registered_client` VALUES (
-    '2',
-    'messaging-client',
+    '1',
+    'messaging-client', 
     '2025-07-09 11:56:43',
-    '{bcrypt}$2a$10$R.gk27uq.4g7cc8EFK0MMeAAne0tRXMWqsv7dFkRgf3Yqni0I6wsK',
+    '{noop}secret',
     NULL,
     'messaging-client',
     'client_secret_basic',
-    'refresh_token,client_credentials,authorization_code',
-    'http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc,http://127.0.0.1:8080/authorized',
-    'http://127.0.0.1:8080/logged-out',
+    'authorization_code,refresh_token,client_credentials',
+    'https://local.codzs.com:8004/login/oauth2/code/messaging-client-oidc,https://local.codzs.com:8004/authorized',
+    'https://local.codzs.com:8004/logged-out',
     'openid,profile,message.read,message.write,user.read',
     '{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"settings.client.require-proof-key\":false,\"settings.client.require-authorization-consent\":true}',
     '{\"@class\":\"java.util.Collections$UnmodifiableMap\", \"settings.token.access-token-format\": {\"@class\":\"org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat\", \"value\":\"self-contained\"}, \"settings.token.reuse-refresh-tokens\":true,\"settings.token.id-token-signature-algorithm\":[\"org.springframework.security.oauth2.jose.jws.SignatureAlgorithm\",\"RS256\"],\"settings.token.authorization-code-time-to-live\":[\"java.time.Duration\",3600.000000000],\"settings.token.access-token-time-to-live\":[\"java.time.Duration\",300.000000000],\"settings.token.refresh-token-time-to-live\":[\"java.time.Duration\",3600.000000000]}'
@@ -20,14 +20,14 @@ INSERT IGNORE INTO `oauth2_registered_client` VALUES (
 
 -- Device Client (device-messaging-client)
 INSERT IGNORE INTO `oauth2_registered_client` VALUES (
-    '3',
+    '2',
     'device-messaging-client',
     '2025-07-09 11:56:43',
     NULL,
     NULL,
     'device-messaging-client',
     'none',
-    'refresh_token,urn:ietf:params:oauth:grant-type:device_code',
+    'urn:ietf:params:oauth:grant-type:device_code,refresh_token',
     NULL,
     NULL,
     'message.read,message.write',
@@ -37,10 +37,10 @@ INSERT IGNORE INTO `oauth2_registered_client` VALUES (
 
 -- Token Exchange Client (token-client)
 INSERT IGNORE INTO `oauth2_registered_client` VALUES (
-    '4',
+    '3',
     'token-client',
     '2025-07-09 11:56:43',
-    '{bcrypt}$2a$10$dJOmBt0MoRMU5gVkRy9HHOOIp9nn1WTMz8juW4tYcZ44ymsM7cJVG',
+    '{noop}token',
     NULL,
     'token-client',
     'client_secret_basic',
@@ -54,7 +54,7 @@ INSERT IGNORE INTO `oauth2_registered_client` VALUES (
 
 -- mTLS Demo Client (mtls-demo-client)
 INSERT IGNORE INTO `oauth2_registered_client` VALUES (
-    '5',
+    '4',
     'mtls-demo-client',
     '2025-07-09 11:56:43',
     NULL,
@@ -65,6 +65,6 @@ INSERT IGNORE INTO `oauth2_registered_client` VALUES (
     NULL,
     NULL,
     'message.read,message.write',
-    '{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"settings.client.require-proof-key\":false,\"settings.client.require-authorization-consent\":false,\"settings.client.x509-certificate-subject-dn\":\"CN=demo-client-sample,OU=Spring Samples,O=Spring,C=US\",\"settings.client.jwk-set-url\":\"http://127.0.0.1:8080/jwks\"}',
+    '{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"settings.client.require-proof-key\":false,\"settings.client.require-authorization-consent\":false,\"settings.client.x509-certificate-subject-dn\":\"CN=demo-client-sample,OU=Spring Samples,O=Spring,C=US\",\"settings.client.jwk-set-url\":\"http://local.codzs.com:8004/jwks\"}',
     '{\"@class\":\"java.util.Collections$UnmodifiableMap\", \"settings.token.access-token-format\": {\"@class\":\"org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat\", \"value\":\"self-contained\"}, \"settings.token.reuse-refresh-tokens\":true,\"settings.token.id-token-signature-algorithm\":[\"org.springframework.security.oauth2.jose.jws.SignatureAlgorithm\",\"RS256\"],\"settings.token.authorization-code-time-to-live\":[\"java.time.Duration\",3600.000000000],\"settings.token.access-token-time-to-live\":[\"java.time.Duration\",300.000000000],\"settings.token.refresh-token-time-to-live\":[\"java.time.Duration\",3600.000000000],\"settings.token.x509-certificate-bound-access-tokens\":true}'
 ); 
