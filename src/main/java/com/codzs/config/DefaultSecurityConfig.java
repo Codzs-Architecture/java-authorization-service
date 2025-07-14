@@ -17,6 +17,7 @@ package com.codzs.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -115,6 +116,22 @@ public class DefaultSecurityConfig {
 	@Bean
 	public HttpSessionEventPublisher httpSessionEventPublisher() {
 		return new HttpSessionEventPublisher();
+	}
+
+	@Bean
+	@Order(0)  // Highest priority for management endpoints
+	public SecurityFilterChain managementSecurityFilterChain(HttpSecurity http) throws Exception {
+		http
+			.securityMatcher("/management/**", "/actuator/**")
+			.authorizeHttpRequests(authz -> authz
+				.requestMatchers("/actuator/health", "/actuator/info").permitAll()  // Only health and info are public
+				.requestMatchers("/management/**", "/actuator/**").authenticated()  // All other endpoints require authentication
+				.anyRequest().authenticated()
+			)
+			.httpBasic(Customizer.withDefaults())  // Enable HTTP Basic Auth for management endpoints
+			.csrf(csrf -> csrf.disable());
+
+		return http.build();
 	}
 
 	/**
