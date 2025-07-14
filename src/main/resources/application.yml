@@ -3,10 +3,10 @@ spring:
     name: java-authorization-service
 
   security:
-    # user:
-    #   name: authorization-service-user
-    #   password: ${authorization.password}
-    #   roles: MANAGEMENT_ADMIN
+    user:
+      name: authorization-service-user
+      password: ${authorization.password}
+      roles: MANAGEMENT_ADMIN
     oauth2:
       client:
         registration:

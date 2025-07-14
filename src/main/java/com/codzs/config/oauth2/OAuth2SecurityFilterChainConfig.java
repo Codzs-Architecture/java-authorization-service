@@ -105,7 +105,8 @@ public class OAuth2SecurityFilterChainConfig {
 					new LoginUrlAuthenticationEntryPoint("/login"),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
-			);
+			)
+			.cors(Customizer.withDefaults());
 
 		return http.build();
 	}

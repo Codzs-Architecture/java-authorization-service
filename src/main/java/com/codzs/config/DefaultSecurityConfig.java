@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.User;
@@ -28,6 +29,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
@@ -66,7 +69,8 @@ public class DefaultSecurityConfig {
 				oauth2Login
 					.loginPage("/login")
 					.successHandler(authenticationSuccessHandler())
-			);
+			)
+			.cors(Customizer.withDefaults());
 
 		return http.build();
 	}
@@ -97,8 +101,10 @@ public class DefaultSecurityConfig {
 	 */
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-		return new org.springframework.security.crypto.password.DelegatingPasswordEncoder("bcrypt", 
-			Map.of("bcrypt", new BCryptPasswordEncoder()));
+		Map<String, PasswordEncoder> encoders = new HashMap<>();
+		encoders.put("bcrypt", new BCryptPasswordEncoder());
+		encoders.put("noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
+		return new org.springframework.security.crypto.password.DelegatingPasswordEncoder("bcrypt", encoders);
 	}
 
 	@Bean
