@@ -103,7 +103,7 @@ public class DefaultSecurityConfig {
 	public PasswordEncoder passwordEncoder() {
 		Map<String, PasswordEncoder> encoders = new HashMap<>();
 		encoders.put("bcrypt", new BCryptPasswordEncoder());
-		encoders.put("noop", org.springframework.security.crypto.password.NoOpPasswordEncoder.getInstance());
+		// NoOpPasswordEncoder removed for security - all passwords must use bcrypt
 		return new org.springframework.security.crypto.password.DelegatingPasswordEncoder("bcrypt", encoders);
 	}
 
