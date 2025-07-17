@@ -4,6 +4,7 @@ import com.codzs.oauth2.authentication.device.DeviceClientAuthenticationProvider
 import com.codzs.oauth2.authentication.device.error.DeviceAuthenticationErrorHandler;
 import com.codzs.web.authentication.DeviceClientAuthenticationConverter;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 
@@ -15,7 +16,7 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
  * @author Nitin Khaitan
  * @since 1.1
  */
-// @Configuration  // Commented out to prevent automatic loading - this is an example
+@Configuration
 public class DeviceAuthenticationConfig {
 
     /**

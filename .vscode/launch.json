@@ -6,39 +6,6 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Launch Application (Debug)",
-            "request": "launch",
-            "mainClass": "com.codzs.Application",
-            "projectName": "java-authorization-service",
-            "args": "",
-            "vmArgs": "",
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        },
-        {
-            "type": "java",
-            "name": "Launch Application with Profile",
-            "request": "launch",
-            "mainClass": "com.codzs.Application",
-            "projectName": "java-authorization-service",
-            "args": "--spring.profiles.active=dev",
-            "vmArgs": "",
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        },
-        {
-            "type": "java",
-            "name": "Launch Application (Local Config)",
-            "request": "launch",
-            "mainClass": "com.codzs.Application",
-            "projectName": "java-authorization-service",
-            "args": "",
-            "vmArgs": "-Dspring.profiles.active=local -Dconfig.server.url=https://local.codzs.com:5002 -Dconfig.password=password -Dserver.ssl.keystore=./../java-codzs-resource/local/local.codzs.com.p12 -Dserver.ssl.password=localpassword",
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        },
-        {
-            "type": "java",
             "name": "Debug (Attach)",
             "request": "attach",
             "hostName": "localhost",

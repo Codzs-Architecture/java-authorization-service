@@ -80,9 +80,26 @@ logging:
     root: INFO
     org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
     org.springframework.web.method.HandlerMethodMappingNamingStrategy: ERROR
-    org.springframework.web: INFO
-    org.springframework.security: INFO
-    org.springframework.security.oauth2: INFO
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.web: DEBUG
+    org.springframework.security.authentication: DEBUG
+    org.springframework.security.authorization: DEBUG
+    org.springframework.security.web.authentication: DEBUG
+    org.springframework.security.web.access: DEBUG
+    org.springframework.security.oauth2.server.authorization: DEBUG
+    org.springframework.security.oauth2.server.authorization.web: DEBUG
+    org.springframework.security.oauth2.server.authorization.authentication: DEBUG
+    org.springframework.security.oauth2.server.authorization.client: DEBUG
+    org.springframework.security.oauth2.server.authorization.oidc: DEBUG
+    org.springframework.security.oauth2.core: DEBUG
+    org.springframework.security.oauth2.jose: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
+    org.springframework.jdbc: DEBUG
+    org.springframework.web.client: DEBUG
+    org.springframework.http: DEBUG
+    com.codzs: DEBUG
 
 acl:
   redis:

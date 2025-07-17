@@ -27,8 +27,16 @@ public class CorsConfig {
 	@Primary
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedHeaders(Arrays.asList("*"));
-		config.setAllowedMethods(Arrays.asList("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"));
+		// Only allow safe and necessary headers - no wildcard
+		config.setAllowedHeaders(Arrays.asList(
+			"Content-Type", 
+			"Authorization", 
+			"X-Requested-With", 
+			"X-XSRF-TOKEN",
+			"Cache-Control"
+		));
+		// Only allow necessary HTTP methods for OAuth2 flow
+		config.setAllowedMethods(Arrays.asList("GET", "POST", "HEAD", "OPTIONS"));
 		
 		// Parse comma-separated origins and filter out wildcards if credentials are enabled
 		List<String> origins = Arrays.asList(allowedOrigins.split(","));
@@ -40,7 +48,10 @@ public class CorsConfig {
 		
 		config.setAllowedOrigins(origins);
 		config.setAllowCredentials(allowCredentials);
+		// Only expose necessary headers
 		config.setExposedHeaders(Arrays.asList("X-XSRF-TOKEN"));
+		// Set max age for preflight cache (reduce OPTIONS requests)
+		config.setMaxAge(3600L);
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", config);
 		return source;

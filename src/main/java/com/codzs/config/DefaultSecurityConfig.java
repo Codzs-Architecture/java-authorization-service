@@ -30,6 +30,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.security.web.SecurityFilterChain;
@@ -106,6 +107,24 @@ public class DefaultSecurityConfig {
 		encoders.put("bcrypt", new BCryptPasswordEncoder());
 		// NoOpPasswordEncoder removed for security - all passwords must use bcrypt
 		return new org.springframework.security.crypto.password.DelegatingPasswordEncoder("bcrypt", encoders);
+	}
+
+	/**
+	 * Configure the DaoAuthenticationProvider for username/password authentication.
+	 * This provider uses the UserDetailsService to load user details and validates
+	 * passwords using the configured PasswordEncoder.
+	 * 
+	 * @param userDetailsService the service to load user details from database
+	 * @param passwordEncoder the encoder to validate passwords
+	 * @return DaoAuthenticationProvider configured with database-backed user details
+	 */
+	@Bean
+	public DaoAuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService, 
+			PasswordEncoder passwordEncoder) {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(userDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder);
+		return authProvider;
 	}
 
 	@Bean
