@@ -43,13 +43,15 @@ public class OAuth2TokenConfig {
 	/**
 	 * Configure the OAuth2 token customizer for ID tokens.
 	 * This customizer handles federated identity information in ID tokens.
+	 * NOTE: This bean has been moved to CertificateBoundTokenCustomizer 
+	 * to avoid conflicts with multiple OAuth2TokenCustomizer beans.
 	 * 
 	 * @return OAuth2TokenCustomizer for JWT encoding context
 	 */
-	@Bean
-	public OAuth2TokenCustomizer<JwtEncodingContext> idTokenCustomizer() {
-		return new FederatedIdentityIdTokenCustomizer();
-	}
+	// @Bean - Commented out to avoid duplicate bean conflicts
+	// public OAuth2TokenCustomizer<JwtEncodingContext> idTokenCustomizer() {
+	//	return new FederatedIdentityIdTokenCustomizer();
+	// }
 
 	/**
 	 * Configure the JWK source for JWT token signing.

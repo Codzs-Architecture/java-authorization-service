@@ -28,7 +28,7 @@ public class FederatedAuthenticationConfig {
      * 
      * @return configured FederatedUserHandler
      */
-    @Bean
+    // @Bean
     public FederatedUserHandler federatedUserHandler() {
         return new DefaultFederatedUserHandler();
     }
@@ -40,7 +40,7 @@ public class FederatedAuthenticationConfig {
      * 
      * @return configured FederatedIdentityAuthenticationSuccessHandler
      */
-    @Bean
+    // @Bean
     public FederatedIdentityAuthenticationSuccessHandler federatedIdentityAuthenticationSuccessHandler() {
         return new FederatedIdentityAuthenticationSuccessHandler();
     }
@@ -52,7 +52,7 @@ public class FederatedAuthenticationConfig {
      * 
      * @return configured FederatedIdentityIdTokenCustomizer
      */
-    @Bean
+    // @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> federatedIdentityIdTokenCustomizer() {
         return new FederatedIdentityIdTokenCustomizer();
     }
@@ -64,7 +64,7 @@ public class FederatedAuthenticationConfig {
      * 
      * @return configured UserRepositoryOAuth2UserHandler
      */
-    @Bean
+    // @Bean
     public UserRepositoryOAuth2UserHandler userRepositoryOAuth2UserHandler() {
         return new UserRepositoryOAuth2UserHandler();
     }
@@ -76,7 +76,7 @@ public class FederatedAuthenticationConfig {
      * 
      * @return configured ClaimExtractor
      */
-    @Bean
+    // @Bean
     public ClaimExtractor claimExtractor() {
         return new ClaimExtractor();
     }
