@@ -74,7 +74,7 @@ management:
 server:
   port: 5003
 
-# Logging configuration to suppress specific warnings
+# Logging configuration
 logging:
   level:
     root: INFO
