@@ -49,18 +49,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleOAuth2Exception(OAuth2Exception ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isDebugEnabled()) {
-            logger.debug("OAuth2 exception occurred [" + errorId + "]", ex);
-        }
+        logException(errorId, ex, "OAuth2 exception occurred", false);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error("OAuth2 Error")
-            .message(ex.getMessage())
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.BAD_REQUEST, "OAuth2 Error", ex.getMessage(), request)
             .oauth2Error(OAuth2ErrorDetails.builder()
                 .error(ex.getOAuth2ErrorCode())
                 .errorDescription(ex.getOAuth2ErrorDescription())
@@ -82,18 +73,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleInvalidClientException(InvalidClientException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isWarnEnabled()) {
-            logger.warn("Invalid client exception occurred [" + errorId + "]: " + ex.getMessage());
-        }
+        logException(errorId, ex, "Invalid client exception occurred", false);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.UNAUTHORIZED.value())
-            .error("Invalid Client")
-            .message(ex.getMessage())
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.UNAUTHORIZED, "Invalid Client", ex.getMessage(), request)
             .oauth2Error(OAuth2ErrorDetails.builder()
                 .error(ex.getOAuth2ErrorCode())
                 .errorDescription(ex.getOAuth2ErrorDescription())
@@ -115,18 +97,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleDeviceFlowException(DeviceFlowException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isDebugEnabled()) {
-            logger.debug("Device flow exception occurred [" + errorId + "]", ex);
-        }
+        logException(errorId, ex, "Device flow exception occurred", false);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error("Device Flow Error")
-            .message(ex.getMessage())
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.BAD_REQUEST, "Device Flow Error", ex.getMessage(), request)
             .oauth2Error(OAuth2ErrorDetails.builder()
                 .error(ex.getOAuth2ErrorCode())
                 .errorDescription(ex.getOAuth2ErrorDescription())
@@ -152,10 +125,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleValidationException(ValidationException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isDebugEnabled()) {
-            logger.debug("Validation exception occurred [" + errorId + "]", ex);
-        }
+        logException(errorId, ex, "Validation exception occurred", false);
 
         List<FieldError> fieldErrors = new ArrayList<>();
         for (ValidationException.ValidationError validationError : ex.getValidationErrors()) {
@@ -166,13 +136,7 @@ public class GlobalExceptionHandler {
                 .build());
         }
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.BAD_REQUEST.value())
-            .error("Validation Error")
-            .message(ex.getMessage())
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.BAD_REQUEST, "Validation Error", ex.getMessage(), request)
             .fieldErrors(fieldErrors)
             .build();
 
@@ -190,18 +154,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isWarnEnabled()) {
-            logger.warn("Authentication exception occurred [" + errorId + "]: " + ex.getMessage());
-        }
+        logException(errorId, ex, "Authentication exception occurred", false);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.UNAUTHORIZED.value())
-            .error("Authentication Error")
-            .message(ex.getMessage())
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.UNAUTHORIZED, "Authentication Error", ex.getMessage(), request)
             .authenticationContext(AuthenticationContextDetails.builder()
                 .username(ex.getUsername())
                 .authenticationType(ex.getAuthenticationType())
@@ -223,18 +178,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleSpringAuthenticationException(org.springframework.security.core.AuthenticationException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isWarnEnabled()) {
-            logger.warn("Spring authentication exception occurred [" + errorId + "]: " + ex.getMessage());
-        }
+        logException(errorId, ex, "Spring authentication exception occurred", false);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.UNAUTHORIZED.value())
-            .error("Authentication Required")
-            .message("Authentication is required to access this resource")
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.UNAUTHORIZED, "Authentication Required", "Authentication is required to access this resource", request)
             .build();
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
@@ -251,18 +197,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isWarnEnabled()) {
-            logger.warn("Access denied exception occurred [" + errorId + "]: " + ex.getMessage());
-        }
+        logException(errorId, ex, "Access denied exception occurred", false);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.FORBIDDEN.value())
-            .error("Access Denied")
-            .message("Access is denied")
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.FORBIDDEN, "Access Denied", "Access is denied", request)
             .build();
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
@@ -279,18 +216,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isDebugEnabled()) {
-            logger.debug("No handler found exception occurred [" + errorId + "]: " + ex.getMessage());
-        }
+        logException(errorId, ex, "No handler found exception occurred", false);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.NOT_FOUND.value())
-            .error("Not Found")
-            .message("The requested resource was not found")
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.NOT_FOUND, "Not Found", "The requested resource was not found", request)
             .build();
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
@@ -307,18 +235,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleAuthorizationServiceException(AuthorizationServiceException ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isErrorEnabled()) {
-            logger.error("Authorization service exception occurred [" + errorId + "]", ex);
-        }
+        logException(errorId, ex, "Authorization service exception occurred", true);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-            .error("Authorization Service Error")
-            .message(ex.getMessage())
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.INTERNAL_SERVER_ERROR, "Authorization Service Error", ex.getMessage(), request)
             .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
@@ -335,18 +254,9 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, WebRequest request) {
         String errorId = generateErrorId();
-        
-        if (logger.isErrorEnabled()) {
-            logger.error("Unexpected exception occurred [" + errorId + "]", ex);
-        }
+        logException(errorId, ex, "Unexpected exception occurred", true);
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-            .errorId(errorId)
-            .timestamp(LocalDateTime.now())
-            .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-            .error("Internal Server Error")
-            .message("An unexpected error occurred")
-            .path(getPath(request))
+        ErrorResponse errorResponse = createBaseErrorResponse(errorId, HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error", "An unexpected error occurred", request)
             .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
@@ -369,5 +279,49 @@ public class GlobalExceptionHandler {
      */
     private String getPath(WebRequest request) {
         return request.getDescription(false).replace("uri=", "");
+    }
+
+    /**
+     * Creates a base error response builder with common fields.
+     * 
+     * @param errorId the error ID
+     * @param status the HTTP status
+     * @param error the error type
+     * @param message the error message
+     * @param request the web request
+     * @return ErrorResponse builder with base fields populated
+     */
+    private ErrorResponse.Builder createBaseErrorResponse(String errorId, HttpStatus status, String error, String message, WebRequest request) {
+        return ErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(status.value())
+            .error(error)
+            .message(message)
+            .path(getPath(request));
+    }
+
+    /**
+     * Logs an exception with appropriate log level.
+     * 
+     * @param errorId the error ID
+     * @param ex the exception
+     * @param logMessage the log message prefix
+     * @param isError whether to log as error (true) or debug/warn (false)
+     */
+    private void logException(String errorId, Exception ex, String logMessage, boolean isError) {
+        String fullMessage = logMessage + " [" + errorId + "]";
+        
+        if (isError && logger.isErrorEnabled()) {
+            logger.error(fullMessage, ex);
+        } else if (!isError && ex instanceof org.springframework.security.core.AuthenticationException) {
+            if (logger.isWarnEnabled()) {
+                logger.warn(fullMessage + ": " + ex.getMessage());
+            }
+        } else if (!isError && logger.isDebugEnabled()) {
+            logger.debug(fullMessage, ex);
+        } else if (!isError && logger.isWarnEnabled()) {
+            logger.warn(fullMessage + ": " + ex.getMessage());
+        }
     }
 } 

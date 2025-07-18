@@ -5,6 +5,8 @@ import org.springframework.util.StringUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -71,14 +73,13 @@ public class OAuth2ParameterValidator {
             throw ValidationException.invalidFormat("scope", "space-separated scope values with alphanumeric characters, hyphens, underscores, colons, and periods");
         }
 
-        // Check for duplicate scopes
+        // Check for duplicate scopes using Set for better performance
         String[] scopes = scope.split("\\s+");
-        for (int i = 0; i < scopes.length; i++) {
-            for (int j = i + 1; j < scopes.length; j++) {
-                if (scopes[i].equals(scopes[j])) {
-                    throw new ValidationException("Scope validation failed", "scope", 
-                        "Duplicate scope value: " + scopes[i]);
-                }
+        Set<String> uniqueScopes = new HashSet<>();
+        for (String scopeValue : scopes) {
+            if (!uniqueScopes.add(scopeValue)) {
+                throw new ValidationException("Scope validation failed", "scope", 
+                    "Duplicate scope value: " + scopeValue);
             }
         }
     }

@@ -15,12 +15,9 @@
  */
 package com.codzs.config;
 
-import java.util.UUID;
-
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-// import com.codzs.config.security.OAuth2DatabaseConfig; // Removed - using MySQL from config server
 import com.codzs.config.oauth2.OAuth2ClientRegistrationConfig;
 import com.codzs.config.oauth2.OAuth2SecurityFilterChainConfig;
 import com.codzs.config.oauth2.OAuth2ServiceConfig;
@@ -33,7 +30,6 @@ import com.codzs.config.oauth2.OAuth2TokenConfig;
  * 
  * The configuration has been decomposed into separate concerns:
  * - OAuth2ClientRegistrationConfig: Client registration and management
- * - OAuth2DatabaseConfig: Database configuration for OAuth2 data storage (removed - using MySQL from config server)
  * - OAuth2SecurityFilterChainConfig: Security filter chain for OAuth2 endpoints
  * - OAuth2ServiceConfig: Authorization services and server settings
  * - OAuth2TokenConfig: JWT/token configuration and customization
@@ -44,12 +40,9 @@ import com.codzs.config.oauth2.OAuth2TokenConfig;
 @Configuration(proxyBeanMethods = false)
 @Import({
 	OAuth2ClientRegistrationConfig.class,
-	// OAuth2DatabaseConfig.class, // Removed - using MySQL from config server
 	OAuth2SecurityFilterChainConfig.class,
 	OAuth2ServiceConfig.class,
 	OAuth2TokenConfig.class
 })
 public class AuthorizationServerConfig {
-	// This class now serves as an orchestrator that imports all OAuth2 configurations
-	// All specific configuration logic has been extracted to separate classes
 }
