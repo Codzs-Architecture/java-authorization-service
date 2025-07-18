@@ -105,3 +105,28 @@ acl:
   redis:
     cache:
       key: com.codzs.acl.cache.local
+
+# Device Authorization Security Configuration
+device:
+  security:
+    rate-limiting:
+      enabled: true
+      requests-per-minute: 10
+      time-window-minutes: 1
+      # Note: Rate limiting protects against device code enumeration attacks
+      # and prevents abuse of device authorization endpoints
+
+# Resilience4j Configuration for Rate Limiting
+resilience4j:
+  ratelimiter:
+    instances:
+      device-authorization:
+        limit-for-period: 10
+        limit-refresh-period: 60s
+        timeout-duration: 100ms
+        register-health-indicator: true
+        event-consumer-buffer-size: 100
+    metrics:
+      enabled: true
+      distribution-statistic-expiry: 1m
+      distribution-statistic-buffer-size: 100

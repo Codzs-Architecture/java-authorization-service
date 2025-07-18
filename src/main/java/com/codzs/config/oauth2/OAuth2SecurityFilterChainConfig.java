@@ -31,7 +31,9 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 import com.codzs.oauth2.authentication.device.DeviceClientAuthenticationProvider;
+import com.codzs.security.DeviceAuthorizationRateLimitingFilter;
 import com.codzs.web.authentication.DeviceClientAuthenticationConverter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Configuration class for OAuth2 authorization server security filter chain.
@@ -64,7 +66,8 @@ public class OAuth2SecurityFilterChainConfig {
 	public SecurityFilterChain authorizationServerSecurityFilterChain(
 			HttpSecurity http, 
 			RegisteredClientRepository registeredClientRepository,
-			AuthorizationServerSettings authorizationServerSettings) throws Exception {
+			AuthorizationServerSettings authorizationServerSettings,
+			DeviceAuthorizationRateLimitingFilter rateLimitingFilter) throws Exception {
 
 		// Create device client authentication components
 		DeviceClientAuthenticationConverter deviceClientAuthenticationConverter =
@@ -78,6 +81,8 @@ public class OAuth2SecurityFilterChainConfig {
 		// Configure the OAuth2 authorization server
 		http
 			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			// Add rate limiting filter for device authorization endpoints
+			.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
 			.with(authorizationServerConfigurer, (authorizationServer) ->
 				authorizationServer
 					.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
