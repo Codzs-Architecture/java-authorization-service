@@ -32,6 +32,7 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 import com.codzs.oauth2.authentication.device.DeviceClientAuthenticationProvider;
 import com.codzs.security.DeviceAuthorizationRateLimitingFilter;
+import com.codzs.security.blacklist.GlobalIpBlacklistFilter;
 import com.codzs.web.authentication.DeviceClientAuthenticationConverter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -67,7 +68,8 @@ public class OAuth2SecurityFilterChainConfig {
 			HttpSecurity http, 
 			RegisteredClientRepository registeredClientRepository,
 			AuthorizationServerSettings authorizationServerSettings,
-			DeviceAuthorizationRateLimitingFilter rateLimitingFilter) throws Exception {
+			DeviceAuthorizationRateLimitingFilter rateLimitingFilter,
+			GlobalIpBlacklistFilter ipBlacklistFilter) throws Exception {
 
 		// Create device client authentication components
 		DeviceClientAuthenticationConverter deviceClientAuthenticationConverter =
@@ -81,8 +83,10 @@ public class OAuth2SecurityFilterChainConfig {
 		// Configure the OAuth2 authorization server
 		http
 			.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+			// Add IP blacklist filter first to block banned IPs immediately
+			.addFilterBefore(ipBlacklistFilter, UsernamePasswordAuthenticationFilter.class)
 			// Add rate limiting filter for device authorization endpoints
-			.addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+			.addFilterAfter(rateLimitingFilter, GlobalIpBlacklistFilter.class)
 			.with(authorizationServerConfigurer, (authorizationServer) ->
 				authorizationServer
 					.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
