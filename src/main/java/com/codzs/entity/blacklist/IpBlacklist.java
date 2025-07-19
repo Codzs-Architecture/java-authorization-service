@@ -4,21 +4,21 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing IP addresses blacklisted from device authorization.
- * This entity is used to prevent abuse of device authorization endpoints
+ * Entity representing IP addresses blacklisted from API access.
+ * This entity is used to prevent abuse of API endpoints
  * by blocking known malicious or suspicious IP addresses.
  * 
  * @author Nitin Khaitan
  * @since 1.2
  */
 @Entity
-@Table(name = "device_ip_blacklist", 
-       uniqueConstraints = @UniqueConstraint(name = "uk_device_ip_blacklist_ip", columnNames = "ip_address"),
+@Table(name = "ip_blacklist", 
+       uniqueConstraints = @UniqueConstraint(name = "uk_ip_blacklist_ip", columnNames = "ip_address"),
        indexes = {
-           @Index(name = "idx_device_ip_blacklist_active", columnList = "is_active, expires_at"),
-           @Index(name = "idx_device_ip_blacklist_created", columnList = "created_at")
+           @Index(name = "idx_ip_blacklist_active", columnList = "is_active, expires_at"),
+           @Index(name = "idx_ip_blacklist_created", columnList = "created_at")
        })
-public class DeviceIpBlacklist {
+public class IpBlacklist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,7 +52,7 @@ public class DeviceIpBlacklist {
     private LocalDateTime updatedAt;
 
     // Constructors
-    public DeviceIpBlacklist() {
+    public IpBlacklist() {
         this.blockedAt = LocalDateTime.now();
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
@@ -60,13 +60,13 @@ public class DeviceIpBlacklist {
         this.blockedBy = "SYSTEM";
     }
 
-    public DeviceIpBlacklist(String ipAddress, String reason) {
+    public IpBlacklist(String ipAddress, String reason) {
         this();
         this.ipAddress = ipAddress;
         this.reason = reason;
     }
 
-    public DeviceIpBlacklist(String ipAddress, String ipRange, String reason, String blockedBy) {
+    public IpBlacklist(String ipAddress, String ipRange, String reason, String blockedBy) {
         this();
         this.ipAddress = ipAddress;
         this.ipRange = ipRange;
@@ -139,7 +139,7 @@ public class DeviceIpBlacklist {
 
     @Override
     public String toString() {
-        return "DeviceIpBlacklist{" +
+        return "IpBlacklist{" +
                 "id=" + id +
                 ", ipAddress='" + ipAddress + '\'' +
                 ", ipRange='" + ipRange + '\'' +

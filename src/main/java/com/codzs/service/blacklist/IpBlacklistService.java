@@ -1,9 +1,9 @@
 package com.codzs.service.blacklist;
 
 import com.codzs.entity.blacklist.ApiAccessAttemptLog;
-import com.codzs.entity.blacklist.DeviceIpBlacklist;
+import com.codzs.entity.blacklist.IpBlacklist;
 import com.codzs.repository.blacklist.ApiAccessAttemptLogRepository;
-import com.codzs.repository.blacklist.DeviceIpBlacklistRepository;
+import com.codzs.repository.blacklist.IpBlacklistRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,13 +24,13 @@ import com.codzs.security.constant.IPConstant;
  */
 @Service
 @Transactional
-public class DeviceIpBlacklistService {
+public class IpBlacklistService {
 
-    private static final Logger logger = LoggerFactory.getLogger(DeviceIpBlacklistService.class);
+    private static final Logger logger = LoggerFactory.getLogger(IpBlacklistService.class);
     
 
     @Autowired
-    private DeviceIpBlacklistRepository blacklistRepository;
+    private IpBlacklistRepository blacklistRepository;
 
     @Autowired
     private ApiAccessAttemptLogRepository attemptLogRepository;
@@ -50,15 +50,15 @@ public class DeviceIpBlacklistService {
         LocalDateTime now = LocalDateTime.now();
         
         // Check direct IP match
-        Optional<DeviceIpBlacklist> directMatch = blacklistRepository.findActiveByIpAddress(ipAddress, now);
+        Optional<IpBlacklist> directMatch = blacklistRepository.findActiveByIpAddress(ipAddress, now);
         if (directMatch.isPresent()) {
             logger.debug("IP {} is directly blacklisted: {}", ipAddress, directMatch.get().getReason());
             return true;
         }
 
         // Check IP range matches
-        List<DeviceIpBlacklist> activeRanges = blacklistRepository.findAllActiveRanges(now);
-        for (DeviceIpBlacklist rangeEntry : activeRanges) {
+        List<IpBlacklist> activeRanges = blacklistRepository.findAllActiveRanges(now);
+        for (IpBlacklist rangeEntry : activeRanges) {
             if (isIpInRange(ipAddress, rangeEntry.getIpRange())) {
                 logger.debug("IP {} matches blacklisted range {}: {}", 
                            ipAddress, rangeEntry.getIpRange(), rangeEntry.getReason());
@@ -77,7 +77,7 @@ public class DeviceIpBlacklistService {
      * @param blockedBy who is adding the blacklist entry
      * @return the created blacklist entry
      */
-    public DeviceIpBlacklist addToBlacklist(String ipAddress, String reason, String blockedBy) {
+    public IpBlacklist addToBlacklist(String ipAddress, String reason, String blockedBy) {
         return addToBlacklist(ipAddress, null, reason, blockedBy, null);
     }
 
@@ -91,7 +91,7 @@ public class DeviceIpBlacklistService {
      * @param expiresAt when the blacklist entry expires (null for permanent)
      * @return the created blacklist entry
      */
-    public DeviceIpBlacklist addToBlacklist(String ipAddress, String ipRange, String reason, 
+    public IpBlacklist addToBlacklist(String ipAddress, String ipRange, String reason, 
                                            String blockedBy, LocalDateTime expiresAt) {
         
         if (!isValidIpAddress(ipAddress)) {
@@ -108,10 +108,10 @@ public class DeviceIpBlacklistService {
             throw new IllegalStateException("IP address is already blacklisted: " + ipAddress);
         }
 
-        DeviceIpBlacklist blacklistEntry = new DeviceIpBlacklist(ipAddress, ipRange, reason, blockedBy);
+        IpBlacklist blacklistEntry = new IpBlacklist(ipAddress, ipRange, reason, blockedBy);
         blacklistEntry.setExpiresAt(expiresAt);
 
-        DeviceIpBlacklist saved = blacklistRepository.save(blacklistEntry);
+        IpBlacklist saved = blacklistRepository.save(blacklistEntry);
         
         logger.info("Added IP {} to blacklist. Reason: {}. Blocked by: {}. Expires: {}", 
                    ipAddress, reason, blockedBy, expiresAt);

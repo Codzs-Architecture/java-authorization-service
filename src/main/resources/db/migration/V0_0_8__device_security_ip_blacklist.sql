@@ -2,7 +2,7 @@
 -- This migration creates tables for managing IP blacklisting to prevent device authorization abuse
 
 -- IP Blacklist table for blocking suspicious IPs from device authorization
-CREATE TABLE device_ip_blacklist (
+CREATE TABLE ip_blacklist (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     ip_address VARCHAR(45) NOT NULL COMMENT 'IP address (supports both IPv4 and IPv6)',
     ip_range VARCHAR(100) COMMENT 'CIDR notation for IP ranges (e.g., 192.168.1.0/24)',
@@ -14,9 +14,9 @@ CREATE TABLE device_ip_blacklist (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
-    UNIQUE KEY uk_device_ip_blacklist_ip (ip_address),
-    INDEX idx_device_ip_blacklist_active (is_active, expires_at),
-    INDEX idx_device_ip_blacklist_created (created_at)
+    UNIQUE KEY uk_ip_blacklist_ip (ip_address),
+    INDEX idx_ip_blacklist_active (is_active, expires_at),
+    INDEX idx_ip_blacklist_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='IP blacklist for device authorization security';
 
@@ -43,7 +43,7 @@ CREATE TABLE api_access_attempt_log (
 COMMENT='Log of all API access attempts for security monitoring';
 
 -- Insert some default blacklist entries for known bad IP ranges
-INSERT INTO device_ip_blacklist (ip_address, ip_range, reason, blocked_by) VALUES
+INSERT INTO ip_blacklist (ip_address, ip_range, reason, blocked_by) VALUES
 ('0.0.0.0', '0.0.0.0/8', 'Invalid IP range - reserved', 'SYSTEM'),
 ('127.0.0.1', NULL, 'Example localhost block (remove in production)', 'SYSTEM'),
 ('10.0.0.0', '10.0.0.0/8', 'Example private network block (configure as needed)', 'SYSTEM');

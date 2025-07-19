@@ -1,7 +1,7 @@
 package com.codzs.security.blacklist;
 
 import com.codzs.entity.blacklist.ApiAccessAttemptLog;
-import com.codzs.service.blacklist.DeviceIpBlacklistService;
+import com.codzs.service.blacklist.IpBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -49,7 +49,7 @@ public class GlobalIpBlacklistFilter extends OncePerRequestFilter {
     );
     
     @Autowired
-    private DeviceIpBlacklistService blacklistService;
+    private IpBlacklistService blacklistService;
     
     @Value("${security.ip-blacklist.enabled:true}")
     private boolean blacklistEnabled;

@@ -1,6 +1,6 @@
 package com.codzs.repository.blacklist;
 
-import com.codzs.entity.blacklist.DeviceIpBlacklist;
+import com.codzs.entity.blacklist.IpBlacklist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,14 +11,14 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository interface for DeviceIpBlacklist entity.
+ * Repository interface for IpBlacklist entity.
  * Provides methods for managing IP blacklist for device authorization security.
  * 
  * @author Nitin Khaitan
  * @since 1.2
  */
 @Repository
-public interface DeviceIpBlacklistRepository extends JpaRepository<DeviceIpBlacklist, Long> {
+public interface IpBlacklistRepository extends JpaRepository<IpBlacklist, Long> {
 
     /**
      * Find an active blacklist entry for a specific IP address.
@@ -26,10 +26,10 @@ public interface DeviceIpBlacklistRepository extends JpaRepository<DeviceIpBlack
      * @param ipAddress the IP address to check
      * @return Optional containing the blacklist entry if found and active
      */
-    @Query("SELECT d FROM DeviceIpBlacklist d WHERE d.ipAddress = :ipAddress " +
+    @Query("SELECT d FROM IpBlacklist d WHERE d.ipAddress = :ipAddress " +
            "AND d.isActive = true " +
            "AND (d.expiresAt IS NULL OR d.expiresAt > :now)")
-    Optional<DeviceIpBlacklist> findActiveByIpAddress(@Param("ipAddress") String ipAddress, 
+    Optional<IpBlacklist> findActiveByIpAddress(@Param("ipAddress") String ipAddress, 
                                                        @Param("now") LocalDateTime now);
 
     /**
@@ -38,10 +38,10 @@ public interface DeviceIpBlacklistRepository extends JpaRepository<DeviceIpBlack
      * @param now current timestamp
      * @return list of active blacklist entries
      */
-    @Query("SELECT d FROM DeviceIpBlacklist d WHERE d.isActive = true " +
+    @Query("SELECT d FROM IpBlacklist d WHERE d.isActive = true " +
            "AND (d.expiresAt IS NULL OR d.expiresAt > :now) " +
            "ORDER BY d.createdAt DESC")
-    List<DeviceIpBlacklist> findAllActive(@Param("now") LocalDateTime now);
+    List<IpBlacklist> findAllActive(@Param("now") LocalDateTime now);
 
     /**
      * Find all active IP ranges for CIDR matching.
@@ -49,11 +49,11 @@ public interface DeviceIpBlacklistRepository extends JpaRepository<DeviceIpBlack
      * @param now current timestamp
      * @return list of active IP ranges
      */
-    @Query("SELECT d FROM DeviceIpBlacklist d WHERE d.isActive = true " +
+    @Query("SELECT d FROM IpBlacklist d WHERE d.isActive = true " +
            "AND d.ipRange IS NOT NULL " +
            "AND (d.expiresAt IS NULL OR d.expiresAt > :now) " +
            "ORDER BY d.createdAt DESC")
-    List<DeviceIpBlacklist> findAllActiveRanges(@Param("now") LocalDateTime now);
+    List<IpBlacklist> findAllActiveRanges(@Param("now") LocalDateTime now);
 
     /**
      * Check if an IP address exists in the blacklist (regardless of active status).
@@ -69,7 +69,7 @@ public interface DeviceIpBlacklistRepository extends JpaRepository<DeviceIpBlack
      * @param blockedBy who created the blacklist entries
      * @return list of blacklist entries
      */
-    List<DeviceIpBlacklist> findByBlockedByOrderByCreatedAtDesc(String blockedBy);
+    List<IpBlacklist> findByBlockedByOrderByCreatedAtDesc(String blockedBy);
 
     /**
      * Deactivate blacklist entries for a specific IP address.
@@ -78,7 +78,7 @@ public interface DeviceIpBlacklistRepository extends JpaRepository<DeviceIpBlack
      * @param now current timestamp
      * @return number of entries deactivated
      */
-    @Query("UPDATE DeviceIpBlacklist d SET d.isActive = false, d.updatedAt = :now " +
+    @Query("UPDATE IpBlacklist d SET d.isActive = false, d.updatedAt = :now " +
            "WHERE d.ipAddress = :ipAddress AND d.isActive = true")
     int deactivateByIpAddress(@Param("ipAddress") String ipAddress, @Param("now") LocalDateTime now);
 
@@ -88,7 +88,7 @@ public interface DeviceIpBlacklistRepository extends JpaRepository<DeviceIpBlack
      * @param now current timestamp
      * @return number of entries cleaned up
      */
-    @Query("UPDATE DeviceIpBlacklist d SET d.isActive = false, d.updatedAt = :now " +
+    @Query("UPDATE IpBlacklist d SET d.isActive = false, d.updatedAt = :now " +
            "WHERE d.isActive = true AND d.expiresAt IS NOT NULL AND d.expiresAt <= :now")
     int cleanupExpiredEntries(@Param("now") LocalDateTime now);
 }
