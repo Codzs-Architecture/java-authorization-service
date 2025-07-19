@@ -22,7 +22,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import static org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer.authorizationServer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -30,11 +29,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
-import com.codzs.oauth2.authentication.device.DeviceClientAuthenticationProvider;
 import com.codzs.security.DeviceAuthorizationRateLimitingFilter;
 import com.codzs.security.blacklist.GlobalIpBlacklistFilter;
 import com.codzs.security.whitelist.GlobalApiWhitelistFilter;
-import com.codzs.web.authentication.DeviceClientAuthenticationConverter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
@@ -53,12 +50,11 @@ public class OAuth2SecurityFilterChainConfig {
 	 * Configure the security filter chain for OAuth2 authorization server.
 	 * This filter chain handles OAuth2 authorization endpoints including device authorization.
 	 * 
-	 * CAUTION: The device authorization endpoints configured here do not require authentication
-	 * and can be accessed by any client that has a valid clientId. It is recommended to
-	 * carefully monitor the use of these endpoints and employ additional protections as needed.
+	 * Uses Spring Authorization Server's default client authentication which provides
+	 * out-of-the-box support for client_secret_basic, client_secret_post, private_key_jwt,
+	 * client_secret_jwt, tls_client_auth, and self_signed_tls_client_auth methods.
 	 * 
 	 * @param http the HttpSecurity to configure
-	 * @param registeredClientRepository the repository for registered clients
 	 * @param authorizationServerSettings the authorization server settings
 	 * @return SecurityFilterChain configured for OAuth2 authorization server
 	 * @throws Exception if configuration fails
@@ -67,18 +63,10 @@ public class OAuth2SecurityFilterChainConfig {
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authorizationServerSecurityFilterChain(
 			HttpSecurity http, 
-			RegisteredClientRepository registeredClientRepository,
 			AuthorizationServerSettings authorizationServerSettings,
 			DeviceAuthorizationRateLimitingFilter rateLimitingFilter,
 			GlobalIpBlacklistFilter ipBlacklistFilter,
 			GlobalApiWhitelistFilter ipWhitelistFilter) throws Exception {
-
-		// Create device client authentication components
-		DeviceClientAuthenticationConverter deviceClientAuthenticationConverter =
-				new DeviceClientAuthenticationConverter(
-						authorizationServerSettings.getDeviceAuthorizationEndpoint());
-		DeviceClientAuthenticationProvider deviceClientAuthenticationProvider =
-				new DeviceClientAuthenticationProvider(registeredClientRepository);
 
 		OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = authorizationServer();
 
@@ -99,11 +87,8 @@ public class OAuth2SecurityFilterChainConfig {
 					.deviceVerificationEndpoint(deviceVerificationEndpoint ->
 						deviceVerificationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI)
 					)
-					.clientAuthentication(clientAuthentication ->
-						clientAuthentication
-							.authenticationConverter(deviceClientAuthenticationConverter)
-							.authenticationProvider(deviceClientAuthenticationProvider)
-					)
+					// Use Spring's default client authentication - supports all standard methods
+					.clientAuthentication(Customizer.withDefaults())
 					.authorizationEndpoint(authorizationEndpoint ->
 						authorizationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI))
 					.oidc(Customizer.withDefaults())	// Enable OpenID Connect 1.0

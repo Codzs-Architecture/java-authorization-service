@@ -19,20 +19,20 @@ INSERT IGNORE INTO `oauth2_registered_client` VALUES (
     '{\"@class\":\"java.util.Collections$UnmodifiableMap\", \"settings.token.access-token-format\": {\"@class\":\"org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat\", \"value\":\"self-contained\"}, \"settings.token.reuse-refresh-tokens\":true,\"settings.token.id-token-signature-algorithm\":[\"org.springframework.security.oauth2.jose.jws.SignatureAlgorithm\",\"RS256\"],\"settings.token.authorization-code-time-to-live\":[\"java.time.Duration\",3600.000000000],\"settings.token.access-token-time-to-live\":[\"java.time.Duration\",300.000000000],\"settings.token.refresh-token-time-to-live\":[\"java.time.Duration\",3600.000000000]}'
 );
 
--- Device Client (device-messaging-client)
+-- Device Client (device-messaging-client) - Enhanced with client authentication
 INSERT IGNORE INTO `oauth2_registered_client` VALUES (
     '2',
     'device-messaging-client',
     '2025-07-09 11:56:43',
-    NULL,
+    '{bcrypt}$2a$10$R/f5T7pqFdztPcZ9B8iPxeOG1LVvbgBlhQ8zsnT6l/eUmCtFzYjda',
     NULL,
     'device-messaging-client',
-    'none',
+    'client_secret_basic',
     'urn:ietf:params:oauth:grant-type:device_code,refresh_token',
     NULL,
     NULL,
     'message.read,message.write',
-    '{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"settings.client.require-proof-key\":false,\"settings.client.require-authorization-consent\":false}',
+    '{\"@class\":\"java.util.Collections$UnmodifiableMap\",\"settings.client.require-proof-key\":true,\"settings.client.require-authorization-consent\":true,\"settings.client.device-client-certificate-validation\":false,\"settings.client.x509-certificate-subject-dn\":\"CN=device-messaging-client,O=Codzs,L=Melbourne,ST=Victoria,C=AU\",\"settings.client.x509-certificate-fingerprint\":\"sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef\"}',
     '{\"@class\":\"java.util.Collections$UnmodifiableMap\", \"settings.token.access-token-format\": {\"@class\":\"org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat\", \"value\":\"self-contained\"}, \"settings.token.reuse-refresh-tokens\":true,\"settings.token.id-token-signature-algorithm\":[\"org.springframework.security.oauth2.jose.jws.SignatureAlgorithm\",\"RS256\"],\"settings.token.authorization-code-time-to-live\":[\"java.time.Duration\",3600.000000000],\"settings.token.access-token-time-to-live\":[\"java.time.Duration\",300.000000000],\"settings.token.refresh-token-time-to-live\":[\"java.time.Duration\",3600.000000000],\"settings.token.device-code-time-to-live\":[\"java.time.Duration\",1800.000000000]}'
 );
 
