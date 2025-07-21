@@ -7,6 +7,8 @@ import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
@@ -16,6 +18,7 @@ import org.springframework.security.oauth2.server.authorization.authentication.O
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+import com.codzs.constants.OAuth2Constants;
 import com.codzs.oauth2.authentication.federation.token.ClaimExtractor;
 
 /**
@@ -26,6 +29,8 @@ import com.codzs.oauth2.authentication.federation.token.ClaimExtractor;
 @Component
 @Primary
 public class CertificateBoundTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingContext> {
+
+    private final Log logger = LogFactory.getLog(getClass());
 
     @Override
     public void customize(JwtEncodingContext context) {
@@ -49,7 +54,7 @@ public class CertificateBoundTokenCustomizer implements OAuth2TokenCustomizer<Jw
             
             // Check if certificate-bound tokens are enabled for this client
             Boolean certificateBoundTokens = registeredClient.getTokenSettings()
-                .getSetting("settings.token.x509-certificate-bound-access-tokens");
+                .getSetting(OAuth2Constants.TokenSettings.X509_CERTIFICATE_BOUND_ACCESS_TOKENS);
                 
             if (Boolean.TRUE.equals(certificateBoundTokens)) {
                 // Extract certificate from authentication context
@@ -58,7 +63,8 @@ public class CertificateBoundTokenCustomizer implements OAuth2TokenCustomizer<Jw
                     String thumbprint = calculateThumbprint(certificate);
                     if (thumbprint != null) {
                         // Add cnf claim with certificate thumbprint
-                        context.getClaims().claim("cnf", Map.of("x5t#S256", thumbprint));
+                        context.getClaims().claim(OAuth2Constants.Claims.CNF, 
+                            Map.of(OAuth2Constants.Claims.X5T_S256, thumbprint));
                     }
                 }
             }
@@ -81,7 +87,9 @@ public class CertificateBoundTokenCustomizer implements OAuth2TokenCustomizer<Jw
             }
         } catch (Exception e) {
             // Log error but don't fail token generation
-            System.err.println("Failed to extract certificate: " + e.getMessage());
+            if (logger.isWarnEnabled()) {
+                logger.warn("Failed to extract certificate for certificate-bound token", e);
+            }
         }
         return null;
     }
@@ -93,7 +101,9 @@ public class CertificateBoundTokenCustomizer implements OAuth2TokenCustomizer<Jw
             byte[] thumbprintBytes = digest.digest(certBytes);
             return Base64.getUrlEncoder().withoutPadding().encodeToString(thumbprintBytes);
         } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
-            System.err.println("Failed to calculate certificate thumbprint: " + e.getMessage());
+            if (logger.isWarnEnabled()) {
+                logger.warn("Failed to calculate certificate thumbprint", e);
+            }
             return null;
         }
     }

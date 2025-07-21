@@ -29,6 +29,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
+import com.codzs.constants.OAuth2Constants;
 import com.codzs.security.DeviceAuthorizationRateLimitingFilter;
 import com.codzs.security.blacklist.GlobalIpBlacklistFilter;
 import com.codzs.security.whitelist.GlobalApiWhitelistFilter;
@@ -44,7 +45,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration(proxyBeanMethods = false)
 public class OAuth2SecurityFilterChainConfig {
 
-	private static final String CUSTOM_CONSENT_PAGE_URI = "/oauth2/consent";
+	private static final String CUSTOM_CONSENT_PAGE_URI = OAuth2Constants.Endpoints.CONSENT;
 
 	/**
 	 * Configure the security filter chain for OAuth2 authorization server.
@@ -82,7 +83,7 @@ public class OAuth2SecurityFilterChainConfig {
 			.with(authorizationServerConfigurer, (authorizationServer) ->
 				authorizationServer
 					.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
-						deviceAuthorizationEndpoint.verificationUri("/activate")
+						deviceAuthorizationEndpoint.verificationUri(OAuth2Constants.Endpoints.DEVICE_ACTIVATION)
 					)
 					.deviceVerificationEndpoint(deviceVerificationEndpoint ->
 						deviceVerificationEndpoint.consentPage(CUSTOM_CONSENT_PAGE_URI)
@@ -100,7 +101,7 @@ public class OAuth2SecurityFilterChainConfig {
 			// NOTE: DefaultSecurityConfig is configured with formLogin.loginPage("/login")
 			.exceptionHandling((exceptions) -> exceptions
 				.defaultAuthenticationEntryPointFor(
-					new LoginUrlAuthenticationEntryPoint("/login"),
+					new LoginUrlAuthenticationEntryPoint(OAuth2Constants.Endpoints.LOGIN),
 					new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
 				)
 			)

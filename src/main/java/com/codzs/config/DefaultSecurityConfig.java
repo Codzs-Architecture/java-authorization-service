@@ -18,28 +18,23 @@ package com.codzs.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
+import com.codzs.constants.OAuth2Constants;
 import com.codzs.oauth2.authentication.federation.FederatedIdentityAuthenticationSuccessHandler;
-
-import java.util.Map;
 
 /**
  * Configuration class for default security settings.
@@ -57,19 +52,19 @@ public class DefaultSecurityConfig {
 	@Bean
 	public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.securityMatcher("/assets/**", "/login")
+			.securityMatcher(OAuth2Constants.Resources.ASSETS, OAuth2Constants.Endpoints.LOGIN)
 			.authorizeHttpRequests(authorize ->
 				authorize
-					.requestMatchers("/assets/**", "/login").permitAll()
+					.requestMatchers(OAuth2Constants.Resources.ASSETS, OAuth2Constants.Endpoints.LOGIN).permitAll()
 					.anyRequest().authenticated()
 			)
 			.formLogin(formLogin ->
 				formLogin
-					.loginPage("/login")
+					.loginPage(OAuth2Constants.Endpoints.LOGIN)
 			)
 			.oauth2Login(oauth2Login ->
 				oauth2Login
-					.loginPage("/login")
+					.loginPage(OAuth2Constants.Endpoints.LOGIN)
 					.successHandler(authenticationSuccessHandler())
 			)
 			.cors(Customizer.withDefaults());
@@ -85,15 +80,11 @@ public class DefaultSecurityConfig {
 	/**
 	 * Configure the UserDetailsService to fetch users from database.
 	 * This service loads user details from the 'users' and 'authorities' tables.
+	 * The JdbcUserDetailsService is automatically configured as a @Service component.
 	 * 
-	 * @param jdbcTemplate the JDBC template for database operations
-	 * @param passwordEncoder the password encoder for password validation
-	 * @return UserDetailsService that loads users from database
+	 * Note: This bean method is no longer needed as JdbcUserDetailsService is now
+	 * a standalone @Service component that will be auto-detected by Spring.
 	 */
-	@Bean
-	public UserDetailsService userDetailsService(JdbcTemplate jdbcTemplate, PasswordEncoder passwordEncoder) {
-		return new JdbcUserDetailsService(jdbcTemplate, passwordEncoder);
-	}
 
 	/**
 	 * Configure the password encoder for password hashing and validation.
@@ -141,10 +132,10 @@ public class DefaultSecurityConfig {
 	@Order(0)  // Highest priority for management endpoints
 	public SecurityFilterChain managementSecurityFilterChain(HttpSecurity http) throws Exception {
 		http
-			.securityMatcher("/management/**", "/actuator/**")
+			.securityMatcher(OAuth2Constants.Management.MANAGEMENT, OAuth2Constants.Management.ACTUATOR)
 			.authorizeHttpRequests(authz -> authz
-				.requestMatchers("/actuator/health", "/actuator/info").permitAll()  // Only health and info are public
-				.requestMatchers("/management/**", "/actuator/**").authenticated()  // All other endpoints require authentication
+				.requestMatchers(OAuth2Constants.Management.HEALTH, OAuth2Constants.Management.INFO).permitAll()  // Only health and info are public
+				.requestMatchers(OAuth2Constants.Management.MANAGEMENT, OAuth2Constants.Management.ACTUATOR).authenticated()  // All other endpoints require authentication
 				.anyRequest().authenticated()
 			)
 			.httpBasic(Customizer.withDefaults())  // Enable HTTP Basic Auth for management endpoints
@@ -153,65 +144,4 @@ public class DefaultSecurityConfig {
 		return http.build();
 	}
 
-	/**
-	 * JDBC-based UserDetailsService implementation.
-	 * Fetches user details from the database using the 'users' and 'authorities' tables.
-	 */
-	private static class JdbcUserDetailsService implements UserDetailsService {
-		
-		private final JdbcTemplate jdbcTemplate;
-		private final PasswordEncoder passwordEncoder;
-
-		public JdbcUserDetailsService(JdbcTemplate jdbcTemplate, PasswordEncoder passwordEncoder) {
-			this.jdbcTemplate = jdbcTemplate;
-			this.passwordEncoder = passwordEncoder;
-		}
-
-		@Override
-		public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-			// Query user from database
-			String sql = "SELECT username, password, enabled FROM users WHERE username = ?";
-			
-			try {
-				UserDetails user = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
-					String dbUsername = rs.getString("username");
-					String rawPassword = rs.getString("password");
-					boolean enabled = rs.getBoolean("enabled");
-					
-					// Query user authorities
-					String authoritiesSql = "SELECT authority FROM authorities WHERE username = ?";
-					var authorities = jdbcTemplate.queryForList(authoritiesSql, String.class, dbUsername);
-					
-					// Convert authorities to Spring Security format
-					var grantedAuthorities = authorities.stream()
-						.map(authority -> {
-							// Ensure authority starts with ROLE_ if it doesn't already
-							if (!authority.startsWith("ROLE_")) {
-								return "ROLE_" + authority;
-							}
-							return authority;
-						})
-						.map(org.springframework.security.core.authority.SimpleGrantedAuthority::new)
-						.toList();
-					
-					// Create UserDetails with proper password handling
-					return User.builder()
-						.username(dbUsername)
-						.password(rawPassword) // Keep the original password format from database
-						.disabled(!enabled)
-						.authorities(grantedAuthorities)
-						.build();
-				}, username);
-				
-				if (user == null) {
-					throw new UsernameNotFoundException("User not found: " + username);
-				}
-				
-				return user;
-				
-			} catch (Exception e) {
-				throw new UsernameNotFoundException("Error loading user: " + username, e);
-			}
-		}
-	}
 }

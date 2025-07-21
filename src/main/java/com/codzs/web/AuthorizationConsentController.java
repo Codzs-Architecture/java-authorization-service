@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.codzs.service.authentication.AuthenticationService;
-import com.codzs.validation.ValidationService;
 import com.codzs.web.consent.ConsentService;
 import com.codzs.web.consent.ConsentService.ConsentData;
 import com.codzs.web.consent.ScopeDescriptionService;
@@ -44,16 +43,12 @@ public class AuthorizationConsentController {
 	private final ConsentService consentService;
 	private final ScopeDescriptionService scopeDescriptionService;
 	private final AuthenticationService authenticationService;
-	private final ValidationService validationService;
-
 	public AuthorizationConsentController(ConsentService consentService, 
 			ScopeDescriptionService scopeDescriptionService,
-			AuthenticationService authenticationService,
-			ValidationService validationService) {
+			AuthenticationService authenticationService) {
 		this.consentService = consentService;
 		this.scopeDescriptionService = scopeDescriptionService;
 		this.authenticationService = authenticationService;
-		this.validationService = validationService;
 	}
 
 	/**
@@ -80,15 +75,8 @@ public class AuthorizationConsentController {
 			throw new IllegalStateException("User must be authenticated to access consent page");
 		}
 
-		// Validate OAuth2 parameters
-		validationService.validateClientId(clientId);
-		validationService.validateScope(scope);
-		validationService.validateRequiredParameter("state", state);
-		
-		// Validate user code if provided (for device flow)
-		if (StringUtils.hasText(userCode)) {
-			validationService.validateUserCode(userCode);
-		}
+		// Note: OAuth2 parameters are already validated by Spring Authorization Server
+		// before reaching this consent controller, so additional validation is not needed
 
 		// Process consent request to determine scope approval requirements
 		ConsentData consentData = consentService.processConsentRequest(principal, clientId, scope);

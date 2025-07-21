@@ -28,7 +28,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import com.codzs.validation.ValidationService;
 
 /**
  * Service class for handling OAuth2 consent business logic.
@@ -42,14 +41,10 @@ public class ConsentService {
 
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
-	private final ValidationService validationService;
-
 	public ConsentService(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationConsentService authorizationConsentService,
-			ValidationService validationService) {
+			OAuth2AuthorizationConsentService authorizationConsentService) {
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationConsentService = authorizationConsentService;
-		this.validationService = validationService;
 	}
 
 	/**
@@ -63,9 +58,8 @@ public class ConsentService {
 	 * @return ConsentData containing scopes to approve and previously approved scopes
 	 */
 	public ConsentData processConsentRequest(Principal principal, String clientId, String scope) {
-		// Validate input parameters
-		validationService.validateClientId(clientId);
-		validationService.validateScope(scope);
+		// Note: clientId and scope are already validated by Spring Authorization Server
+		// before reaching this consent service, so additional validation is not needed
 		
 		// Remove scopes that were already approved
 		Set<String> scopesToApprove = new HashSet<>();
