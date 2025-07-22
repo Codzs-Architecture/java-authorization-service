@@ -8,11 +8,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+/**
+ * General CORS configuration for the application.
+ * Note: OAuth2 authorization endpoints use a more restrictive CORS configuration
+ * defined in {@link com.codzs.config.security.SecurityHeadersConfigurer}.
+ */
 @Configuration(proxyBeanMethods = false)
 @Order(-1)
 public class CorsConfig {
