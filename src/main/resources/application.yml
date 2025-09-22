@@ -8,6 +8,9 @@ spring:
   profiles:
     include: keystore,config-service
 
+  main:
+    allow-bean-definition-overriding: true
+
   # Flyway configuration to handle existing schemas  
   flyway:
     baseline-on-migrate: true
@@ -71,3 +74,5 @@ acl:
 
 # Security headers, CORS, and device security configurations moved to config server
 # for environment-specific customization
+
+
