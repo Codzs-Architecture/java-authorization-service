@@ -1,62 +1,69 @@
 package com.codzs.entity.blacklist;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 /**
- * Entity for logging API access attempts for security monitoring.
- * This entity tracks all attempts to access API endpoints,
+ * MongoDB Document for logging API access attempts for security monitoring.
+ * This document tracks all attempts to access API endpoints,
  * including both allowed and blocked requests, for security analysis.
  * 
  * @author Nitin Khaitan
  * @since 1.2
  */
-@Entity
-@Table(name = "api_access_attempt_log",
-       indexes = {
-           @Index(name = "idx_api_access_log_ip_time", columnList = "ip_address, attempted_at"),
-           @Index(name = "idx_api_access_log_result", columnList = "request_result, attempted_at"),
-           @Index(name = "idx_api_access_log_client", columnList = "client_id, attempted_at"),
-           @Index(name = "idx_api_access_log_endpoint", columnList = "endpoint, attempted_at")
-       })
+@Document(collection = "api_access_attempt_log")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_api_access_log_ip_time", def = "{'ipAddress': 1, 'attemptedAt': 1}"),
+    @CompoundIndex(name = "idx_api_access_log_result", def = "{'requestResult': 1, 'attemptedAt': 1}"),
+    @CompoundIndex(name = "idx_api_access_log_client", def = "{'clientId': 1, 'attemptedAt': 1}"),
+    @CompoundIndex(name = "idx_api_access_log_endpoint", def = "{'endpoint': 1, 'attemptedAt': 1}")
+})
 public class ApiAccessAttemptLog {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id; // MongoDB ObjectId
 
-    @Column(name = "ip_address", nullable = false, length = 45)
+    @NotBlank(message = "IP address is required")
+    @Size(max = 45, message = "IP address must not exceed 45 characters")
     private String ipAddress;
 
-    @Column(name = "user_agent", length = 1000)
+    @Size(max = 1000, message = "User agent must not exceed 1000 characters")
     private String userAgent;
 
-    @Column(name = "endpoint", nullable = false, length = 200)
+    @NotBlank(message = "Endpoint is required")
+    @Size(max = 200, message = "Endpoint must not exceed 200 characters")
     private String endpoint;
 
-    @Column(name = "http_method", nullable = false, length = 10)
+    @NotBlank(message = "HTTP method is required")
+    @Size(max = 10, message = "HTTP method must not exceed 10 characters")
     private String httpMethod;
 
-    @Column(name = "client_id", length = 100)
+    @Size(max = 100, message = "Client ID must not exceed 100 characters")
     private String clientId;
 
-    @Column(name = "user_code", length = 20)
+    @Size(max = 20, message = "User code must not exceed 20 characters")
     private String userCode;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "request_result", nullable = false)
+    @NotNull(message = "Request result is required")
     private RequestResult requestResult;
 
-    @Column(name = "block_reason", length = 500)
+    @Size(max = 500, message = "Block reason must not exceed 500 characters")
     private String blockReason;
 
-    @Column(name = "session_id", length = 100)
+    @Size(max = 100, message = "Session ID must not exceed 100 characters")
     private String sessionId;
 
-    @Column(name = "request_headers", columnDefinition = "JSON")
-    private String requestHeaders;
+    private String requestHeaders; // MongoDB supports nested documents naturally
 
-    @Column(name = "attempted_at", nullable = false)
+    @CreatedDate
+    @NotNull(message = "Attempted at timestamp is required")
     private LocalDateTime attemptedAt;
 
     /**
@@ -148,8 +155,8 @@ public class ApiAccessAttemptLog {
     }
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getIpAddress() { return ipAddress; }
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }

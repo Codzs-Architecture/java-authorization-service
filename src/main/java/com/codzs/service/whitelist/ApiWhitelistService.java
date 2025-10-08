@@ -58,10 +58,10 @@ public class ApiWhitelistService {
     public static class WhitelistValidationResult {
         private final boolean allowed;
         private final String reason;
-        private final Long matchedRuleId;
+        private final String matchedRuleId;
         private final String matchedPattern;
 
-        public WhitelistValidationResult(boolean allowed, String reason, Long matchedRuleId, String matchedPattern) {
+        public WhitelistValidationResult(boolean allowed, String reason, String matchedRuleId, String matchedPattern) {
             this.allowed = allowed;
             this.reason = reason;
             this.matchedRuleId = matchedRuleId;
@@ -70,7 +70,7 @@ public class ApiWhitelistService {
 
         public boolean isAllowed() { return allowed; }
         public String getReason() { return reason; }
-        public Long getMatchedRuleId() { return matchedRuleId; }
+        public String getMatchedRuleId() { return matchedRuleId; }
         public String getMatchedPattern() { return matchedPattern; }
     }
 
@@ -395,7 +395,7 @@ public class ApiWhitelistService {
     private void logAccessAttempt(String ipAddress, String endpoint, String httpMethod, 
                                 String clientId, String userAgent, 
                                 ApiWhitelistAccessLog.RequestResult result,
-                                Long whitelistRuleId, String matchedPattern, String blockReason) {
+                                String whitelistRuleId, String matchedPattern, String blockReason) {
         try {
             ApiWhitelistAccessLog log = new ApiWhitelistAccessLog();
             log.setIpAddress(ipAddress);
@@ -435,13 +435,16 @@ public class ApiWhitelistService {
      */
     @Transactional(readOnly = true)
     public Map<String, Long> getAccessStatistics(LocalDateTime startTime, LocalDateTime endTime) {
-        List<Object[]> stats = accessLogRepository.getAccessStatistics(startTime, endTime);
+        List<Object> stats = accessLogRepository.getAccessStatistics(startTime, endTime);
         Map<String, Long> result = new HashMap<>();
         
-        for (Object[] stat : stats) {
-            String resultType = stat[0].toString();
-            Long count = (Long) stat[1];
-            result.put(resultType, count);
+        for (Object stat : stats) {
+            if (stat instanceof Object[]) {
+                Object[] statArray = (Object[]) stat;
+                String resultType = statArray[0].toString();
+                Long count = (Long) statArray[1];
+                result.put(resultType, count);
+            }
         }
         
         return result;

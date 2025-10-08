@@ -13,9 +13,12 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.thymeleaf.expression.Lists;
 
+import io.mongock.runner.springboot.EnableMongock;
+
 import com.codzs.web.model.ScopeWithDescription;
 
 @SpringBootApplication
+@EnableMongock
 @ComponentScan(excludeFilters = @ComponentScan.Filter(
 	type = FilterType.REGEX,
 	pattern = ".*RestResponseEntityExceptionHandler.*"

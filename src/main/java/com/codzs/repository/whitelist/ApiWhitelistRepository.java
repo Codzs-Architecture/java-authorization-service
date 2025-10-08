@@ -16,36 +16,30 @@
 package com.codzs.repository.whitelist;
 
 import com.codzs.entity.whitelist.ApiWhitelist;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Repository interface for managing ApiWhitelist entities.
+ * Repository interface for managing ApiWhitelist MongoDB documents.
  * Provides methods for pattern-based IP and endpoint matching.
  *
  * @author Nitin Khaitan
  * @since 1.1
  */
 @Repository
-public interface ApiWhitelistRepository extends JpaRepository<ApiWhitelist, Long> {
+public interface ApiWhitelistRepository extends MongoRepository<ApiWhitelist, String> {
 
     /**
      * Finds all active whitelist entries ordered by priority (lower number = higher priority).
      *
      * @return list of active whitelist entries ordered by priority
      */
-    @Query("""
-        SELECT w FROM ApiWhitelist w 
-        WHERE w.isActive = true 
-        AND (w.expiresAt IS NULL OR w.expiresAt > :currentTime)
-        ORDER BY w.priority ASC, w.id ASC
-        """)
-    List<ApiWhitelist> findActiveWhitelistEntriesOrderedByPriority(@Param("currentTime") LocalDateTime currentTime);
+    @Query(value = "{ 'isActive': true, $or: [ { 'expiresAt': null }, { 'expiresAt': { $gt: ?0 } } ] }", sort = "{ 'priority': 1, '_id': 1 }")
+    List<ApiWhitelist> findActiveWhitelistEntriesOrderedByPriority(LocalDateTime currentTime);
 
     /**
      * Finds whitelist entries that could match the given IP address.
@@ -55,20 +49,8 @@ public interface ApiWhitelistRepository extends JpaRepository<ApiWhitelist, Long
      * @param currentTime current timestamp for expiry check
      * @return list of potentially matching whitelist entries
      */
-    @Query("""
-        SELECT w FROM ApiWhitelist w 
-        WHERE w.isActive = true 
-        AND (w.expiresAt IS NULL OR w.expiresAt > :currentTime)
-        AND (
-            w.ipAddress = :ipAddress
-            OR w.ipRange IS NOT NULL
-            OR w.ipPattern IS NOT NULL
-            OR (w.ipAddress IS NULL AND w.ipRange IS NULL AND w.ipPattern IS NULL)
-        )
-        ORDER BY w.priority ASC, w.id ASC
-        """)
-    List<ApiWhitelist> findPotentialMatches(@Param("ipAddress") String ipAddress, 
-                                            @Param("currentTime") LocalDateTime currentTime);
+    @Query(value = "{ 'isActive': true, $or: [ { 'expiresAt': null }, { 'expiresAt': { $gt: ?1 } } ], $or: [ { 'ipAddress': ?0 }, { 'ipRange': { $ne: null } }, { 'ipPattern': { $ne: null } }, { $and: [ { 'ipAddress': null }, { 'ipRange': null }, { 'ipPattern': null } ] } ] }", sort = "{ 'priority': 1, '_id': 1 }")
+    List<ApiWhitelist> findPotentialMatches(String ipAddress, LocalDateTime currentTime);
 
     /**
      * Finds whitelist entries for a specific endpoint pattern.
@@ -77,15 +59,8 @@ public interface ApiWhitelistRepository extends JpaRepository<ApiWhitelist, Long
      * @param currentTime current timestamp for expiry check
      * @return list of whitelist entries for the endpoint pattern
      */
-    @Query("""
-        SELECT w FROM ApiWhitelist w 
-        WHERE w.isActive = true 
-        AND (w.expiresAt IS NULL OR w.expiresAt > :currentTime)
-        AND (w.endpointPattern = :endpointPattern OR w.endpointPattern IS NULL)
-        ORDER BY w.priority ASC, w.id ASC
-        """)
-    List<ApiWhitelist> findByEndpointPattern(@Param("endpointPattern") String endpointPattern, 
-                                             @Param("currentTime") LocalDateTime currentTime);
+    @Query(value = "{ 'isActive': true, $or: [ { 'expiresAt': null }, { 'expiresAt': { $gt: ?1 } } ], $or: [ { 'endpointPattern': ?0 }, { 'endpointPattern': null } ] }", sort = "{ 'priority': 1, '_id': 1 }")
+    List<ApiWhitelist> findByEndpointPattern(String endpointPattern, LocalDateTime currentTime);
 
     /**
      * Finds whitelist entries for a specific client ID.
@@ -94,15 +69,8 @@ public interface ApiWhitelistRepository extends JpaRepository<ApiWhitelist, Long
      * @param currentTime current timestamp for expiry check
      * @return list of whitelist entries for the client ID
      */
-    @Query("""
-        SELECT w FROM ApiWhitelist w 
-        WHERE w.isActive = true 
-        AND (w.expiresAt IS NULL OR w.expiresAt > :currentTime)
-        AND (w.clientId = :clientId OR w.clientId IS NULL)
-        ORDER BY w.priority ASC, w.id ASC
-        """)
-    List<ApiWhitelist> findByClientId(@Param("clientId") String clientId, 
-                                      @Param("currentTime") LocalDateTime currentTime);
+    @Query(value = "{ 'isActive': true, $or: [ { 'expiresAt': null }, { 'expiresAt': { $gt: ?1 } } ], $or: [ { 'clientId': ?0 }, { 'clientId': null } ] }", sort = "{ 'priority': 1, '_id': 1 }")
+    List<ApiWhitelist> findByClientId(String clientId, LocalDateTime currentTime);
 
     /**
      * Finds whitelist entries that match the given IP, endpoint, and client criteria.
@@ -113,23 +81,8 @@ public interface ApiWhitelistRepository extends JpaRepository<ApiWhitelist, Long
      * @param currentTime current timestamp for expiry check
      * @return list of matching whitelist entries ordered by priority
      */
-    @Query("""
-        SELECT w FROM ApiWhitelist w 
-        WHERE w.isActive = true 
-        AND (w.expiresAt IS NULL OR w.expiresAt > :currentTime)
-        AND (
-            w.ipAddress = :ipAddress
-            OR w.ipRange IS NOT NULL
-            OR w.ipPattern IS NOT NULL
-        )
-        AND (w.endpointPattern IS NULL OR w.endpointPattern = '' OR :endpoint LIKE w.endpointPattern)
-        AND (w.clientId IS NULL OR w.clientId = :clientId)
-        ORDER BY w.priority ASC, w.id ASC
-        """)
-    List<ApiWhitelist> findMatchingEntries(@Param("ipAddress") String ipAddress,
-                                           @Param("endpoint") String endpoint,
-                                           @Param("clientId") String clientId,
-                                           @Param("currentTime") LocalDateTime currentTime);
+    @Query(value = "{ 'isActive': true, $or: [ { 'expiresAt': null }, { 'expiresAt': { $gt: ?3 } } ], $or: [ { 'ipAddress': ?0 }, { 'ipRange': { $ne: null } }, { 'ipPattern': { $ne: null } } ], $or: [ { 'endpointPattern': null }, { 'endpointPattern': '' }, { 'endpointPattern': { $regex: ?1 } } ], $or: [ { 'clientId': null }, { 'clientId': ?2 } ] }", sort = "{ 'priority': 1, '_id': 1 }")
+    List<ApiWhitelist> findMatchingEntries(String ipAddress, String endpoint, String clientId, LocalDateTime currentTime);
 
     /**
      * Finds expired whitelist entries.
@@ -137,12 +90,8 @@ public interface ApiWhitelistRepository extends JpaRepository<ApiWhitelist, Long
      * @param currentTime current timestamp
      * @return list of expired whitelist entries
      */
-    @Query("""
-        SELECT w FROM ApiWhitelist w 
-        WHERE w.expiresAt IS NOT NULL 
-        AND w.expiresAt <= :currentTime
-        """)
-    List<ApiWhitelist> findExpiredEntries(@Param("currentTime") LocalDateTime currentTime);
+    @Query("{ 'expiresAt': { $ne: null, $lte: ?0 } }")
+    List<ApiWhitelist> findExpiredEntries(LocalDateTime currentTime);
 
     /**
      * Counts active whitelist entries.
@@ -150,12 +99,8 @@ public interface ApiWhitelistRepository extends JpaRepository<ApiWhitelist, Long
      * @param currentTime current timestamp for expiry check
      * @return count of active entries
      */
-    @Query("""
-        SELECT COUNT(w) FROM ApiWhitelist w 
-        WHERE w.isActive = true 
-        AND (w.expiresAt IS NULL OR w.expiresAt > :currentTime)
-        """)
-    long countActiveEntries(@Param("currentTime") LocalDateTime currentTime);
+    @Query(value = "{ 'isActive': true, $or: [ { 'expiresAt': null }, { 'expiresAt': { $gt: ?0 } } ] }", count = true)
+    long countActiveEntries(LocalDateTime currentTime);
 
     /**
      * Finds whitelist entries by IP address (exact match).

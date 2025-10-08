@@ -135,6 +135,7 @@ public class OAuth2SecurityFilterChainConfig {
 			.addFilterAfter(rateLimitingFilter, GlobalApiWhitelistFilter.class)
 			.with(authorizationServerConfigurer, (authorizationServer) ->
 				authorizationServer
+					// .tokenEndpoint(Customizer.withDefaults()) // Add this line
 					.deviceAuthorizationEndpoint(deviceAuthorizationEndpoint ->
 						deviceAuthorizationEndpoint.verificationUri(OAuth2Constants.Endpoints.DEVICE_ACTIVATION)
 					)

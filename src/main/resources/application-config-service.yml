@@ -4,8 +4,10 @@ spring:
     import: optional:configserver:${config.server.url}
   cloud:
     config:
+      # uri: custom
       profile: ${spring.profiles.active}
-      label: main
+      label: main,MF_ORGANIZATION
+      send-all-labels: true
       username: config-service-user
       password: ${config.password}
   # End: Spring Config Client

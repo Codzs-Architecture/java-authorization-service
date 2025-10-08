@@ -15,11 +15,16 @@
  */
 package com.codzs.config.oauth2;
 
+import com.codzs.service.oauth2.MongoOAuth2AuthorizationService;
+import com.codzs.service.oauth2.MongoOAuth2AuthorizationConsentService;
+import com.codzs.service.oauth2.MongoRegisteredClientRepository;
+import com.codzs.repository.oauth2.OAuth2AuthorizationRepository;
+import com.codzs.repository.oauth2.OAuth2AuthorizationConsentRepository;
+import com.codzs.repository.oauth2.OAuth2RegisteredClientRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.context.annotation.Primary;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -37,33 +42,50 @@ public class OAuth2ServiceConfig {
 
 	/**
 	 * Configure the OAuth2 authorization service for managing OAuth2 authorizations.
-	 * This service stores and retrieves OAuth2 authorization information.
+	 * This service stores and retrieves OAuth2 authorization information using MongoDB.
 	 * 
-	 * @param jdbcTemplate the JDBC template for database operations
+	 * @param authorizationRepository the MongoDB repository for authorizations
 	 * @param registeredClientRepository the repository for registered clients
 	 * @return OAuth2AuthorizationService for managing authorizations
 	 */
 	@Bean
 	public OAuth2AuthorizationService authorizationService(
-			JdbcTemplate jdbcTemplate,
+			OAuth2AuthorizationRepository authorizationRepository,
 			RegisteredClientRepository registeredClientRepository) {
-		return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
+		return new MongoOAuth2AuthorizationService(authorizationRepository, registeredClientRepository);
 	}
 
 	/**
 	 * Configure the OAuth2 authorization consent service for managing user consent.
-	 * This service stores and retrieves user consent information for OAuth2 authorizations.
+	 * This service stores and retrieves user consent information for OAuth2 authorizations using MongoDB.
 	 * Used by the ConsentController for consent management.
 	 * 
-	 * @param jdbcTemplate the JDBC template for database operations
+	 * @param authorizationConsentRepository the MongoDB repository for consent
 	 * @param registeredClientRepository the repository for registered clients
 	 * @return OAuth2AuthorizationConsentService for managing consent
 	 */
 	@Bean
+	@Primary
 	public OAuth2AuthorizationConsentService authorizationConsentService(
-			JdbcTemplate jdbcTemplate,
+			OAuth2AuthorizationConsentRepository authorizationConsentRepository,
 			RegisteredClientRepository registeredClientRepository) {
-		return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
+		return new MongoOAuth2AuthorizationConsentService(authorizationConsentRepository, registeredClientRepository);
+	}
+
+	/**
+	 * Configure the registered client repository for managing OAuth2 clients.
+	 * This service stores and retrieves OAuth2 client registration information using MongoDB.
+	 * 
+	 * @param mongoRepository the MongoDB repository for registered clients
+	 * @param objectMapper the configured ObjectMapper with Java time support
+	 * @return RegisteredClientRepository for managing client registrations
+	 */
+	@Bean
+	@Primary
+	public RegisteredClientRepository registeredClientRepository(
+			OAuth2RegisteredClientRepository mongoRepository,
+			ObjectMapper objectMapper) {
+		return new MongoRegisteredClientRepository(mongoRepository, objectMapper);
 	}
 
 	/**

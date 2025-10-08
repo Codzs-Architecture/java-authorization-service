@@ -17,14 +17,20 @@ package com.codzs.config.oauth2;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationContext;
+import org.springframework.security.oauth2.server.authorization.oidc.authentication.OidcUserInfoAuthenticationToken;
 
 import com.codzs.jose.Jwks;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+
+import java.util.function.Function;
+
 
 /**
  * Configuration class for OAuth2 token customization and JWT settings.
@@ -62,4 +68,24 @@ public class OAuth2TokenConfig {
 	public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
 		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
 	}
+
+	/**
+	 * Configure a completely isolated UserInfo mapper that avoids any time-related casting issues.
+	 * This creates a minimal UserInfo response without touching any stored OAuth2 data.
+	 * 
+	 * @return Function to map UserInfo authentication context
+	 */
+	@Bean
+	public Function<OidcUserInfoAuthenticationContext, OidcUserInfo> oidcUserInfoMapper() {
+		return (context) -> {
+			OidcUserInfoAuthenticationToken authentication = context.getAuthentication();
+			
+			// Create absolutely minimal UserInfo response to avoid any MongoDB casting issues
+			// Only include the subject claim - no time fields, no stored data
+			return OidcUserInfo.builder()
+				.subject(authentication.getName())
+				.build();
+		};
+	}
+
 } 

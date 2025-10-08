@@ -15,106 +15,81 @@
  */
 package com.codzs.entity.whitelist;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Entity representing a whitelist entry for API endpoint access control.
+ * MongoDB Document representing a whitelist entry for API endpoint access control.
  * Supports pattern-based matching for IP addresses, ranges, and endpoint patterns.
  *
  * @author Nitin Khaitan
  * @since 1.1
  */
-@Entity
-@Table(name = "api_whitelist",
-       indexes = {
-           @Index(name = "idx_api_whitelist_active", columnList = "is_active, expires_at"),
-           @Index(name = "idx_api_whitelist_priority", columnList = "priority, is_active"),
-           @Index(name = "idx_api_whitelist_endpoint", columnList = "endpoint_pattern, is_active"),
-           @Index(name = "idx_api_whitelist_client", columnList = "client_id, is_active"),
-           @Index(name = "idx_api_whitelist_created", columnList = "created_at")
-       })
+@Document(collection = "api_whitelist")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_api_whitelist_active", def = "{'isActive': 1, 'expiresAt': 1}"),
+    @CompoundIndex(name = "idx_api_whitelist_priority", def = "{'priority': 1, 'isActive': 1}"),
+    @CompoundIndex(name = "idx_api_whitelist_endpoint", def = "{'endpointPattern': 1, 'isActive': 1}"),
+    @CompoundIndex(name = "idx_api_whitelist_client", def = "{'clientId': 1, 'isActive': 1}"),
+    @CompoundIndex(name = "idx_api_whitelist_created", def = "{'createdAt': 1}")
+})
 public class ApiWhitelist {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id; // MongoDB ObjectId
 
-    @Column(name = "ip_address", length = 45)
     @Size(max = 45, message = "IP address must not exceed 45 characters")
     private String ipAddress;
 
-    @Column(name = "ip_range", length = 100)
     @Size(max = 100, message = "IP range must not exceed 100 characters")
     private String ipRange;
 
-    @Column(name = "ip_pattern", length = 200)
     @Size(max = 200, message = "IP pattern must not exceed 200 characters")
     private String ipPattern;
 
-    @Column(name = "endpoint_pattern", length = 500)
     @Size(max = 500, message = "Endpoint pattern must not exceed 500 characters")
     private String endpointPattern;
 
-    @Column(name = "client_id", length = 100)
     @Size(max = 100, message = "Client ID must not exceed 100 characters")
     private String clientId;
 
-    @Column(name = "description", length = 500, nullable = false)
     @NotBlank(message = "Description is required")
     @Size(max = 500, message = "Description must not exceed 500 characters")
     private String description;
 
-    @Column(name = "added_at", nullable = false)
     @NotNull(message = "Added at timestamp is required")
     private LocalDateTime addedAt;
 
-    @Column(name = "added_by", length = 100, nullable = false)
     @NotBlank(message = "Added by is required")
     @Size(max = 100, message = "Added by must not exceed 100 characters")
     private String addedBy;
 
-    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    @Column(name = "is_active", nullable = false)
     @NotNull(message = "Active status is required")
     private Boolean isActive = true;
 
-    @Column(name = "priority", nullable = false)
     @NotNull(message = "Priority is required")
     private Integer priority = 100;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        if (addedAt == null) {
-            addedAt = LocalDateTime.now();
-        }
-        if (addedBy == null) {
-            addedBy = "SYSTEM";
-        }
-        if (isActive == null) {
-            isActive = true;
-        }
-        if (priority == null) {
-            priority = 100;
-        }
-    }
+    // Note: MongoDB auditing (@CreatedDate, @LastModifiedDate) handles timestamps automatically
+    // Default values are set in field declarations
 
     /**
      * Checks if this whitelist entry is currently active and not expired.
@@ -143,11 +118,11 @@ public class ApiWhitelist {
     }
 
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

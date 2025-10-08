@@ -1,63 +1,59 @@
 package com.codzs.entity.blacklist;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import java.time.LocalDateTime;
 
 /**
- * Entity representing IP addresses blacklisted from API access.
+ * MongoDB Document representing IP addresses blacklisted from API access.
  * This entity is used to prevent abuse of API endpoints
  * by blocking known malicious or suspicious IP addresses.
  * 
  * @author Nitin Khaitan
  * @since 1.2
  */
-@Entity
-@Table(name = "ip_blacklist", 
-       uniqueConstraints = @UniqueConstraint(name = "uk_ip_blacklist_ip", columnNames = "ip_address"),
-       indexes = {
-           @Index(name = "idx_ip_blacklist_active", columnList = "is_active, expires_at"),
-           @Index(name = "idx_ip_blacklist_created", columnList = "created_at")
-       })
+@Document(collection = "ip_blacklist")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_ip_blacklist_active", def = "{'isActive': 1, 'expiresAt': 1}"),
+    @CompoundIndex(name = "idx_ip_blacklist_created", def = "{'createdAt': 1}")
+})
 public class IpBlacklist {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id; // MongoDB ObjectId
 
-    @Column(name = "ip_address", nullable = false, length = 45)
+    @Indexed(unique = true)
     private String ipAddress;
 
-    @Column(name = "ip_range", length = 100)
     private String ipRange;
 
-    @Column(name = "reason", nullable = false, length = 500)
     private String reason;
 
-    @Column(name = "blocked_at", nullable = false)
     private LocalDateTime blockedAt;
 
-    @Column(name = "blocked_by", nullable = false, length = 100)
     private String blockedBy;
 
-    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
-    @Column(name = "created_at", nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 
     // Constructors
     public IpBlacklist() {
         this.blockedAt = LocalDateTime.now();
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
         this.isActive = true;
         this.blockedBy = "SYSTEM";
+        // Note: createdAt and updatedAt are now managed by MongoDB auditing
     }
 
     public IpBlacklist(String ipAddress, String reason) {
@@ -74,23 +70,8 @@ public class IpBlacklist {
         this.blockedBy = blockedBy;
     }
 
-    // Update timestamp before persistence
-    @PrePersist
-    protected void onCreate() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (blockedAt == null) {
-            blockedAt = now;
-        }
-        updatedAt = now;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    // Note: MongoDB auditing (@CreatedDate, @LastModifiedDate) handles timestamps automatically
+    // No @PrePersist or @PreUpdate needed
 
     /**
      * Checks if this blacklist entry is currently effective.
@@ -107,8 +88,8 @@ public class IpBlacklist {
     }
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getIpAddress() { return ipAddress; }
     public void setIpAddress(String ipAddress) { this.ipAddress = ipAddress; }

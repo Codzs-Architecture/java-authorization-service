@@ -15,83 +15,69 @@
  */
 package com.codzs.entity.whitelist;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Entity for logging API whitelist access attempts for security monitoring and analysis.
+ * MongoDB Document for logging API whitelist access attempts for security monitoring and analysis.
  *
  * @author Nitin Khaitan
  * @since 1.1
  */
-@Entity
-@Table(name = "api_whitelist_access_log",
-       indexes = {
-           @Index(name = "idx_whitelist_access_log_ip_time", columnList = "ip_address, attempted_at"),
-           @Index(name = "idx_whitelist_access_log_result", columnList = "request_result, attempted_at"),
-           @Index(name = "idx_whitelist_access_log_endpoint", columnList = "endpoint, attempted_at"),
-           @Index(name = "idx_whitelist_access_log_rule", columnList = "whitelist_rule_id, attempted_at")
-       })
+@Document(collection = "api_whitelist_access_log")
+@CompoundIndexes({
+    @CompoundIndex(name = "idx_whitelist_access_log_ip_time", def = "{'ipAddress': 1, 'attemptedAt': 1}"),
+    @CompoundIndex(name = "idx_whitelist_access_log_result", def = "{'requestResult': 1, 'attemptedAt': 1}"),
+    @CompoundIndex(name = "idx_whitelist_access_log_endpoint", def = "{'endpoint': 1, 'attemptedAt': 1}"),
+    @CompoundIndex(name = "idx_whitelist_access_log_rule", def = "{'whitelistRuleId': 1, 'attemptedAt': 1}")
+})
 public class ApiWhitelistAccessLog {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id; // MongoDB ObjectId
 
-    @Column(name = "ip_address", length = 45, nullable = false)
     @NotBlank(message = "IP address is required")
     @Size(max = 45, message = "IP address must not exceed 45 characters")
     private String ipAddress;
 
-    @Column(name = "user_agent", length = 1000)
     @Size(max = 1000, message = "User agent must not exceed 1000 characters")
     private String userAgent;
 
-    @Column(name = "endpoint", length = 200, nullable = false)
     @NotBlank(message = "Endpoint is required")
     @Size(max = 200, message = "Endpoint must not exceed 200 characters")
     private String endpoint;
 
-    @Column(name = "http_method", length = 10, nullable = false)
     @NotBlank(message = "HTTP method is required")
     @Size(max = 10, message = "HTTP method must not exceed 10 characters")
     private String httpMethod;
 
-    @Column(name = "client_id", length = 100)
     @Size(max = 100, message = "Client ID must not exceed 100 characters")
     private String clientId;
 
-    @Column(name = "whitelist_rule_id")
-    private Long whitelistRuleId;
+    private String whitelistRuleId; // Changed to String to reference MongoDB ObjectId
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "request_result", nullable = false)
     @NotNull(message = "Request result is required")
     private RequestResult requestResult;
 
-    @Column(name = "matched_pattern", length = 200)
     @Size(max = 200, message = "Matched pattern must not exceed 200 characters")
     private String matchedPattern;
 
-    @Column(name = "block_reason", length = 500)
     @Size(max = 500, message = "Block reason must not exceed 500 characters")
     private String blockReason;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "request_headers", columnDefinition = "json")
-    private Map<String, String> requestHeaders;
+    private Map<String, String> requestHeaders; // MongoDB supports nested documents naturally
 
-    @CreationTimestamp
-    @Column(name = "attempted_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime attemptedAt;
 
     /**
@@ -124,7 +110,7 @@ public class ApiWhitelistAccessLog {
      * @return a new log entry for successful validation
      */
     public static ApiWhitelistAccessLog createAllowedEntry(String ipAddress, String endpoint, 
-                                                          String httpMethod, Long whitelistRuleId, 
+                                                          String httpMethod, String whitelistRuleId, 
                                                           String matchedPattern) {
         ApiWhitelistAccessLog log = new ApiWhitelistAccessLog();
         log.setIpAddress(ipAddress);
@@ -157,11 +143,11 @@ public class ApiWhitelistAccessLog {
     }
 
     // Getters and Setters
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -205,11 +191,11 @@ public class ApiWhitelistAccessLog {
         this.clientId = clientId;
     }
 
-    public Long getWhitelistRuleId() {
+    public String getWhitelistRuleId() {
         return whitelistRuleId;
     }
 
-    public void setWhitelistRuleId(Long whitelistRuleId) {
+    public void setWhitelistRuleId(String whitelistRuleId) {
         this.whitelistRuleId = whitelistRuleId;
     }
 

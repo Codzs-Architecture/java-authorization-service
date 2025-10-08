@@ -92,6 +92,9 @@ Make sure you have the following installed:
         -Djavax.net.ssl.trustStoreType=PKCS12 \
         -Dgoogle.client_id=google-client-id \
         -Dgoogle.client_secret=google-client-secret \
+        -Dauthorization.mongodb.host=localhost \
+        -Dauthorization.mongodb.port=27017 \
+        -Dauthorization.mongodb.database=authorization \
         -jar target/java-authorization-service.jar 
     ```
     * `spring.profiles.active`: current active profile as per the environment

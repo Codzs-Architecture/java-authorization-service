@@ -126,7 +126,7 @@ public class IpBlacklistService {
      * @return true if the IP was successfully removed
      */
     public boolean removeFromBlacklist(String ipAddress) {
-        int updated = blacklistRepository.deactivateByIpAddress(ipAddress, LocalDateTime.now());
+        long updated = blacklistRepository.deactivateByIpAddress(ipAddress, LocalDateTime.now());
         
         if (updated > 0) {
             logger.info("Removed IP {} from blacklist", ipAddress);
@@ -195,8 +195,8 @@ public class IpBlacklistService {
      * 
      * @return number of entries cleaned up
      */
-    public int cleanupExpiredEntries() {
-        int cleaned = blacklistRepository.cleanupExpiredEntries(LocalDateTime.now());
+    public long cleanupExpiredEntries() {
+        long cleaned = blacklistRepository.cleanupExpiredEntries(LocalDateTime.now());
         if (cleaned > 0) {
             logger.info("Cleaned up {} expired blacklist entries", cleaned);
         }
@@ -209,9 +209,9 @@ public class IpBlacklistService {
      * @param daysToKeep number of days of logs to keep
      * @return number of log entries deleted
      */
-    public int cleanupOldLogs(int daysToKeep) {
+    public long cleanupOldLogs(int daysToKeep) {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(daysToKeep);
-        int deleted = attemptLogRepository.cleanupOldEntries(cutoff);
+        long deleted = attemptLogRepository.deleteByAttemptedAtBefore(cutoff);
         if (deleted > 0) {
             logger.info("Cleaned up {} old attempt log entries", deleted);
         }
