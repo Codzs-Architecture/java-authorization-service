@@ -13,9 +13,9 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.thymeleaf.expression.Lists;
 
-import io.mongock.runner.springboot.EnableMongock;
+import com.codzs.model.ScopeWithDescription;
 
-import com.codzs.web.model.ScopeWithDescription;
+import io.mongock.runner.springboot.EnableMongock;
 
 @SpringBootApplication
 @EnableMongock

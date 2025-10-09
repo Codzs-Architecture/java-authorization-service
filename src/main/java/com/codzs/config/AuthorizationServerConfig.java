@@ -18,10 +18,9 @@ package com.codzs.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 
-import com.codzs.config.oauth2.OAuth2ClientRegistrationConfig;
-import com.codzs.config.oauth2.OAuth2SecurityFilterChainConfig;
-import com.codzs.config.oauth2.OAuth2ServiceConfig;
+import com.codzs.config.oauth2.MongoDbOAuth2ServiceConfig;
 import com.codzs.config.oauth2.OAuth2TokenConfig;
+import com.codzs.filter.OAuth2SecurityFilterChainConfig;
 
 /**
  * Main configuration class for OAuth2 Authorization Server.
@@ -29,9 +28,8 @@ import com.codzs.config.oauth2.OAuth2TokenConfig;
  * a complete OAuth2 authorization server setup.
  * 
  * The configuration has been decomposed into separate concerns:
- * - OAuth2ClientRegistrationConfig: Client registration and management
  * - OAuth2SecurityFilterChainConfig: Security filter chain for OAuth2 endpoints
- * - OAuth2ServiceConfig: Authorization services and server settings
+ * - OAuth2ServiceConfig: Authorization services and MongoDB client registration
  * - OAuth2TokenConfig: JWT/token configuration and customization
  * 
  * @author Nitin Khaitan
@@ -39,9 +37,8 @@ import com.codzs.config.oauth2.OAuth2TokenConfig;
  */
 @Configuration(proxyBeanMethods = false)
 @Import({
-	OAuth2ClientRegistrationConfig.class,
 	OAuth2SecurityFilterChainConfig.class,
-	OAuth2ServiceConfig.class,
+	MongoDbOAuth2ServiceConfig.class,
 	OAuth2TokenConfig.class
 })
 public class AuthorizationServerConfig {

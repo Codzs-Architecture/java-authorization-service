@@ -18,6 +18,7 @@ package com.codzs.migration;
 import com.codzs.entity.oauth2.OAuth2RegisteredClient;
 import com.codzs.entity.security.User;
 import com.codzs.entity.security.Authority;
+import com.codzs.constant.OAuth2Constant;
 import org.bson.Document;
 import io.mongock.api.annotations.ChangeUnit;
 import io.mongock.api.annotations.Execution;

@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2A
 
 import java.util.List;
 import com.fasterxml.jackson.databind.Module;
+import com.codzs.util.OAuth2Util;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -158,14 +159,14 @@ public class MongoRegisteredClientRepository implements RegisteredClientReposito
         // Parse authentication methods
         if (StringUtils.hasText(entity.getClientAuthenticationMethods())) {
             for (String method : StringUtils.commaDelimitedListToStringArray(entity.getClientAuthenticationMethods())) {
-                builder.clientAuthenticationMethod(resolveClientAuthenticationMethod(method.trim()));
+                builder.clientAuthenticationMethod(OAuth2Util.resolveClientAuthenticationMethod(method.trim()));
             }
         }
         
         // Parse grant types
         if (StringUtils.hasText(entity.getAuthorizationGrantTypes())) {
             for (String grantType : StringUtils.commaDelimitedListToStringArray(entity.getAuthorizationGrantTypes())) {
-                builder.authorizationGrantType(resolveAuthorizationGrantType(grantType.trim()));
+                builder.authorizationGrantType(OAuth2Util.resolveAuthorizationGrantType(grantType.trim()));
             }
         }
         
@@ -234,25 +235,4 @@ public class MongoRegisteredClientRepository implements RegisteredClientReposito
         }
     }
 
-    private static ClientAuthenticationMethod resolveClientAuthenticationMethod(String method) {
-        if (ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue().equals(method)) {
-            return ClientAuthenticationMethod.CLIENT_SECRET_BASIC;
-        } else if (ClientAuthenticationMethod.CLIENT_SECRET_POST.getValue().equals(method)) {
-            return ClientAuthenticationMethod.CLIENT_SECRET_POST;
-        } else if (ClientAuthenticationMethod.NONE.getValue().equals(method)) {
-            return ClientAuthenticationMethod.NONE;
-        }
-        return new ClientAuthenticationMethod(method);
-    }
-
-    private static AuthorizationGrantType resolveAuthorizationGrantType(String grantType) {
-        if (AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(grantType)) {
-            return AuthorizationGrantType.AUTHORIZATION_CODE;
-        } else if (AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(grantType)) {
-            return AuthorizationGrantType.CLIENT_CREDENTIALS;
-        } else if (AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(grantType)) {
-            return AuthorizationGrantType.REFRESH_TOKEN;
-        }
-        return new AuthorizationGrantType(grantType);
-    }
 }

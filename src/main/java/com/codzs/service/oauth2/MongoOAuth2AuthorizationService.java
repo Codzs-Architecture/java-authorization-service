@@ -39,7 +39,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -48,6 +47,7 @@ import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2A
 
 import java.util.List;
 import com.fasterxml.jackson.databind.Module;
+import com.codzs.util.OAuth2Util;
 
 /**
  * MongoDB implementation of OAuth2AuthorizationService.
@@ -216,8 +216,8 @@ public class MongoOAuth2AuthorizationService implements OAuth2AuthorizationServi
                 org.springframework.security.oauth2.server.authorization.OAuth2Authorization.withRegisteredClient(registeredClient)
                         .id(entity.getId())
                         .principalName(entity.getPrincipalName())
-                        .authorizationGrantType(resolveAuthorizationGrantType(entity.getAuthorizationGrantType()))
-                        .authorizedScopes(resolveScopes(entity.getAuthorizedScopes()))
+                        .authorizationGrantType(OAuth2Util.resolveAuthorizationGrantType(entity.getAuthorizationGrantType()))
+                        .authorizedScopes(OAuth2Util.resolveScopes(entity.getAuthorizedScopes()))
                         .attributes(attributes -> attributes.putAll(readMap(entity.getAttributes())));
 
         if (entity.getState() != null) {
@@ -238,7 +238,7 @@ public class MongoOAuth2AuthorizationService implements OAuth2AuthorizationServi
                     entity.getAccessTokenValue(),
                     toInstant(entity.getAccessTokenIssuedAt()),
                     toInstant(entity.getAccessTokenExpiresAt()),
-                    resolveScopes(entity.getAccessTokenScopes()));
+                    OAuth2Util.resolveScopes(entity.getAccessTokenScopes()));
             builder.token(accessToken, metadata -> metadata.putAll(readMap(entity.getAccessTokenMetadata())));
         }
 
@@ -307,18 +307,4 @@ public class MongoOAuth2AuthorizationService implements OAuth2AuthorizationServi
         }
     }
 
-    private static org.springframework.security.oauth2.core.AuthorizationGrantType resolveAuthorizationGrantType(String authorizationGrantType) {
-        if (org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE.getValue().equals(authorizationGrantType)) {
-            return org.springframework.security.oauth2.core.AuthorizationGrantType.AUTHORIZATION_CODE;
-        } else if (org.springframework.security.oauth2.core.AuthorizationGrantType.CLIENT_CREDENTIALS.getValue().equals(authorizationGrantType)) {
-            return org.springframework.security.oauth2.core.AuthorizationGrantType.CLIENT_CREDENTIALS;
-        } else if (org.springframework.security.oauth2.core.AuthorizationGrantType.REFRESH_TOKEN.getValue().equals(authorizationGrantType)) {
-            return org.springframework.security.oauth2.core.AuthorizationGrantType.REFRESH_TOKEN;
-        }
-        return new org.springframework.security.oauth2.core.AuthorizationGrantType(authorizationGrantType);
-    }
-
-    private static Set<String> resolveScopes(String scope) {
-        return (scope != null) ? Set.of(org.springframework.util.StringUtils.delimitedListToStringArray(scope, ",")) : Set.of();
-    }
 }

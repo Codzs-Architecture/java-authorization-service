@@ -1,6 +1,7 @@
 package com.codzs.validation.oauth2;
 
 import com.codzs.exception.validation.ValidationException;
+import com.codzs.constant.OAuth2Constant;
 import org.springframework.util.StringUtils;
 
 import java.net.URI;
@@ -41,15 +42,15 @@ public class OAuth2ParameterValidator {
      */
     public void validateClientId(String clientId) throws ValidationException {
         if (!StringUtils.hasText(clientId)) {
-            throw ValidationException.requiredField("client_id");
+            throw ValidationException.requiredField(OAuth2Constant.Parameters.CLIENT_ID);
         }
 
         if (clientId.length() < CLIENT_ID_MIN_LENGTH || clientId.length() > CLIENT_ID_MAX_LENGTH) {
-            throw ValidationException.valueOutOfRange("client_id", CLIENT_ID_MIN_LENGTH, CLIENT_ID_MAX_LENGTH);
+            throw ValidationException.valueOutOfRange(OAuth2Constant.Parameters.CLIENT_ID, CLIENT_ID_MIN_LENGTH, CLIENT_ID_MAX_LENGTH);
         }
 
         if (!CLIENT_ID_PATTERN.matcher(clientId).matches()) {
-            throw ValidationException.invalidFormat("client_id", "alphanumeric characters, hyphens, and underscores only");
+            throw ValidationException.invalidFormat(OAuth2Constant.Parameters.CLIENT_ID, "alphanumeric characters, hyphens, and underscores only");
         }
     }
 
@@ -61,16 +62,16 @@ public class OAuth2ParameterValidator {
      */
     public void validateScope(String scope) throws ValidationException {
         if (!StringUtils.hasText(scope)) {
-            throw ValidationException.requiredField("scope");
+            throw ValidationException.requiredField(OAuth2Constant.Parameters.SCOPE);
         }
 
         if (scope.length() > SCOPE_MAX_LENGTH) {
-            throw new ValidationException("Scope validation failed", "scope", 
+            throw new ValidationException(OAuth2Constant.ValidationMessages.SCOPE_VALIDATION_FAILED, OAuth2Constant.Parameters.SCOPE, 
                 "Scope parameter exceeds maximum length of " + SCOPE_MAX_LENGTH + " characters");
         }
 
         if (!SCOPE_PATTERN.matcher(scope).matches()) {
-            throw ValidationException.invalidFormat("scope", "space-separated scope values with alphanumeric characters, hyphens, underscores, colons, and periods");
+            throw ValidationException.invalidFormat(OAuth2Constant.Parameters.SCOPE, "space-separated scope values with alphanumeric characters, hyphens, underscores, colons, and periods");
         }
 
         // Check for duplicate scopes using Set for better performance
@@ -78,7 +79,7 @@ public class OAuth2ParameterValidator {
         Set<String> uniqueScopes = new HashSet<>();
         for (String scopeValue : scopes) {
             if (!uniqueScopes.add(scopeValue)) {
-                throw new ValidationException("Scope validation failed", "scope", 
+                throw new ValidationException(OAuth2Constant.ValidationMessages.SCOPE_VALIDATION_FAILED, OAuth2Constant.Parameters.SCOPE, 
                     "Duplicate scope value: " + scopeValue);
             }
         }
@@ -92,7 +93,7 @@ public class OAuth2ParameterValidator {
      */
     public void validateRedirectUri(String redirectUri) throws ValidationException {
         if (!StringUtils.hasText(redirectUri)) {
-            throw ValidationException.requiredField("redirect_uri");
+            throw ValidationException.requiredField(OAuth2Constant.Parameters.REDIRECT_URI);
         }
 
         try {
@@ -100,31 +101,31 @@ public class OAuth2ParameterValidator {
             
             // Check for required scheme
             if (uri.getScheme() == null) {
-                throw new ValidationException("Redirect URI validation failed", "redirect_uri", 
+                throw new ValidationException(OAuth2Constant.ValidationMessages.REDIRECT_URI_VALIDATION_FAILED, OAuth2Constant.Parameters.REDIRECT_URI, 
                     "Redirect URI must have a scheme (http or https)");
             }
 
             // Check for allowed schemes
             String scheme = uri.getScheme().toLowerCase();
-            if (!("http".equals(scheme) || "https".equals(scheme))) {
-                throw new ValidationException("Redirect URI validation failed", "redirect_uri", 
+            if (!(OAuth2Constant.Schemes.HTTP.equals(scheme) || OAuth2Constant.Schemes.HTTPS.equals(scheme))) {
+                throw new ValidationException(OAuth2Constant.ValidationMessages.REDIRECT_URI_VALIDATION_FAILED, OAuth2Constant.Parameters.REDIRECT_URI, 
                     "Redirect URI scheme must be http or https");
             }
 
             // Check for fragment
             if (uri.getFragment() != null) {
-                throw new ValidationException("Redirect URI validation failed", "redirect_uri", 
+                throw new ValidationException(OAuth2Constant.ValidationMessages.REDIRECT_URI_VALIDATION_FAILED, OAuth2Constant.Parameters.REDIRECT_URI, 
                     "Redirect URI must not contain a fragment");
             }
 
             // For production, require HTTPS
-            if ("http".equals(scheme) && !isLocalhost(uri.getHost())) {
-                throw new ValidationException("Redirect URI validation failed", "redirect_uri", 
+            if (OAuth2Constant.Schemes.HTTP.equals(scheme) && !isLocalhost(uri.getHost())) {
+                throw new ValidationException(OAuth2Constant.ValidationMessages.REDIRECT_URI_VALIDATION_FAILED, OAuth2Constant.Parameters.REDIRECT_URI, 
                     "Redirect URI must use HTTPS for non-localhost domains");
             }
 
         } catch (URISyntaxException e) {
-            throw new ValidationException("Redirect URI validation failed", "redirect_uri", 
+            throw new ValidationException(OAuth2Constant.ValidationMessages.REDIRECT_URI_VALIDATION_FAILED, OAuth2Constant.Parameters.REDIRECT_URI, 
                 "Invalid URI format: " + e.getMessage());
         }
     }
