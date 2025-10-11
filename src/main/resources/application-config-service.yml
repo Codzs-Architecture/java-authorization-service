@@ -6,7 +6,7 @@ spring:
     config:
       # uri: custom
       profile: ${spring.profiles.active}
-      label: main,MF_ORGANIZATION
+      label: main,MF_SYSTEM,MF_AUTHORIZATION
       send-all-labels: true
       username: config-service-user
       password: ${config.password}
