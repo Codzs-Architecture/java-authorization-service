@@ -115,6 +115,67 @@ public class DomainBusinessValidator {
         validateDomainRemovalRules(organization, domain, errors);
     }
 
+    /**
+     * Validates domain update request.
+     * Entry point for: PUT /api/v1/organizations/{id}/domains/{domainId}
+     */
+    public void validateDomainUpdate(Organization organization, Domain existingDomain, Domain updatedDomain) {
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        
+        // Check if domain name is being changed to an existing one
+        if (!existingDomain.getName().equals(updatedDomain.getName()) && 
+            organizationService.isDomainAlreadyRegistered(updatedDomain.getName())) {
+            errors.add(new ValidationException.ValidationError("name", 
+                "Domain name already registered: " + updatedDomain.getName()));
+        }
+        
+        validateDomainNameFormat(updatedDomain.getName(), "", errors);
+        validateVerificationMethod(updatedDomain.getVerificationMethod(), "", errors);
+        
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Domain update validation failed", errors);
+        }
+    }
+
+    /**
+     * Validates setting primary domain request.
+     * Entry point for: PUT /api/v1/organizations/{id}/domains/{domainId}/primary
+     */
+    public void validateSetPrimaryDomain(Organization organization, Domain domain) {
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        
+        if (!domain.getIsVerified()) {
+            errors.add(new ValidationException.ValidationError("domainId", 
+                "Only verified domains can be set as primary"));
+        }
+        
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Set primary domain validation failed", errors);
+        }
+    }
+
+    /**
+     * Validates domain verification request.
+     * Entry point for: PUT /api/v1/organizations/{id}/domains/{domainId}/verify
+     */
+    public void validateDomainVerificationRequest(Organization organization, Domain domain, 
+                                                String verificationMethod, String verificationToken) {
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        
+        if (domain.getIsVerified()) {
+            errors.add(new ValidationException.ValidationError("domainId", "Domain is already verified"));
+        } else if (!domain.getVerificationMethod().equals(verificationMethod)) {
+            errors.add(new ValidationException.ValidationError("verificationMethod", 
+                "Verification method does not match domain's configured method"));
+        } else if (!domainService.validateVerificationToken(domain, verificationToken, verificationMethod)) {
+            errors.add(new ValidationException.ValidationError("verificationToken", "Invalid verification token"));
+        }
+        
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Domain verification validation failed", errors);
+        }
+    }
+
     // ========== CORE VALIDATION METHODS ==========
 
     private void validateDomainCountLimit(List<Domain> domains, List<ValidationException.ValidationError> errors) {

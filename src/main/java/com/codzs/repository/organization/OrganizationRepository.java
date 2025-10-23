@@ -115,4 +115,40 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
     // Domain-related queries for embedded domains
     @Query("{ 'deletedOn': null, 'domains.name': ?0 }")
     boolean existsByDomainsName(String domainName);
+    
+    // Array operations for domain management
+    @org.springframework.data.mongodb.repository.Update("{ '$push': { 'domains': ?1 } }")
+    void addDomainToOrganization(String organizationId, com.codzs.entity.domain.Domain domain);
+    
+    @org.springframework.data.mongodb.repository.Update("{ '$pull': { 'domains': { 'id': ?1 } } }")
+    void removeDomainFromOrganization(String organizationId, String domainId);
+    
+    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.isVerified': true, 'domains.$.verifiedDate': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomainVerificationStatus(String organizationId, String domainId, java.time.Instant verifiedDate);
+    
+    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$[elem].isPrimary': false } }")
+    @Query("{ '_id': ?0 }")
+    void unsetAllPrimaryDomains(String organizationId);
+    
+    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.isPrimary': true } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void setPrimaryDomain(String organizationId, String domainId);
+    
+    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.verificationToken': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomainVerificationToken(String organizationId, String domainId, String newToken);
+    
+    // Individual domain field update operations
+    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.name': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomainName(String organizationId, String domainId, String newName);
+    
+    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.verificationMethod': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomainVerificationMethod(String organizationId, String domainId, String verificationMethod);
+    
+    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.isPrimary': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomainPrimaryStatus(String organizationId, String domainId, Boolean isPrimary);
 }
