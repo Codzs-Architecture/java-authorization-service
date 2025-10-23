@@ -15,47 +15,103 @@
  */
 package com.codzs.constant.organization;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
-
-import com.codzs.framework.base.ConfigParameterBase;
-
 /**
- * Configuration enum for ORGANIZATION_STATUS parameters from config server.
- * This class maps the configuration from the param table in the config database.
+ * Enum for organization account status values.
  * 
- * Available options include: PENDING, ACTIVE, SUSPENDED, DELETED
+ * Available options: PENDING, ACTIVE, SUSPENDED, DELETED
  * Default value: PENDING
  * 
  * @author Nitin Khaitan
  * @since 1.2
  */
-@Configuration(proxyBeanMethods = false)
-@Order(-1)
-public class OrganizationStatusEnum extends ConfigParameterBase {
-
-    @Value("${organization.status.options:}")
-    private String optionsString;
+public enum OrganizationStatusEnum {
+ 
+    /**
+     * Organization is pending activation
+     */
+    PENDING("PENDING", "Organization is pending activation"),
     
-    @Value("${organization.status.description:}")
-    private String description;
+    /**
+     * Organization is active and operational
+     */
+    ACTIVE("ACTIVE", "Organization is active and operational"),
     
-    @Value("${organization.status.default:}")
-    private String defaultValue;
+    /**
+     * Organization is temporarily suspended
+     */
+    SUSPENDED("SUSPENDED", "Organization is temporarily suspended"),
+    
+    /**
+     * Organization has been deleted (soft delete)
+     */
+    DELETED("DELETED", "Organization has been deleted");
 
-    @Override
-    protected String getOptionsString() {
-        return optionsString;
+    private final String value;
+    private final String description;
+
+    OrganizationStatusEnum(String value, String description) {
+        this.value = value;
+        this.description = description;
     }
 
-    @Override
-    protected String getDescription() {
+    /**
+     * Gets the string value of the enum
+     * 
+     * @return the string representation
+     */
+    public String getValue() {
+        return value;
+    }
+
+    /**
+     * Gets the description of the status
+     * 
+     * @return the description
+     */
+    public String getDescription() {
         return description;
     }
 
+    /**
+     * Gets the default status (PENDING)
+     * 
+     * @return the default OrganizationStatusEnum
+     */
+    public static OrganizationStatusEnum getDefault() {
+        return PENDING;
+    }
+
+    /**
+     * Converts a string value to the corresponding enum
+     * 
+     * @param value the string value
+     * @return the corresponding enum, or null if not found
+     */
+    public static OrganizationStatusEnum fromValue(String value) {
+        if (value == null) {
+            return null;
+        }
+        
+        for (OrganizationStatusEnum status : values()) {
+            if (status.value.equals(value)) {
+                return status;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Validates if a string value is a valid organization status
+     * 
+     * @param value the value to validate
+     * @return true if valid, false otherwise
+     */
+    public static boolean isValid(String value) {
+        return fromValue(value) != null;
+    }
+
     @Override
-    public String getDefaultValue() {
-        return defaultValue;
+    public String toString() {
+        return value;
     }
 }
