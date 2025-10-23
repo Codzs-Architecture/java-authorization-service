@@ -5,6 +5,7 @@ import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.constant.user.UserConstants;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
+import com.codzs.framework.constant.CommonConstants;
 import com.codzs.service.organization.OrganizationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class UserBusinessValidator {
     
     // Email validation pattern
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-        "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        CommonConstants.EMAIL_PATTERN
     );
 
     @Autowired
@@ -148,7 +149,7 @@ public class UserBusinessValidator {
         log.debug("Validating user activation for user: {}", user.getEmail());
         
         // Check if user is already active
-        if (UserConstants.ACTIVE.equals(user.getStatus())) {
+        if (CommonConstants.ACTIVE.equals(user.getStatus())) {
             errors.add(new ValidationException.ValidationError("status", "User is already active"));
             return;
         }
@@ -165,7 +166,7 @@ public class UserBusinessValidator {
         log.debug("Validating user deactivation for user: {}", user.getEmail());
         
         // Check if user is already inactive
-        if (!UserConstants.ACTIVE.equals(user.getStatus())) {
+        if (!CommonConstants.ACTIVE.equals(user.getStatus())) {
             errors.add(new ValidationException.ValidationError("status", "User is already inactive"));
             return;
         }
@@ -180,7 +181,7 @@ public class UserBusinessValidator {
         log.debug("Validating user deletion for user: {}", user.getEmail());
         
         // Check if user can be deleted (must be inactive)
-        if (UserConstants.ACTIVE.equals(user.getStatus())) {
+        if (CommonConstants.ACTIVE.equals(user.getStatus())) {
             errors.add(new ValidationException.ValidationError("status", 
                 "Cannot delete active user. Deactivate first."));
             return;

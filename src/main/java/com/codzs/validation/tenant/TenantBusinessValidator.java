@@ -1,9 +1,9 @@
 package com.codzs.validation.tenant;
 
 import com.codzs.entity.tenant.Tenant;
-import com.codzs.constant.tenant.TenantConstants;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
+import com.codzs.framework.constant.CommonConstants;
 import com.codzs.service.organization.OrganizationService;
 import com.codzs.service.subscription.SubscriptionService;
 import lombok.extern.slf4j.Slf4j;
@@ -138,7 +138,7 @@ public class TenantBusinessValidator {
         log.debug("Validating tenant activation for tenant: {}", tenant.getName());
         
         // Check if tenant is already active
-        if (TenantConstants.TENANT_ACTIVE_STATUS.equals(tenant.getStatus())) { 
+        if (CommonConstants.ACTIVE.equals(tenant.getStatus())) { 
             errors.add(new ValidationException.ValidationError("status", "Tenant is already active"));
             return;
         }
@@ -153,7 +153,7 @@ public class TenantBusinessValidator {
         log.debug("Validating tenant deactivation for tenant: {}", tenant.getName());
         
         // Check if tenant is already inactive
-        if (!TenantConstants.TENANT_ACTIVE_STATUS.equals(tenant.getStatus())) {
+        if (!CommonConstants.ACTIVE.equals(tenant.getStatus())) {
             errors.add(new ValidationException.ValidationError("status", "Tenant is already inactive"));
             return;
         }
@@ -171,7 +171,7 @@ public class TenantBusinessValidator {
         log.debug("Validating tenant deletion for tenant: {}", tenant.getName());
         
         // Check if tenant can be deleted (must be inactive)
-        if (TenantConstants.TENANT_ACTIVE_STATUS.equals(tenant.getStatus())) {
+        if (CommonConstants.ACTIVE.equals(tenant.getStatus())) {
             errors.add(new ValidationException.ValidationError("status", 
                 "Cannot delete active tenant. Deactivate first."));
             return;

@@ -11,6 +11,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.codzs.framework.constant.CommonConstants;
 import com.codzs.framework.entity.BaseEntity;
 import com.codzs.constant.user.UserConstants;
 
@@ -40,7 +41,7 @@ public class User extends BaseEntity {
 
     @NotBlank(message = UserConstants.EMAIL_REQUIRED_MESSAGE)
     @Email(message = UserConstants.EMAIL_FORMAT_MESSAGE)
-    @Pattern(regexp = UserConstants.EMAIL_PATTERN, message = UserConstants.EMAIL_FORMAT_MESSAGE)
+    @Pattern(regexp = CommonConstants.EMAIL_PATTERN, message = UserConstants.EMAIL_FORMAT_MESSAGE)
     @Indexed(unique = true)
     private String email;
 
@@ -53,7 +54,7 @@ public class User extends BaseEntity {
     private String lastName;
 
     @Size(max = UserConstants.MAX_PHONE_NUMBER_LENGTH, message = UserConstants.PHONE_NUMBER_SIZE_MESSAGE)
-    @Pattern(regexp = UserConstants.PHONE_NUMBER_PATTERN, message = UserConstants.PHONE_NUMBER_FORMAT_MESSAGE)
+    @Pattern(regexp = CommonConstants.PHONE_NUMBER_PATTERN, message = UserConstants.PHONE_NUMBER_FORMAT_MESSAGE)
     private String phoneNumber;
 
     @NotBlank(message = UserConstants.ORGANIZATION_ID_REQUIRED_MESSAGE)

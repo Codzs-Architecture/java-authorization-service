@@ -3,6 +3,7 @@ package com.codzs.dto.organization.request;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.constant.organization.OrganizationSwaggerConstants;
 import com.codzs.framework.annotation.validation.ApplyDefaults;
+import com.codzs.framework.constant.CommonConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
@@ -29,26 +30,26 @@ public class OrganizationSettingsRequestDto {
 
     @Size(max = OrganizationConstants.MAX_LANGUAGE_LENGTH, message = "Language must not exceed " + OrganizationConstants.MAX_LANGUAGE_LENGTH + " characters")
     @Schema(description = "Organization default language", 
-            example = OrganizationConstants.DEFAULT_LANGUAGE, 
-            defaultValue = OrganizationConstants.DEFAULT_LANGUAGE)
+            example = CommonConstants.DEFAULT_LANGUAGE, 
+            defaultValue = CommonConstants.DEFAULT_LANGUAGE)
     private String language;
 
     @Size(max = OrganizationConstants.MAX_TIMEZONE_LENGTH, message = "Timezone must not exceed " + OrganizationConstants.MAX_TIMEZONE_LENGTH + " characters")
     @Schema(description = "Organization default timezone", 
             example = OrganizationSwaggerConstants.EXAMPLE_TIMEZONE, 
-            defaultValue = OrganizationConstants.DEFAULT_TIMEZONE)
+            defaultValue = CommonConstants.DEFAULT_TIMEZONE)
     private String timezone;
 
     @Size(max = OrganizationConstants.MAX_CURRENCY_LENGTH, message = "Currency must not exceed " + OrganizationConstants.MAX_CURRENCY_LENGTH + " characters")
     @Schema(description = "Organization default currency", 
-            example = OrganizationConstants.DEFAULT_CURRENCY, 
-            defaultValue = OrganizationConstants.DEFAULT_CURRENCY)
+            example = CommonConstants.DEFAULT_CURRENCY, 
+            defaultValue = CommonConstants.DEFAULT_CURRENCY)
     private String currency;
 
     @Size(max = OrganizationConstants.MAX_COUNTRY_LENGTH, message = "Country must not exceed " + OrganizationConstants.MAX_COUNTRY_LENGTH + " characters")
     @Schema(description = "Organization country code", 
-            example = OrganizationConstants.DEFAULT_COUNTRY, 
-            defaultValue = OrganizationConstants.DEFAULT_COUNTRY)
+            example = CommonConstants.DEFAULT_COUNTRY, 
+            defaultValue = CommonConstants.DEFAULT_COUNTRY)
     private String country;
 
     public OrganizationSettingsRequestDto(String language, String timezone, String currency, String country) {
@@ -63,16 +64,16 @@ public class OrganizationSettingsRequestDto {
      */
     public void applyDefaults() {
         if (this.language == null) {
-            this.language = OrganizationConstants.DEFAULT_LANGUAGE;
+            this.language = CommonConstants.DEFAULT_LANGUAGE;
         }
         if (this.timezone == null) {
-            this.timezone = OrganizationConstants.DEFAULT_TIMEZONE;
+            this.timezone = CommonConstants.DEFAULT_TIMEZONE;
         }
         if (this.currency == null) {
-            this.currency = OrganizationConstants.DEFAULT_CURRENCY;
+            this.currency = CommonConstants.DEFAULT_CURRENCY;
         }
         if (this.country == null) {
-            this.country = OrganizationConstants.DEFAULT_COUNTRY;
+            this.country = CommonConstants.DEFAULT_COUNTRY;
         }
     }
 
