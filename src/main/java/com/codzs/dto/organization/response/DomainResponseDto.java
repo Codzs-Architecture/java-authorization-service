@@ -49,9 +49,9 @@ public class DomainResponseDto {
 
     @Schema(description = "Domain creation timestamp", example = DomainConstants.EXAMPLE_CREATED_ON)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
-    private Instant createdOn;
+    private Instant createdDate;
 
     @Schema(description = "Domain verification timestamp", example = DomainConstants.EXAMPLE_VERIFIED_ON)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
-    private Instant verifiedOn;
+    private Instant verifiedDate;
 }

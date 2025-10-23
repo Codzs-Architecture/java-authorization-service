@@ -75,7 +75,7 @@ public class OrganizationCreateRequestDto {
 
     @Schema(description = "Organization expiration date", 
             example = OrganizationSwaggerConstants.EXAMPLE_EXPIRY_DATE)
-    private Instant expiresOn;
+    private Instant expiresDate;
 
     @NotNull(message = "Database configuration is required")
     @Valid

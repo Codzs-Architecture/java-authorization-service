@@ -55,7 +55,7 @@ public class OrganizationResponseDto extends BaseDto {
 
     @Schema(description = "Organization expiration date", example = "2025-12-31T23:59:59Z")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
-    private Instant expiresOn;
+    private Instant expiresDate;
 
     @Schema(description = "Database configuration for the organization")
     private DatabaseConfigResponseDto database;

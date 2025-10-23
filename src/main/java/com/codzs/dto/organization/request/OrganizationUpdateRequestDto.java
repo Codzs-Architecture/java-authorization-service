@@ -60,7 +60,7 @@ public class OrganizationUpdateRequestDto {
     private String billingEmail;
 
     @Schema(description = "Organization expiration date", example = OrganizationSwaggerConstants.EXAMPLE_EXPIRY_DATE)
-    private Instant expiresOn;
+    private Instant expiresDate;
 
     @Valid
     @Schema(description = "Database configuration for the organization")
