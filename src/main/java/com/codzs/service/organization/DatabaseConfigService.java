@@ -1,0 +1,128 @@
+package com.codzs.service.organization;
+
+import com.codzs.entity.organization.DatabaseConfig;
+import com.codzs.entity.organization.DatabaseSchema;
+import com.codzs.entity.organization.Organization;
+
+import java.util.List;
+
+/**
+ * Service interface for DatabaseConfig-related business operations.
+ * Manages database configuration and schema operations for organizations
+ * with proper business validation and transaction management.
+ * 
+ * @author Codzs Team
+ * @since 1.0
+ */
+public interface DatabaseConfigService {
+
+    // ========== API FLOW METHODS ==========
+
+    /**
+     * Updates database configuration for an organization.
+     * API: PUT /api/v1/organizations/{id}/database
+     *
+     * @param organization the organization entity
+     * @param databaseConfig the database configuration entity
+     * @return the updated organization entity
+     */
+    Organization updateDatabaseConfig(Organization organization, DatabaseConfig databaseConfig);
+
+    /**
+     * Gets database configuration for an organization.
+     * API: GET /api/v1/organizations/{id}/database
+     *
+     * @param organizationId the organization ID
+     * @return the database configuration entity or null if not found
+     */
+    DatabaseConfig getDatabaseConfig(String organizationId);
+
+    /**
+     * Adds a new database schema to an organization.
+     * API: POST /api/v1/organizations/{id}/database/schemas
+     *
+     * @param organization the organization entity
+     * @param schema the database schema entity to add
+     * @return the updated organization entity with new schema
+     */
+    Organization addDatabaseSchema(Organization organization, DatabaseSchema schema);
+
+    /**
+     * Updates an existing database schema for an organization.
+     * API: PUT /api/v1/organizations/{id}/database/schemas/{schemaId}
+     *
+     * @param organization the organization entity
+     * @param schema the database schema entity with updates
+     * @return the updated organization entity
+     */
+    Organization updateDatabaseSchema(Organization organization, DatabaseSchema schema);
+
+    /**
+     * Removes a database schema from an organization.
+     * API: DELETE /api/v1/organizations/{id}/database/schemas/{schemaId}
+     *
+     * @param organizationId the organization ID
+     * @param schemaId the schema ID to remove
+     * @return the updated organization entity without the schema
+     */
+    Organization removeDatabaseSchema(String organizationId, String schemaId);
+
+    /**
+     * Gets all database schemas for an organization.
+     * API: GET /api/v1/organizations/{id}/database/schemas
+     *
+     * @param organizationId the organization ID
+     * @return list of database schema entities
+     */
+    List<DatabaseSchema> getDatabaseSchemas(String organizationId);
+
+    /**
+     * Gets a specific database schema for an organization.
+     * API: GET /api/v1/organizations/{id}/database/schemas/{schemaId}
+     *
+     * @param organizationId the organization ID
+     * @param schemaId the schema ID
+     * @return the database schema entity or null if not found
+     */
+    DatabaseSchema getDatabaseSchema(String organizationId, String schemaId);
+
+    /**
+     * Tests database connectivity for an organization.
+     * API: POST /api/v1/organizations/{id}/database/test-connection
+     *
+     * @param organizationId the organization ID
+     * @return true if connection is successful
+     */
+    boolean testDatabaseConnection(String organizationId);
+
+    // ========== UTILITY METHODS ==========
+
+    /**
+     * Validates database configuration business rules.
+     *
+     * @param organizationId the organization ID
+     * @param databaseConfig the database configuration to validate
+     * @return true if valid
+     */
+    boolean validateDatabaseConfig(String organizationId, DatabaseConfig databaseConfig);
+
+    /**
+     * Generates default schema name for a service.
+     *
+     * @param organizationAbbr the organization abbreviation
+     * @param serviceType the service type
+     * @param environment the environment (optional)
+     * @return generated schema name
+     */
+    String generateSchemaName(String organizationAbbr, String serviceType, String environment);
+
+    /**
+     * Checks if schema name already exists for an organization.
+     *
+     * @param organizationId the organization ID
+     * @param schemaName the schema name
+     * @param excludeSchemaId ID to exclude from check (for updates)
+     * @return true if schema name exists
+     */
+    boolean isSchemaNameExists(String organizationId, String schemaName, String excludeSchemaId);
+}
