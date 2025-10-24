@@ -47,19 +47,22 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
 
     @Override
     @Transactional
-    public Organization updateDatabaseConfig(Organization organization, DatabaseConfig databaseConfig) {
-        log.debug("Updating database config for organization ID: {}", organization.getId());
+    public Organization updateDatabaseConfig(String organizationId, String connectionString, String certificate) {
+        log.debug("Updating database config for organization ID: {}", organizationId);
+        
+        // Get organization and validate it exists
+        Organization organization = getOrganizationAndValidate(organizationId);
         
         // Business validation for database configuration
-        databaseConfigBusinessValidator.validateDatabaseConfigUpdate(organization, databaseConfig);
+        databaseConfigBusinessValidator.validateDatabaseConfigUpdate(organization, connectionString, certificate);
         
         // Use specific MongoDB operations to update only database config fields (preserving schemas)
-        updateDatabaseConfigFields(organization.getId(), databaseConfig);
+        updateDatabaseConfigFields(organizationId, connectionString, certificate);
         
-        log.info("Updated database config for organization ID: {}", organization.getId());
+        log.info("Updated database config for organization ID: {}", organizationId);
         
         // Return updated organization
-        return getOrganizationAndValidate(organization.getId());
+        return getOrganizationAndValidate(organizationId);
     }
 
     @Override
@@ -77,8 +80,11 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
 
     @Override
     @Transactional
-    public Organization addDatabaseSchema(Organization organization, DatabaseSchema schema) {
-        log.debug("Adding database schema for organization ID: {}", organization.getId());
+    public Organization addDatabaseSchema(String organizationId, DatabaseSchema schema) {
+        log.debug("Adding database schema for organization ID: {}", organizationId);
+        
+        // Get organization and validate it exists
+        Organization organization = getOrganizationAndValidate(organizationId);
         
         // Validate database config exists
         if (organization.getDatabase() == null) {
@@ -97,19 +103,22 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         applySchemaAdditionBusinessLogic(organization, schema);
         
         // Use MongoDB array operation to add schema directly
-        databaseConfigRepository.addDatabaseSchema(organization.getId(), schema);
+        databaseConfigRepository.addDatabaseSchema(organizationId, schema);
         
         log.info("Added database schema {} for organization ID: {}", 
-                schema.getSchemaName(), organization.getId());
+                schema.getSchemaName(), organizationId);
         
         // Return updated organization
-        return getOrganizationAndValidate(organization.getId());
+        return getOrganizationAndValidate(organizationId);
     }
 
     @Override
     @Transactional
-    public Organization updateDatabaseSchema(Organization organization, DatabaseSchema schema) {
-        log.debug("Updating database schema {} for organization ID: {}", schema.getId(), organization.getId());
+    public Organization updateDatabaseSchema(String organizationId, DatabaseSchema schema) {
+        log.debug("Updating database schema {} for organization ID: {}", schema.getId(), organizationId);
+        
+        // Get organization and validate it exists
+        Organization organization = getOrganizationAndValidate(organizationId);
         
         // Find schema to update
         DatabaseSchema existingSchema = findSchemaById(organization, schema.getId());
@@ -120,13 +129,13 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         // Business validation for schema update
         databaseConfigBusinessValidator.validateDatabaseSchemaUpdate(organization, schema);
         
-        // Use MongoDB array operations to update specific schema fields
-        updateSchemaFields(organization.getId(), schema.getId(), schema);
+        // Use MongoDB array operation to update entire schema in one go
+        databaseConfigRepository.updateDatabaseSchema(organizationId, schema.getId(), schema);
         
-        log.info("Updated database schema {} for organization ID: {}", schema.getId(), organization.getId());
+        log.info("Updated database schema {} for organization ID: {}", schema.getId(), organizationId);
         
         // Return updated organization
-        return getOrganizationAndValidate(organization.getId());
+        return getOrganizationAndValidate(organizationId);
     }
 
     @Override
@@ -272,34 +281,18 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         }
     }
 
-    private void updateDatabaseConfigFields(String organizationId, DatabaseConfig databaseConfig) {
+    private void updateDatabaseConfigFields(String organizationId, String connectionString, String certificate) {
         // Use specific MongoDB operations to update only the database config fields (excluding schemas)
-        if (StringUtils.hasText(databaseConfig.getConnectionString())) {
-            databaseConfigRepository.updateDatabaseConnectionString(organizationId, databaseConfig.getConnectionString());
+        if (StringUtils.hasText(connectionString)) {
+            databaseConfigRepository.updateDatabaseConnectionString(organizationId, connectionString);
         }
         
-        if (StringUtils.hasText(databaseConfig.getCertificate())) {
-            databaseConfigRepository.updateDatabaseCertificate(organizationId, databaseConfig.getCertificate());
+        if (StringUtils.hasText(certificate)) {
+            databaseConfigRepository.updateDatabaseCertificate(organizationId, certificate);
         }
         
         log.debug("Updated database config fields for organization {}", organizationId);
     }
 
-    private void updateSchemaFields(String organizationId, String schemaId, DatabaseSchema updatedSchema) {
-        // Use specific MongoDB operations to update only the schema fields that are provided
-        if (StringUtils.hasText(updatedSchema.getSchemaName())) {
-            databaseConfigRepository.updateDatabaseSchemaName(organizationId, schemaId, updatedSchema.getSchemaName());
-        }
-        
-        if (StringUtils.hasText(updatedSchema.getForService())) {
-            databaseConfigRepository.updateDatabaseSchemaService(organizationId, schemaId, updatedSchema.getForService());
-        }
-        
-        if (StringUtils.hasText(updatedSchema.getDescription())) {
-            databaseConfigRepository.updateDatabaseSchemaDescription(organizationId, schemaId, updatedSchema.getDescription());
-        }
-        
-        log.debug("Updated schema fields for schema {} in organization {}", schemaId, organizationId);
-    }
 
 }

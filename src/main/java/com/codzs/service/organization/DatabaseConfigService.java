@@ -22,11 +22,12 @@ public interface DatabaseConfigService {
      * Updates database configuration for an organization.
      * API: PUT /api/v1/organizations/{id}/database
      *
-     * @param organization the organization entity
-     * @param databaseConfig the database configuration entity
+     * @param organizationId the organization ID
+     * @param connectionString the database connection string
+     * @param certificate the database certificate
      * @return the updated organization entity
      */
-    Organization updateDatabaseConfig(Organization organization, DatabaseConfig databaseConfig);
+    Organization updateDatabaseConfig(String organizationId, String connectionString, String certificate);
 
     /**
      * Gets database configuration for an organization.
@@ -41,21 +42,21 @@ public interface DatabaseConfigService {
      * Adds a new database schema to an organization.
      * API: POST /api/v1/organizations/{id}/database/schemas
      *
-     * @param organization the organization entity
+     * @param organizationId the organization ID
      * @param schema the database schema entity to add
      * @return the updated organization entity with new schema
      */
-    Organization addDatabaseSchema(Organization organization, DatabaseSchema schema);
+    Organization addDatabaseSchema(String organizationId, DatabaseSchema schema);
 
     /**
      * Updates an existing database schema for an organization.
      * API: PUT /api/v1/organizations/{id}/database/schemas/{schemaId}
      *
-     * @param organization the organization entity
+     * @param organizationId the organization ID
      * @param schema the database schema entity with updates
      * @return the updated organization entity
      */
-    Organization updateDatabaseSchema(Organization organization, DatabaseSchema schema);
+    Organization updateDatabaseSchema(String organizationId, DatabaseSchema schema);
 
     /**
      * Removes a database schema from an organization.

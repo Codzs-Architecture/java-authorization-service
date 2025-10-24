@@ -35,9 +35,9 @@ public class DatabaseConfigBusinessValidator {
      * Validates database config update for service layer.
      * Entry point for: PUT /api/v1/organizations/{id}/database-config
      */
-    public void validateDatabaseConfigUpdate(Organization organization, DatabaseConfig databaseConfig) {
+    public void validateDatabaseConfigUpdate(Organization organization, String connectionString, String certificate) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateDatabaseConfigUpdateFlow(organization, databaseConfig, errors);
+        validateDatabaseConfigUpdateFlow(organization, connectionString, certificate, errors);
         
         if (!errors.isEmpty()) {
             throw new ValidationException("Database config update validation failed", errors);
@@ -85,12 +85,12 @@ public class DatabaseConfigBusinessValidator {
 
     // ========== CORE VALIDATION METHODS ==========
 
-    private void validateDatabaseConfigUpdateFlow(Organization organization, DatabaseConfig databaseConfig, 
+    private void validateDatabaseConfigUpdateFlow(Organization organization, String connectionString, String certificate, 
                                                  List<ValidationException.ValidationError> errors) {
         // For config updates, we only validate the config fields that can be updated
         // We don't validate schemas here since they are managed separately
-        validateConnectionStringFormat(databaseConfig.getConnectionString(), errors);
-        validateCertificateFormat(databaseConfig.getCertificate(), errors);
+        validateConnectionStringFormat(connectionString, errors);
+        validateCertificateFormat(certificate, errors);
     }
 
     private void validateDatabaseSchemaAdditionFlow(Organization organization, DatabaseSchema schema, 

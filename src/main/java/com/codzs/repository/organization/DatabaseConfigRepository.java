@@ -55,28 +55,12 @@ public interface DatabaseConfigRepository extends MongoRepository<Organization, 
     void removeDatabaseSchema(String organizationId, String schemaId);
     
     /**
-     * Updates the schema name for a specific database schema.
+     * Updates an entire database schema in one operation.
      * Uses MongoDB positional operator ($) to update the specific schema in the array.
      */
-    @Update("{ '$set': { 'database.schemas.$.schemaName': ?2 } }")
+    @Update("{ '$set': { 'database.schemas.$': ?2 } }")
     @Query("{ '_id': ?0, 'database.schemas.id': ?1 }")
-    void updateDatabaseSchemaName(String organizationId, String schemaId, String schemaName);
-    
-    /**
-     * Updates the service type for a specific database schema.
-     * Uses MongoDB positional operator ($) to update the specific schema in the array.
-     */
-    @Update("{ '$set': { 'database.schemas.$.forService': ?2 } }")
-    @Query("{ '_id': ?0, 'database.schemas.id': ?1 }")
-    void updateDatabaseSchemaService(String organizationId, String schemaId, String forService);
-    
-    /**
-     * Updates the description for a specific database schema.
-     * Uses MongoDB positional operator ($) to update the specific schema in the array.
-     */
-    @Update("{ '$set': { 'database.schemas.$.description': ?2 } }")
-    @Query("{ '_id': ?0, 'database.schemas.id': ?1 }")
-    void updateDatabaseSchemaDescription(String organizationId, String schemaId, String description);
+    void updateDatabaseSchema(String organizationId, String schemaId, DatabaseSchema schema);
 
     // ========== QUERY OPERATIONS ==========
     
