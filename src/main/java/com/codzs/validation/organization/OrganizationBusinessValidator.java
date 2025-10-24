@@ -6,8 +6,7 @@ import com.codzs.constant.organization.OrganizationTypeEnum;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
 import com.codzs.service.organization.OrganizationService;
-import com.codzs.validation.organization.domain.DomainBusinessValidator;
-import com.codzs.validation.organization.plan.PlanBusinessValidator;
+import com.codzs.validation.domain.DomainBusinessValidator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,7 +15,6 @@ import org.springframework.util.StringUtils;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Business validator for Organization-related operations.
@@ -31,17 +29,17 @@ public class OrganizationBusinessValidator {
     
     private final OrganizationService organizationService;
     private final DomainBusinessValidator domainBusinessValidator;
-    private final PlanBusinessValidator planBusinessValidator;
+    private final OrganizationPlanBusinessValidator organizationPlanBusinessValidator;
     private final OrganizationTypeEnum organizationTypeEnum;
 
     @Autowired
     public OrganizationBusinessValidator(OrganizationService organizationService,
                                        DomainBusinessValidator domainBusinessValidator,
-                                       PlanBusinessValidator planBusinessValidator,
+                                       OrganizationPlanBusinessValidator organizationPlanBusinessValidator,
                                        OrganizationTypeEnum organizationTypeEnum) {
         this.organizationService = organizationService;
         this.domainBusinessValidator = domainBusinessValidator;
-        this.planBusinessValidator = planBusinessValidator;
+        this.organizationPlanBusinessValidator = organizationPlanBusinessValidator;
         this.organizationTypeEnum = organizationTypeEnum;
     }
 
@@ -118,7 +116,7 @@ public class OrganizationBusinessValidator {
 
         validateOrganizationExistsAndActive(organization.getId(), errors);
 
-        planBusinessValidator.validatePlanAssociationForOrganization(organization, organizationPlan, errors);
+        organizationPlanBusinessValidator.validatePlanAssociationForOrganization(organization, organizationPlan, errors);
 
         if (!errors.isEmpty()) {
             throw new ValidationException("Organization plan association business validation failed", errors);
@@ -213,8 +211,6 @@ public class OrganizationBusinessValidator {
         if (organization.getExpiresDate() != null && organization.getExpiresDate().isBefore(Instant.now())) {
             errors.add(new ValidationException.ValidationError("expiresDate", "Expiry date cannot be in the past"));
         }
-
-        validateOrganizationTypeConstraints(organization.getOrganizationType(), errors);
     }
 
     private void validateOrganizationHierarchyRules(String parentId, String childId, 
@@ -251,34 +247,6 @@ public class OrganizationBusinessValidator {
         if (database.getSchemas() != null && database.getSchemas().size() > OrganizationConstants.MAX_DATABASES_PER_ORGANIZATION) {
             errors.add(new ValidationException.ValidationError("database.schemas", 
                 "Organization cannot have more than " + OrganizationConstants.MAX_DATABASES_PER_ORGANIZATION + " database schemas"));
-        }
-
-        if (database.getSchemas() != null) {
-            for (int i = 0; i < database.getSchemas().size(); i++) {
-                validateDatabaseSchemaBusinessRules(database.getSchemas().get(i), i, errors);
-            }
-        }
-    }
-
-    private void validateDatabaseSchemaBusinessRules(com.codzs.entity.organization.DatabaseSchema schema, int index, 
-                                                    List<ValidationException.ValidationError> errors) {
-        String fieldPrefix = "database.schemas[" + index + "]";
-        
-        if (StringUtils.hasText(schema.getSchemaName()) && 
-            !Pattern.matches(OrganizationConstants.SCHEMA_NAME_PATTERN, schema.getSchemaName())) {
-            errors.add(new ValidationException.ValidationError(fieldPrefix + ".schemaName", 
-                OrganizationConstants.SCHEMA_NAME_PATTERN_MESSAGE));
-        }
-    }
-
-    private void validateOrganizationTypeConstraints(String organizationType, 
-                                                   List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(organizationType)) {
-            return;
-        }
-        
-        if (!organizationTypeEnum.isValidOption(organizationType)) {
-            errors.add(new ValidationException.ValidationError("organizationType", "Invalid organization type"));
         }
     }
 
@@ -354,10 +322,7 @@ public class OrganizationBusinessValidator {
 
     private Organization validateOrganizationExists(String organizationId, 
                                                    List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(organizationId)) {
-            errors.add(new ValidationException.ValidationError("organizationId", "Organization ID is required"));
-            return null;
-        }
+        // Organization ID required validation is handled by @NotBlank in request DTOs
         
         Organization organization = organizationService.findById(organizationId);
         if (organization == null) {
@@ -402,9 +367,8 @@ public class OrganizationBusinessValidator {
     private void validateOrganizationStatusTransition(OrganizationStatusEnum currentStatus, 
                                                      OrganizationStatusEnum newStatus, 
                                                      List<ValidationException.ValidationError> errors) {
+        // Skip validation if organization is already in target status (idempotent operation)
         if (currentStatus == newStatus) {
-            errors.add(new ValidationException.ValidationError("status", 
-                "Organization is already in " + newStatus + " status"));
             return;
         }
         

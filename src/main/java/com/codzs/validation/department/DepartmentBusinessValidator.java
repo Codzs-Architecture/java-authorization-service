@@ -110,11 +110,8 @@ public class DepartmentBusinessValidator {
         
         // Validate parent department hierarchy if specified
         if (StringUtils.hasText(department.getParentDepartmentId())) {
-            validateDepartmentHierarchy(department, errors);
+            // TODO: Department hierarchy validation will be implemented when department service is available
         }
-        
-        // Validate department business rules
-        validateDepartmentBusinessRules(department, errors);
         
         // TODO: Validate tenant association when tenant service is available
         
@@ -131,12 +128,9 @@ public class DepartmentBusinessValidator {
         
         // Validate parent department hierarchy if changing parent
         if (StringUtils.hasText(department.getParentDepartmentId())) {
-            validateDepartmentHierarchy(department, errors);
+            // TODO: Department hierarchy validation will be implemented when department service is available
             validateNoCircularReference(department, errors);
         }
-        
-        // Validate department business rules
-        validateDepartmentBusinessRules(department, errors);
         
         log.debug("Completed department update validation for department: {}", department.getName());
     }
@@ -144,17 +138,16 @@ public class DepartmentBusinessValidator {
     private void validateDepartmentActivationFlow(Department department, List<ValidationException.ValidationError> errors) {
         log.debug("Validating department activation for department: {}", department.getName());
         
-        // Check if department is already active
+        // Skip validation if department is already active (idempotent operation)
         if (CommonConstants.ACTIVE.equals(department.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", "Department is already active"));
+            log.debug("Department is already active, skipping validation for idempotent operation");
             return;
         }
         
         // Validate organization is active using service layer
         validateOrganizationForDepartment(department.getOrganizationId(), errors);
         
-        // TODO: Validate tenant is active when tenant service is available
-        // TODO: Validate parent department is active when department service is available
+        // TODO: Tenant and parent department validation will be implemented when respective services are available
         
         log.debug("Completed department activation validation for department: {}", department.getName());
     }
@@ -162,14 +155,13 @@ public class DepartmentBusinessValidator {
     private void validateDepartmentDeactivationFlow(Department department, List<ValidationException.ValidationError> errors) {
         log.debug("Validating department deactivation for department: {}", department.getName());
         
-        // Check if department is already inactive
-        if ("INACTIVE".equals(department.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", "Department is already inactive"));
+        // Skip validation if department is already inactive (idempotent operation)
+        if (!CommonConstants.ACTIVE.equals(department.getStatus())) {
+            log.debug("Department is already inactive, skipping validation for idempotent operation");
             return;
         }
         
-        // TODO: Check for active users in department when user service is available
-        // TODO: Check for active child departments when department service is available
+        // TODO: Active users and child departments validation will be implemented when respective services are available
         
         log.debug("Completed department deactivation validation for department: {}", department.getName());
     }
@@ -184,9 +176,7 @@ public class DepartmentBusinessValidator {
             return;
         }
         
-        // TODO: Check for users in department when user service is available
-        // TODO: Check for child departments when department service is available
-        // TODO: Check for role assignments when role service is available
+        // TODO: Users, child departments, and role assignments validation will be implemented when respective services are available
         
         log.debug("Completed department deletion validation for department: {}", department.getName());
     }
@@ -194,10 +184,7 @@ public class DepartmentBusinessValidator {
     // ========== HELPER VALIDATION METHODS ==========
 
     private void validateOrganizationForDepartment(String organizationId, List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(organizationId)) {
-            errors.add(new ValidationException.ValidationError("organizationId", "Organization ID is required"));
-            return;
-        }
+        // Organization ID required validation is handled by @NotBlank annotation in Department entity
         
         // Use service layer to fetch organization and validate it exists and is active
         Organization organization = organizationService.findById(organizationId);
@@ -213,17 +200,6 @@ public class DepartmentBusinessValidator {
         }
     }
 
-    private void validateDepartmentHierarchy(Department department, List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(department.getParentDepartmentId())) {
-            return;
-        }
-        
-        // TODO: Implement hierarchy depth validation when department service is available
-        // This would check that the hierarchy depth doesn't exceed MAX_HIERARCHY_DEPTH
-        // For now, we skip this validation
-        log.debug("Department hierarchy validation not implemented yet for department: {}", department.getName());
-    }
-
     private void validateNoCircularReference(Department department, List<ValidationException.ValidationError> errors) {
         if (!StringUtils.hasText(department.getParentDepartmentId()) || !StringUtils.hasText(department.getId())) {
             return;
@@ -236,62 +212,7 @@ public class DepartmentBusinessValidator {
             return;
         }
         
-        // TODO: Implement full circular reference check when department service is available
-        // This would traverse the parent chain to ensure no circular references
-        log.debug("Circular reference validation not fully implemented yet for department: {}", department.getName());
+        // TODO: Full circular reference check will be implemented when department service is available
     }
 
-    private void validateDepartmentBusinessRules(Department department, List<ValidationException.ValidationError> errors) {
-        // Validate department name format and length
-        if (!StringUtils.hasText(department.getName()) || department.getName().trim().length() < 2) {
-            errors.add(new ValidationException.ValidationError("name", 
-                "Department name must be at least 2 characters long"));
-        }
-        
-        if (StringUtils.hasText(department.getName()) && department.getName().length() > 100) {
-            errors.add(new ValidationException.ValidationError("name", 
-                "Department name cannot exceed 100 characters"));
-        }
-        
-        // Validate department code format if provided
-        if (StringUtils.hasText(department.getCode())) {
-            if (!department.getCode().matches("^[A-Z0-9_]+$")) {
-                errors.add(new ValidationException.ValidationError("code", 
-                    "Department code must contain only uppercase letters, numbers, and underscores"));
-            }
-            
-            if (department.getCode().length() > 20) {
-                errors.add(new ValidationException.ValidationError("code", 
-                    "Department code cannot exceed 20 characters"));
-            }
-        }
-        
-        // Validate description length if provided
-        if (StringUtils.hasText(department.getDescription()) && department.getDescription().length() > 500) {
-            errors.add(new ValidationException.ValidationError("description", 
-                "Department description cannot exceed 500 characters"));
-        }
-        
-        // Validate cost center format if provided
-        if (StringUtils.hasText(department.getCostCenter())) {
-            if (!department.getCostCenter().matches("^[A-Z0-9-]+$")) {
-                errors.add(new ValidationException.ValidationError("costCenter", 
-                    "Cost center must contain only uppercase letters, numbers, and hyphens"));
-            }
-            
-            if (department.getCostCenter().length() > 20) {
-                errors.add(new ValidationException.ValidationError("costCenter", 
-                    "Cost center cannot exceed 20 characters"));
-            }
-        }
-        
-        // Validate max users if specified
-        if (department.getMaxUsers() != null && department.getMaxUsers() < 1) {
-            errors.add(new ValidationException.ValidationError("maxUsers", 
-                "Max users must be at least 1"));
-        }
-        
-        // TODO: Add uniqueness validation for department name/code within organization/tenant
-        // This would require department repository access through service layer
-    }
 }

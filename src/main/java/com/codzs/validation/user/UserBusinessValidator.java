@@ -2,7 +2,6 @@ package com.codzs.validation.user;
 
 import com.codzs.entity.user.User;
 import com.codzs.constant.organization.OrganizationStatusEnum;
-import com.codzs.constant.user.UserConstants;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
 import com.codzs.framework.constant.CommonConstants;
@@ -14,7 +13,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Business validator for User-related operations.
@@ -29,11 +27,6 @@ import java.util.regex.Pattern;
 public class UserBusinessValidator {
 
     private final OrganizationService organizationService;
-    
-    // Email validation pattern
-    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-        CommonConstants.EMAIL_PATTERN
-    );
 
     @Autowired
     public UserBusinessValidator(OrganizationService organizationService) {
@@ -118,9 +111,6 @@ public class UserBusinessValidator {
         // Validate email domain against organization domains using service layer
         validateEmailDomainForOrganization(user.getEmail(), user.getOrganizationId(), errors);
         
-        // Validate user business rules
-        validateUserBusinessRules(user, errors);
-        
         // TODO: Validate tenant association when tenant service is available
         
         log.debug("Completed user creation validation for user: {}", user.getEmail());
@@ -139,18 +129,15 @@ public class UserBusinessValidator {
             validateEmailDomainForOrganization(user.getEmail(), user.getOrganizationId(), errors);
         }
         
-        // Validate user business rules
-        validateUserBusinessRules(user, errors);
-        
         log.debug("Completed user update validation for user: {}", user.getEmail());
     }
 
     private void validateUserActivationFlow(User user, List<ValidationException.ValidationError> errors) {
         log.debug("Validating user activation for user: {}", user.getEmail());
         
-        // Check if user is already active
+        // Skip validation if user is already active (idempotent operation)
         if (CommonConstants.ACTIVE.equals(user.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", "User is already active"));
+            log.debug("User is already active, skipping validation for idempotent operation");
             return;
         }
         
@@ -165,9 +152,9 @@ public class UserBusinessValidator {
     private void validateUserDeactivationFlow(User user, List<ValidationException.ValidationError> errors) {
         log.debug("Validating user deactivation for user: {}", user.getEmail());
         
-        // Check if user is already inactive
+        // Skip validation if user is already inactive (idempotent operation)
         if (!CommonConstants.ACTIVE.equals(user.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", "User is already inactive"));
+            log.debug("User is already inactive, skipping validation for idempotent operation");
             return;
         }
         
@@ -196,10 +183,7 @@ public class UserBusinessValidator {
     // ========== HELPER VALIDATION METHODS ==========
 
     private void validateOrganizationForUser(String organizationId, List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(organizationId)) {
-            errors.add(new ValidationException.ValidationError("organizationId", "Organization ID is required"));
-            return;
-        }
+        // Organization ID required validation is handled by @NotBlank annotation in User entity
         
         // Use service layer to fetch organization and validate it exists and is active
         Organization organization = organizationService.findById(organizationId);
@@ -221,11 +205,10 @@ public class UserBusinessValidator {
             return;
         }
         
-        // Extract domain from email
+        // Extract domain from email (email format validation is handled by entity annotations)
         String emailDomain = extractDomainFromEmail(email);
         if (emailDomain == null) {
-            errors.add(new ValidationException.ValidationError("email", "Invalid email format"));
-            return;
+            return; // Invalid email format - handled by entity annotations
         }
         
         // Use service layer to fetch organization and check if email domain is registered
@@ -245,43 +228,6 @@ public class UserBusinessValidator {
         }
     }
 
-    private void validateUserBusinessRules(User user, List<ValidationException.ValidationError> errors) {
-        // Validate email format
-        if (StringUtils.hasText(user.getEmail()) && !EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
-            errors.add(new ValidationException.ValidationError("email", "Invalid email format"));
-        }
-        
-        // Validate first name
-        if (!StringUtils.hasText(user.getFirstName()) || user.getFirstName().trim().length() < 1) {
-            errors.add(new ValidationException.ValidationError("firstName", "First name is required"));
-        }
-        
-        if (StringUtils.hasText(user.getFirstName()) && user.getFirstName().length() > 50) {
-            errors.add(new ValidationException.ValidationError("firstName", 
-                "First name cannot exceed 50 characters"));
-        }
-        
-        // Validate last name
-        if (!StringUtils.hasText(user.getLastName()) || user.getLastName().trim().length() < 1) {
-            errors.add(new ValidationException.ValidationError("lastName", "Last name is required"));
-        }
-        
-        if (StringUtils.hasText(user.getLastName()) && user.getLastName().length() > 50) {
-            errors.add(new ValidationException.ValidationError("lastName", 
-                "Last name cannot exceed 50 characters"));
-        }
-        
-        // Validate phone number format if provided
-        if (StringUtils.hasText(user.getPhoneNumber())) {
-            if (!user.getPhoneNumber().matches("^\\+?[1-9]\\d{1,14}$")) {
-                errors.add(new ValidationException.ValidationError("phoneNumber", 
-                    "Invalid phone number format"));
-            }
-        }
-        
-        // TODO: Add uniqueness validation for email within organization/tenant
-        // This would require user repository access through service layer
-    }
 
     private String extractDomainFromEmail(String email) {
         if (!StringUtils.hasText(email)) {

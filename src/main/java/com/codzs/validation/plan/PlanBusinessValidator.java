@@ -175,29 +175,16 @@ public class PlanBusinessValidator {
         validateValidityPeriod(plan.getValidityPeriod(), plan.getValidityPeriodUnit(), errors);
 
         // Validate pricing
-        if (plan.getPrice() != null && plan.getPrice() > PlanConstants.MAX_PLAN_PRICE) {
-            errors.add(new ValidationException.ValidationError("price", 
-                "Plan price cannot exceed " + PlanConstants.MAX_PLAN_PRICE));
-        }
+        validatePricing(plan, errors);
 
         // Validate user limits
-        if (plan.getMaxUsers() != null && plan.getMaxUsers() > PlanConstants.MAX_PLAN_USER_LIMIT) {
-            errors.add(new ValidationException.ValidationError("maxUsers", 
-                "Plan user limit cannot exceed " + PlanConstants.MAX_PLAN_USER_LIMIT));
-        }
+        validateUserLimit(plan, errors);
 
         // Validate tenant limits
-        if (plan.getMaxTenants() != null && plan.getMaxTenants() > PlanConstants.MAX_PLAN_TENANT_LIMIT) {
-            errors.add(new ValidationException.ValidationError("maxTenants", 
-                "Plan tenant limit cannot exceed " + PlanConstants.MAX_PLAN_TENANT_LIMIT));
-        }
+        validateTenantLimits(plan, errors);
 
         // Validate storage limits
-        if (plan.getStorageLimit() != null && 
-            plan.getStorageLimit() > PlanConstants.MAX_PLAN_STORAGE_LIMIT_GB * 1024 * 1024 * 1024) {
-            errors.add(new ValidationException.ValidationError("storageLimit", 
-                "Plan storage limit cannot exceed " + PlanConstants.MAX_PLAN_STORAGE_LIMIT_GB + " GB"));
-        }
+        validateStorageLimit(plan, errors);
     }
 
     private void validatePlanCapacityLimits(Plan plan, 
@@ -213,11 +200,9 @@ public class PlanBusinessValidator {
     }
 
     private void validatePlanType(String planType, List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(planType)) {
-            errors.add(new ValidationException.ValidationError("type", "Plan type is required"));
-            return;
-        }
-
+        // Plan type required validation is handled by @NotBlank annotation in Plan entity
+        // Plan type enum validation should use dynamic enum from configuration
+        
         String[] validTypes = {
             PlanConstants.PLAN_TYPE_BASIC,
             PlanConstants.PLAN_TYPE_STANDARD,
@@ -226,23 +211,18 @@ public class PlanBusinessValidator {
             PlanConstants.PLAN_TYPE_CUSTOM
         };
 
-        if (!Arrays.asList(validTypes).contains(planType)) {
+        if (StringUtils.hasText(planType) && !Arrays.asList(validTypes).contains(planType)) {
             errors.add(new ValidationException.ValidationError("type", "Invalid plan type"));
         }
     }
 
     private void validateValidityPeriod(Integer validityPeriod, String validityPeriodUnit, 
                                       List<ValidationException.ValidationError> errors) {
-        if (validityPeriod == null || validityPeriod <= 0) {
-            errors.add(new ValidationException.ValidationError("validityPeriod", 
-                "Validity period must be positive"));
-            return;
-        }
-
-        if (!StringUtils.hasText(validityPeriodUnit)) {
-            errors.add(new ValidationException.ValidationError("validityPeriodUnit", 
-                "Validity period unit is required"));
-            return;
+        // Validity period required and positive validation is handled by @NotNull and @Min annotations in Plan entity
+        // Validity period unit required validation is handled by @NotBlank annotation in Plan entity
+        
+        if (validityPeriod == null || !StringUtils.hasText(validityPeriodUnit)) {
+            return; // Basic validations are handled by entity annotations
         }
 
         String[] validUnits = {
@@ -294,9 +274,8 @@ public class PlanBusinessValidator {
 
     private void validateActivationBusinessRules(Plan plan, 
                                                 List<ValidationException.ValidationError> errors) {
+        // Skip validation if plan is already active (idempotent operation)
         if (plan.getIsActive()) {
-            errors.add(new ValidationException.ValidationError("isActive", 
-                "Plan is already active"));
             return;
         }
 
@@ -315,9 +294,8 @@ public class PlanBusinessValidator {
 
     private void validateDeactivationBusinessRules(Plan plan, 
                                                   List<ValidationException.ValidationError> errors) {
+        // Skip validation if plan is already inactive (idempotent operation)
         if (!plan.getIsActive()) {
-            errors.add(new ValidationException.ValidationError("isActive", 
-                "Plan is already inactive"));
             return;
         }
 
@@ -329,23 +307,66 @@ public class PlanBusinessValidator {
 
     private void validateDeprecationBusinessRules(Plan plan, 
                                                  List<ValidationException.ValidationError> errors) {
+        // Skip validation if plan is already deprecated (idempotent operation)
         if (plan.getIsDeprecated() != null && plan.getIsDeprecated()) {
-            errors.add(new ValidationException.ValidationError("isDeprecated", 
-                "Plan is already deprecated"));
+            return;
         }
     }
 
     private void validateDowngradeConstraints(Plan existingPlan, Plan updatedPlan, 
                                             List<ValidationException.ValidationError> errors) {
-        // Add specific downgrade validation rules here
+        // Validate user limit reduction
         if (updatedPlan.getMaxUsers() != null && existingPlan.getMaxUsers() != null &&
             updatedPlan.getMaxUsers() < existingPlan.getMaxUsers()) {
             errors.add(new ValidationException.ValidationError("maxUsers", 
                 "Cannot reduce user limit below current limit while subscriptions exist"));
         }
+        
+        // Validate tenant limit reduction
+        if (updatedPlan.getMaxTenants() != null && existingPlan.getMaxTenants() != null &&
+            updatedPlan.getMaxTenants() < existingPlan.getMaxTenants()) {
+            errors.add(new ValidationException.ValidationError("maxTenants", 
+                "Cannot reduce tenant limit below current limit while subscriptions exist"));
+        }
+        
+        // Validate storage limit reduction
+        if (updatedPlan.getStorageLimit() != null && existingPlan.getStorageLimit() != null &&
+            updatedPlan.getStorageLimit() < existingPlan.getStorageLimit()) {
+            errors.add(new ValidationException.ValidationError("storageLimit", 
+                "Cannot reduce storage limit below current limit while subscriptions exist"));
+        }
     }
 
     // ========== HELPER METHODS ==========
+
+    private void validateStorageLimit(Plan plan, List<ValidationException.ValidationError> errors) {
+        if (plan.getStorageLimit() != null && 
+            plan.getStorageLimit() > PlanConstants.MAX_PLAN_STORAGE_LIMIT_GB * 1024 * 1024 * 1024) {
+            errors.add(new ValidationException.ValidationError("storageLimit", 
+                "Plan storage limit cannot exceed " + PlanConstants.MAX_PLAN_STORAGE_LIMIT_GB + " GB"));
+        }
+    }
+
+    private void validateTenantLimits(Plan plan, List<ValidationException.ValidationError> errors) {
+        if (plan.getMaxTenants() != null && plan.getMaxTenants() > PlanConstants.MAX_PLAN_TENANT_LIMIT) {
+            errors.add(new ValidationException.ValidationError("maxTenants", 
+                "Plan tenant limit cannot exceed " + PlanConstants.MAX_PLAN_TENANT_LIMIT));
+        }
+    }
+
+    private void validateUserLimit(Plan plan, List<ValidationException.ValidationError> errors) {
+        if (plan.getMaxUsers() != null && plan.getMaxUsers() > PlanConstants.MAX_PLAN_USER_LIMIT) {
+            errors.add(new ValidationException.ValidationError("maxUsers", 
+                "Plan user limit cannot exceed " + PlanConstants.MAX_PLAN_USER_LIMIT));
+        }
+    }
+
+    private void validatePricing(Plan plan, List<ValidationException.ValidationError> errors) {
+        if (plan.getPrice() != null && plan.getPrice() > PlanConstants.MAX_PLAN_PRICE) {
+            errors.add(new ValidationException.ValidationError("price", 
+                "Plan price cannot exceed " + PlanConstants.MAX_PLAN_PRICE));
+        }
+    }
 
     private void validatePlanNameUniqueness(String name, String excludeId, 
                                            List<ValidationException.ValidationError> errors) {
@@ -356,10 +377,7 @@ public class PlanBusinessValidator {
 
     private Plan validatePlanExists(String planId, 
                                    List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(planId)) {
-            errors.add(new ValidationException.ValidationError("planId", "Plan ID is required"));
-            return null;
-        }
+        // Plan ID required validation should be handled by request DTO annotations
         
         Plan plan = planRepository.findByIdAndDeletedOnIsNull(planId).orElse(null);
         if (plan == null) {
@@ -403,7 +421,7 @@ public class PlanBusinessValidator {
     }
 
     private boolean isDowngrade(Plan existingPlan, Plan updatedPlan) {
-        // Implement plan hierarchy comparison logic
+        // Compare plan hierarchy levels to determine if this is a downgrade
         int existingLevel = getPlanLevel(existingPlan.getType());
         int updatedLevel = getPlanLevel(updatedPlan.getType());
         
@@ -431,10 +449,10 @@ public class PlanBusinessValidator {
             return planRepository.findByNameAndDeletedOnIsNull(name)
                     .map(plan -> !plan.getId().equals(excludeId))
                     .orElse(false);
-        } else {
-            // For creation - check if name exists at all
-            return planRepository.existsByNameAndDeletedOnIsNull(name);
         }
+        
+        // For creation - check if name exists at all
+        return planRepository.existsByNameAndDeletedOnIsNull(name);
     }
 
     private boolean hasActiveSubscriptions(String planId) {

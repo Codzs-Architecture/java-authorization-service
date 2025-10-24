@@ -1,6 +1,5 @@
-package com.codzs.validation.organization.domain;
+package com.codzs.validation.domain;
 
-import com.codzs.constant.domain.DomainConstants;
 import com.codzs.constant.domain.DomainVerificationMethodEnum;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.domain.Domain;
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.ArrayList;
 
 /**
@@ -31,7 +29,6 @@ public class DomainBusinessValidator {
     private final OrganizationService organizationService;
     private final DomainService domainService;
     private final DomainVerificationMethodEnum domainVerificationMethodEnum;
-    private static final Pattern DOMAIN_PATTERN = Pattern.compile(DomainConstants.DOMAIN_BUSINESS_VALIDATION_PATTERN);
 
     @Autowired
     public DomainBusinessValidator(OrganizationService organizationService,
@@ -123,14 +120,11 @@ public class DomainBusinessValidator {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
         
         // Check if domain name is being changed to an existing one
-        if (!existingDomain.getName().equals(updatedDomain.getName()) && 
-            organizationService.isDomainAlreadyRegistered(updatedDomain.getName())) {
-            errors.add(new ValidationException.ValidationError("name", 
-                "Domain name already registered: " + updatedDomain.getName()));
+        if (!existingDomain.getName().equals(updatedDomain.getName())) {
+            validateDomainGlobalUniqueness(updatedDomain.getName(), "", errors);
         }
         
         validateDomainNameFormat(updatedDomain.getName(), "", errors);
-        validateVerificationMethod(updatedDomain.getVerificationMethod(), "", errors);
         
         if (!errors.isEmpty()) {
             throw new ValidationException("Domain update validation failed", errors);
@@ -162,12 +156,10 @@ public class DomainBusinessValidator {
                                                 String verificationMethod, String verificationToken) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
         
-        if (domain.getIsVerified()) {
-            errors.add(new ValidationException.ValidationError("domainId", "Domain is already verified"));
-        } else if (!domain.getVerificationMethod().equals(verificationMethod)) {
-            errors.add(new ValidationException.ValidationError("verificationMethod", 
-                "Verification method does not match domain's configured method"));
-        } else if (!domainService.validateVerificationToken(domain, verificationToken, verificationMethod)) {
+        validateDomainVerificationRules(domain, verificationMethod, errors);
+        
+        // Additional validation for verification token
+        if (!domainService.validateVerificationToken(domain, verificationToken, verificationMethod)) {
             errors.add(new ValidationException.ValidationError("verificationToken", "Invalid verification token"));
         }
         
@@ -218,7 +210,6 @@ public class DomainBusinessValidator {
         
         validateDomainNameFormat(domain.getName(), fieldPrefix, errors);
         validateDomainGlobalUniqueness(domain.getName(), fieldPrefix, errors);
-        validateVerificationMethod(domain.getVerificationMethod(), fieldPrefix, errors);
     }
 
     private void validateDomainNameFormat(String domainName, String fieldPrefix, 
@@ -227,18 +218,7 @@ public class DomainBusinessValidator {
             return;
         }
 
-        if (!DOMAIN_PATTERN.matcher(domainName).matches()) {
-            errors.add(new ValidationException.ValidationError(
-                StringUtils.hasText(fieldPrefix) ? fieldPrefix + ".name" : "name", 
-                "Invalid domain format"));
-        }
-
-        if (domainName.length() > DomainConstants.MAX_DOMAIN_NAME_LENGTH) {
-            errors.add(new ValidationException.ValidationError(
-                StringUtils.hasText(fieldPrefix) ? fieldPrefix + ".name" : "name", 
-                "Domain name cannot exceed " + DomainConstants.MAX_DOMAIN_NAME_LENGTH + " characters"));
-        }
-
+        // Only business logic validations remain here
         validateReservedDomains(domainName, fieldPrefix, errors);
     }
 
@@ -253,15 +233,6 @@ public class DomainBusinessValidator {
             errors.add(new ValidationException.ValidationError(
                 StringUtils.hasText(fieldPrefix) ? fieldPrefix + ".name" : "name", 
                 "Cannot use reserved or platform domain names"));
-        }
-    }
-
-    private void validateVerificationMethod(String verificationMethod, String fieldPrefix, 
-                                          List<ValidationException.ValidationError> errors) {
-        if (StringUtils.hasText(verificationMethod) && !domainVerificationMethodEnum.isValidOption(verificationMethod)) {
-            errors.add(new ValidationException.ValidationError(
-                StringUtils.hasText(fieldPrefix) ? fieldPrefix + ".verificationMethod" : "verificationMethod", 
-                "Invalid domain verification method"));
         }
     }
 
@@ -347,11 +318,8 @@ public class DomainBusinessValidator {
 
     private Domain findDomainInOrganization(Organization organization, String domainId, 
                                           List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(domainId)) {
-            errors.add(new ValidationException.ValidationError("domainId", "Domain ID is required"));
-            return null;
-        }
-
+        // Domain ID required validation is handled by @NotBlank annotation in request DTOs
+        
         if (organization.getDomains() == null) {
             errors.add(new ValidationException.ValidationError("domainId", "Domain not found in organization"));
             return null;

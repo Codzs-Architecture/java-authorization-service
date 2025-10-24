@@ -1,4 +1,4 @@
-package com.codzs.validation.organization.plan;
+package com.codzs.validation.organization;
 
 import com.codzs.constant.plan.PlanConstants;
 import com.codzs.constant.plan.PlanTypeEnum;
@@ -18,28 +18,26 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
- * Business validator for Plan-related operations within organizations.
- * Focuses on plan association for organization APIs.
+ * Business validator for Organization-Plan association operations.
+ * Focuses on plan compatibility and association rules for organization APIs.
  * 
  * @author Codzs Team
  * @since 1.0
  */
 @Component
-public class PlanBusinessValidator {
+public class OrganizationPlanBusinessValidator {
     
     private final PlanService planService;
     private final OrganizationPlanService organizationPlanService;
-    private final PlanTypeEnum planTypeEnum;
 
     @Autowired
-    public PlanBusinessValidator(
+    public OrganizationPlanBusinessValidator(
         PlanService planService, 
         OrganizationPlanService organizationPlanService, 
         PlanTypeEnum planTypeEnum
     ) {
         this.planService = planService;
         this.organizationPlanService = organizationPlanService;
-        this.planTypeEnum = planTypeEnum;
     }
 
     // ========== ENTRY POINT METHODS FOR ORGANIZATION APIs ==========
@@ -67,10 +65,7 @@ public class PlanBusinessValidator {
     // ========== CORE VALIDATION METHODS ==========
 
     private Plan validatePlanExistsAndAvailable(String planId, List<ValidationException.ValidationError> errors) {
-        if (!StringUtils.hasText(planId)) {
-            errors.add(new ValidationException.ValidationError("planId", "Plan ID is required"));
-            return null;
-        }
+        // Plan ID required validation is handled by @NotBlank annotation in OrganizationPlanRequestDto
 
         Plan plan = planService.findById(planId);
 
@@ -121,7 +116,7 @@ public class PlanBusinessValidator {
         if (currentPlan != null) {
             Plan currentPlanEntity = planService.findById(currentPlan.getPlanId());
             
-            if (currentPlanEntity.getId().equals(plan.getId())) {
+            if (currentPlan.getPlanId().equals(plan.getId())) {
                 errors.add(new ValidationException.ValidationError("planId", 
                     "Organization is already on this plan"));
                 return;
@@ -153,12 +148,9 @@ public class PlanBusinessValidator {
 
     private void validatePlanTransitionPath(Plan currentPlan, Plan newPlan, 
                                           List<ValidationException.ValidationError> errors) {
-        Boolean currentPlanType = planTypeEnum.isValidOption(currentPlan.getType());
-        Boolean newPlanType = planTypeEnum.isValidOption(newPlan.getType());
-
         if (!planService.isTransitionAllowed(currentPlan.getType(), newPlan.getType())) {
             errors.add(new ValidationException.ValidationError("planId", 
-                "Direct transition from " + currentPlanType + " to " + newPlanType + " is not allowed"));
+                "Direct transition from " + currentPlan.getType() + " to " + newPlan.getType() + " is not allowed"));
         }
     }
 
@@ -245,16 +237,17 @@ public class PlanBusinessValidator {
     private boolean isValidBillingCycle(Plan plan, long durationDays) {
         int billingPeriod = plan.getValidityPeriod();
         
-        long expectedDays = 0;
-        if (plan.getValidityPeriodUnit() == PlanConstants.VALIDITY_UNIT_DAYS) {
-            return expectedDays == billingPeriod;
-        }   else if (plan.getValidityPeriodUnit() == PlanConstants.VALIDITY_UNIT_MONTHS) {
-            return expectedDays >= billingPeriod * 30L - 1 && durationDays <= billingPeriod * 30L + 1;
-        } else if (plan.getValidityPeriodUnit() == PlanConstants.VALIDITY_UNIT_YEARS) {
-            return expectedDays >= billingPeriod * 365L - 1 && durationDays <= billingPeriod * 365L + 1;
+        if (plan.getValidityPeriodUnit().equals(PlanConstants.VALIDITY_UNIT_DAYS)) {
+            return durationDays == billingPeriod;
+        } else if (plan.getValidityPeriodUnit().equals(PlanConstants.VALIDITY_UNIT_MONTHS)) {
+            long expectedDays = billingPeriod * 30L;
+            return durationDays >= expectedDays - 1 && durationDays <= expectedDays + 1;
+        } else if (plan.getValidityPeriodUnit().equals(PlanConstants.VALIDITY_UNIT_YEARS)) {
+            long expectedDays = billingPeriod * 365L;
+            return durationDays >= expectedDays - 1 && durationDays <= expectedDays + 1;
         }
         
-        return Math.abs(durationDays - expectedDays) <= 1;
+        return false;
     }
 
     private boolean isPlanHierarchyValid(Plan parentPlan, Plan childPlan) {
