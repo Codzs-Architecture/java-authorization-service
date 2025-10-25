@@ -1,13 +1,14 @@
 package com.codzs.repository.organization;
 
 import com.codzs.entity.organization.Organization;
+import com.codzs.entity.organization.OrganizationSettings;
+
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,7 +28,7 @@ public interface OrganizationSettingsRepository extends MongoRepository<Organiza
     // Bulk settings update using MongoDB update operators
     @Query("{ '_id': ?0, 'deletedDate': null }")
     @Update("{ '$set': { 'settings': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
-    void updateAllSettings(String organizationId, Object settings, Instant lastModifiedDate, String lastModifiedBy);
+    void updateAllSettings(String organizationId, OrganizationSettings settings, Instant lastModifiedDate, String lastModifiedBy);
 
     // Individual settings field updates
     @Query("{ '_id': ?0, 'deletedDate': null }")
@@ -46,33 +47,4 @@ public interface OrganizationSettingsRepository extends MongoRepository<Organiza
     @Update("{ '$set': { 'settings.country': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
     void updateCountry(String organizationId, String country, Instant lastModifiedDate, String lastModifiedBy);
 
-    // Settings analytics and reporting
-    @Query("{ 'deletedDate': null, 'settings.timezone': ?0 }")
-    List<Organization> findByTimezone(String timezone);
-    
-    @Query("{ 'deletedDate': null, 'settings.currency': ?0 }")
-    List<Organization> findByCurrency(String currency);
-    
-    @Query("{ 'deletedDate': null, 'settings.country': ?0 }")
-    List<Organization> findByCountry(String country);
-
-    // Settings statistics
-    @Query("{ 'deletedDate': null, 'settings.timezone': ?0 }")
-    long countByTimezone(String timezone);
-    
-    @Query("{ 'deletedDate': null, 'settings.currency': ?0 }")
-    long countByCurrency(String currency);
-    
-    @Query("{ 'deletedDate': null, 'settings.country': ?0 }")
-    long countByCountry(String country);
-
-    // Organizations missing certain settings
-    @Query("{ 'deletedDate': null, 'settings.timezone': { '$exists': false } }")
-    List<Organization> findWithoutTimezone();
-    
-    @Query("{ 'deletedDate': null, 'settings.currency': { '$exists': false } }")
-    List<Organization> findWithoutCurrency();
-    
-    @Query("{ 'deletedDate': null, 'settings.language': { '$exists': false } }")
-    List<Organization> findWithoutLanguage();
 }
