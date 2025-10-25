@@ -6,7 +6,6 @@ import com.codzs.constant.organization.OrganizationTypeEnum;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
 import com.codzs.service.organization.OrganizationService;
-import com.codzs.validation.domain.DomainBusinessValidator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -28,17 +27,14 @@ import java.util.List;
 public class OrganizationBusinessValidator {
     
     private final OrganizationService organizationService;
-    private final DomainBusinessValidator domainBusinessValidator;
     private final OrganizationPlanBusinessValidator organizationPlanBusinessValidator;
     private final OrganizationTypeEnum organizationTypeEnum;
 
     @Autowired
     public OrganizationBusinessValidator(OrganizationService organizationService,
-                                       DomainBusinessValidator domainBusinessValidator,
                                        OrganizationPlanBusinessValidator organizationPlanBusinessValidator,
                                        OrganizationTypeEnum organizationTypeEnum) {
         this.organizationService = organizationService;
-        this.domainBusinessValidator = domainBusinessValidator;
         this.organizationPlanBusinessValidator = organizationPlanBusinessValidator;
         this.organizationTypeEnum = organizationTypeEnum;
     }
@@ -58,14 +54,6 @@ public class OrganizationBusinessValidator {
         validateOrganizationUniqueness(organization.getName(), organization.getAbbr(), null, errors);
         validateOrganizationBusinessRules(organization, errors);
         validateOrganizationHierarchyRules(organization.getParentOrganizationId(), null, errors);
-        
-        if (organization.getDomains() != null && !organization.getDomains().isEmpty()) {
-            domainBusinessValidator.validateDomainsForOrganizationCreation(organization.getDomains(), errors);
-        }
-
-        if (organization.getDatabase() != null) {
-            validateDatabaseBusinessRules(organization.getDatabase(), errors);
-        }
 
         if (!errors.isEmpty()) {
             throw new ValidationException("Organization creation business validation failed", errors);
@@ -123,25 +111,6 @@ public class OrganizationBusinessValidator {
         }
     }
 
-    /**
-     * Entry point for organization domain addition business validation.
-     * API: POST /api/v1/organizations/{id}/domains
-     *
-     * @param organization the organization entity
-     * @param domain the domain entity
-     * @throws ValidationException if business validation fails
-     */
-    public void validateOrganizationDomainAdditionFlow(Organization organization, com.codzs.entity.domain.Domain domain) throws ValidationException {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-
-        validateOrganizationExistsAndActive(organization.getId(), errors);
-
-        domainBusinessValidator.validateDomainAdditionForOrganization(organization, domain, errors);
-
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Organization domain addition business validation failed", errors);
-        }
-    }
 
     /**
      * Entry point for organization activation business validation.
@@ -189,6 +158,23 @@ public class OrganizationBusinessValidator {
         }
     }
 
+    /**
+     * Entry point for organization deletion business validation.
+     * API: DELETE /api/v1/organizations/{id}
+     *
+     * @param organization the organization entity to delete
+     * @throws ValidationException if business validation fails
+     */
+    public void validateOrganizationDeletionFlow(Organization organization) throws ValidationException {
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+
+        validateDeletionBusinessRules(organization, errors);
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Organization deletion business validation failed", errors);
+        }
+    }
+
     // ========== CORE VALIDATION METHODS ==========
 
     private void validateOrganizationUniqueness(String name, String abbr, String excludeId, 
@@ -203,11 +189,6 @@ public class OrganizationBusinessValidator {
 
     private void validateOrganizationBusinessRules(Organization organization, 
                                                   List<ValidationException.ValidationError> errors) {
-        if (organization.getDomains() != null && organization.getDomains().size() > OrganizationConstants.MAX_DOMAINS_PER_ORGANIZATION) {
-            errors.add(new ValidationException.ValidationError("domains", 
-                "Organization cannot have more than " + OrganizationConstants.MAX_DOMAINS_PER_ORGANIZATION + " domains"));
-        }
-        
         if (organization.getExpiresDate() != null && organization.getExpiresDate().isBefore(Instant.now())) {
             errors.add(new ValidationException.ValidationError("expiresDate", "Expiry date cannot be in the past"));
         }
@@ -242,13 +223,6 @@ public class OrganizationBusinessValidator {
         }
     }
 
-    private void validateDatabaseBusinessRules(com.codzs.entity.organization.DatabaseConfig database, 
-                                             List<ValidationException.ValidationError> errors) {
-        if (database.getSchemas() != null && database.getSchemas().size() > OrganizationConstants.MAX_DATABASES_PER_ORGANIZATION) {
-            errors.add(new ValidationException.ValidationError("database.schemas", 
-                "Organization cannot have more than " + OrganizationConstants.MAX_DATABASES_PER_ORGANIZATION + " database schemas"));
-        }
-    }
 
     private void validateUpdateBusinessConstraints(Organization existingOrg, Organization updatedOrg, 
                                                  List<ValidationException.ValidationError> errors) {
@@ -275,14 +249,6 @@ public class OrganizationBusinessValidator {
                 "Organization must have valid database configuration before activation"));
         }
 
-        if (organization.getDomains() != null && !organization.getDomains().isEmpty()) {
-            boolean hasVerifiedDomain = organization.getDomains().stream()
-                .anyMatch(domain -> domain.getIsVerified());
-            if (!hasVerifiedDomain) {
-                errors.add(new ValidationException.ValidationError("domains", 
-                    "Organization must have at least one verified domain before activation"));
-            }
-        }
 
         if (StringUtils.hasText(organization.getParentOrganizationId())) {
             Organization parent = organizationService.findById(organization.getParentOrganizationId());
@@ -303,6 +269,19 @@ public class OrganizationBusinessValidator {
         if (organizationService.hasActiveTenants(organization.getId())) {
             errors.add(new ValidationException.ValidationError("tenants", 
                 "Cannot deactivate organization with active tenants"));
+        }
+    }
+
+    private void validateDeletionBusinessRules(Organization organization, 
+                                              List<ValidationException.ValidationError> errors) {
+        if (organizationService.hasActiveChildOrganizations(organization.getId())) {
+            errors.add(new ValidationException.ValidationError("childOrganizations", 
+                "Cannot delete organization with active child organizations"));
+        }
+
+        if (organizationService.hasActiveTenants(organization.getId())) {
+            errors.add(new ValidationException.ValidationError("tenants", 
+                "Cannot delete organization with active tenants"));
         }
     }
 

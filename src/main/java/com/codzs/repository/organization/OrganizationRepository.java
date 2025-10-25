@@ -6,14 +6,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.Update;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Repository interface for Organization MongoDB documents.
- * Provides methods for managing organizations with minimal, reusable functionality.
+ * Provides methods for managing organizations with root-level attribute operations only.
+ * Nested sub-objects (settings, metadata, domains, database) are handled by their respective repositories.
  * 
  * @author Codzs Team
  * @since 1.0
@@ -21,27 +24,64 @@ import java.util.Optional;
 @Repository
 public interface OrganizationRepository extends MongoRepository<Organization, String> {
 
-    // Basic CRUD and existence checks
+    // ========== BASIC CRUD OPERATIONS ==========
+    
     Optional<Organization> findByIdAndDeletedOnIsNull(String id);
     
     Optional<Organization> findByNameAndDeletedOnIsNull(String name);
     
-    Optional<Organization> findByName(String name);
-    
     Optional<Organization> findByAbbrAndDeletedOnIsNull(String abbr);
-    
-    Optional<Organization> findByAbbr(String abbr);
     
     boolean existsByNameAndDeletedOnIsNull(String name);
     
     boolean existsByAbbrAndDeletedOnIsNull(String abbr);
 
-    // Status-based queries
+    // ========== ROOT-LEVEL ATTRIBUTE UPDATES ==========
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'name': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationName(String organizationId, String name, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'abbr': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationAbbr(String organizationId, String abbr, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'displayName': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationDisplayName(String organizationId, String displayName, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'description': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationDescription(String organizationId, String description, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'status': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationStatus(String organizationId, OrganizationStatusEnum status, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'organizationType': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationType(String organizationId, String organizationType, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'billingEmail': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationBillingEmail(String organizationId, String billingEmail, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'expiresDate': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationExpiresDate(String organizationId, Instant expiresDate, Instant lastModifiedDate, String lastModifiedBy);
+    
+    @Query("{ '_id': ?0, 'deletedDate': null }")
+    @Update("{ '$set': { 'parentOrganizationId': ?1, 'lastModifiedDate': ?2, 'lastModifiedBy': ?3 } }")
+    void updateOrganizationParent(String organizationId, String parentOrganizationId, Instant lastModifiedDate, String lastModifiedBy);
+
+    // ========== STATUS-BASED QUERIES ==========
+    
     List<Organization> findByStatusAndDeletedOnIsNull(OrganizationStatusEnum status);
     
     Page<Organization> findByStatusAndDeletedOnIsNull(OrganizationStatusEnum status, Pageable pageable);
 
-    // Search and filtering for listing APIs
+    // ========== SEARCH AND FILTERING ==========
+    
     @Query("{ 'deletedDate': null, $and: [ " +
            "{ $or: [ " +
            "  { 'status': { $in: ?0 } }, " +
@@ -72,7 +112,8 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
                                       String searchText, 
                                       Pageable pageable);
 
-    // Autocomplete functionality
+    // ========== AUTOCOMPLETE FUNCTIONALITY ==========
+    
     @Query("{ 'deletedDate': null, 'status': { $in: ?0 }, " +
            "$or: [ " +
            "  { 'name': { $regex: ?1, $options: 'i' } }, " +
@@ -80,7 +121,8 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
            "] }")
     List<Organization> findForAutocomplete(List<OrganizationStatusEnum> statuses, String searchQuery, Pageable pageable);
 
-    // Hierarchy management
+    // ========== HIERARCHY MANAGEMENT ==========
+    
     List<Organization> findByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId);
     
     Page<Organization> findByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId, Pageable pageable);
@@ -100,55 +142,17 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
                                               List<String> organizationTypes, 
                                               Pageable pageable);
 
-    // Access control helpers - find organizations for specific users
+    // ========== ACCESS CONTROL HELPERS ==========
+    
     @Query("{ 'deletedDate': null, 'ownerUserIds': { $in: [?0] } }")
     List<Organization> findByOwnerUserId(String userId);
     
     @Query("{ 'deletedDate': null, 'ownerUserIds': { $in: [?0] } }")
     Page<Organization> findByOwnerUserId(String userId, Pageable pageable);
 
-    // Utility methods for validation
+    // ========== UTILITY METHODS FOR VALIDATION ==========
+    
     long countByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId);
     
     boolean existsByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId);
-
-    // Domain-related queries for embedded domains
-    @Query("{ 'deletedOn': null, 'domains.name': ?0 }")
-    boolean existsByDomainsName(String domainName);
-    
-    // Array operations for domain management
-    @org.springframework.data.mongodb.repository.Update("{ '$push': { 'domains': ?1 } }")
-    void addDomainToOrganization(String organizationId, com.codzs.entity.domain.Domain domain);
-    
-    @org.springframework.data.mongodb.repository.Update("{ '$pull': { 'domains': { 'id': ?1 } } }")
-    void removeDomainFromOrganization(String organizationId, String domainId);
-    
-    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.isVerified': true, 'domains.$.verifiedDate': ?2 } }")
-    @Query("{ '_id': ?0, 'domains.id': ?1 }")
-    void updateDomainVerificationStatus(String organizationId, String domainId, java.time.Instant verifiedDate);
-    
-    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$[elem].isPrimary': false } }")
-    @Query("{ '_id': ?0 }")
-    void unsetAllPrimaryDomains(String organizationId);
-    
-    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.isPrimary': true } }")
-    @Query("{ '_id': ?0, 'domains.id': ?1 }")
-    void setPrimaryDomain(String organizationId, String domainId);
-    
-    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.verificationToken': ?2 } }")
-    @Query("{ '_id': ?0, 'domains.id': ?1 }")
-    void updateDomainVerificationToken(String organizationId, String domainId, String newToken);
-    
-    // Individual domain field update operations
-    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.name': ?2 } }")
-    @Query("{ '_id': ?0, 'domains.id': ?1 }")
-    void updateDomainName(String organizationId, String domainId, String newName);
-    
-    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.verificationMethod': ?2 } }")
-    @Query("{ '_id': ?0, 'domains.id': ?1 }")
-    void updateDomainVerificationMethod(String organizationId, String domainId, String verificationMethod);
-    
-    @org.springframework.data.mongodb.repository.Update("{ '$set': { 'domains.$.isPrimary': ?2 } }")
-    @Query("{ '_id': ?0, 'domains.id': ?1 }")
-    void updateDomainPrimaryStatus(String organizationId, String domainId, Boolean isPrimary);
 }
