@@ -1,13 +1,10 @@
 package com.codzs.service.domain;
 
 import com.codzs.constant.domain.DomainConstants;
-import com.codzs.constant.organization.OrganizationConstants;
+// OrganizationConstants removed - generic service doesn't have entity-specific constants
 import com.codzs.entity.domain.Domain;
-import com.codzs.entity.organization.Organization;
-import com.codzs.exception.validation.ValidationException;
-import com.codzs.repository.organization.OrganizationRepository;
-import com.codzs.service.organization.OrganizationService;
-import com.codzs.validation.organization.domain.DomainBusinessValidator;
+import com.codzs.repository.domain.DomainRepository;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,15 +13,14 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Service implementation for Domain-related business operations within organizations.
- * Manages domain operations as embedded objects within organizations
+ * Service implementation for Domain-related business operations within entities.
+ * Manages domain operations as embedded objects within entities
  * with proper business validation and transaction management.
  * 
  * @author Codzs Team
@@ -33,213 +29,15 @@ import java.util.regex.Pattern;
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-public class DomainServiceImpl implements DomainService {
+public class DomainServiceImpl<T> implements DomainService<T> {
 
-    private final OrganizationRepository organizationRepository;
-    private final OrganizationService organizationService;
-    private final DomainBusinessValidator domainBusinessValidator;
+    protected final DomainRepository<T> domainRepository;
     
     private static final Pattern DOMAIN_PATTERN = Pattern.compile(DomainConstants.DOMAIN_BUSINESS_VALIDATION_PATTERN);
 
     @Autowired
-    public DomainServiceImpl(OrganizationRepository organizationRepository,
-                           OrganizationService organizationService,
-                           DomainBusinessValidator domainBusinessValidator) {
-        this.organizationRepository = organizationRepository;
-        this.organizationService = organizationService;
-        this.domainBusinessValidator = domainBusinessValidator;
-    }
-
-    // ========== API FLOW METHODS ==========
-
-    @Override
-    @Transactional
-    public Organization addDomainToOrganization(Organization organization, Domain domain) {
-        log.debug("Adding domain {} to organization ID: {}", domain.getName(), organization.getId());
-        
-        domainBusinessValidator.validateDomainAddition(organization, domain);
-        
-        // Apply domain addition business logic
-        applyDomainAdditionBusinessLogic(organization, domain);
-        
-        // Use MongoDB array operation to add domain directly
-        organizationRepository.addDomainToOrganization(organization.getId(), domain);
-        
-        log.info("Added domain {} to organization ID: {}", domain.getName(), organization.getId());
-        
-        // Return updated organization
-        return getOrganizationAndValidate(organization.getId());
-    }
-
-    @Override
-    @Transactional
-    public Organization updateDomainInOrganization(Organization organization, Domain domain) {
-        log.debug("Updating domain {} in organization ID: {}", domain.getId(), organization.getId());
-        
-        // Find existing domain in organization
-        Domain existingDomain = findDomainInOrganization(organization, domain.getId());
-        if (existingDomain == null) {
-            throw new ValidationException("Domain not found with ID: " + domain.getId());
-        }
-        
-        // Business validation for domain update
-        domainBusinessValidator.validateDomainUpdate(organization, existingDomain, domain);
-        
-        // Use MongoDB array update operations for specific fields
-        updateDomainFields(organization.getId(), domain.getId(), domain);
-        
-        log.info("Updated domain {} in organization ID: {}", domain.getId(), organization.getId());
-        
-        // Return updated organization
-        return getOrganizationAndValidate(organization.getId());
-    }
-
-    @Override
-    @Transactional
-    public Organization removeDomainFromOrganization(String organizationId, String domainId) {
-        log.debug("Removing domain {} from organization ID: {}", domainId, organizationId);
-        
-        // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
-        
-        // Find domain to remove
-        Domain domainToRemove = findDomainInOrganization(organization, domainId);
-        if (domainToRemove == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
-        }
-        
-        // Business validation for domain removal
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        domainBusinessValidator.validateDomainRemoval(organization, domainId, errors);
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Domain removal validation failed", errors);
-        }
-        
-        // Use MongoDB array operation to remove domain directly
-        organizationRepository.removeDomainFromOrganization(organizationId, domainId);
-        
-        log.info("Removed domain {} from organization ID: {}", domainId, organizationId);
-        
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
-    }
-
-    @Override
-    @Transactional
-    public Organization verifyDomainInOrganization(String organizationId, String domainId, 
-                                                 String verificationMethod, String verificationToken) {
-        log.debug("Verifying domain {} in organization ID: {}", domainId, organizationId);
-        
-        // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
-        
-        // Find domain to verify
-        Domain domain = findDomainInOrganization(organization, domainId);
-        if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
-        }
-        
-        // Business validation for domain verification
-        domainBusinessValidator.validateDomainVerificationRequest(organization, domain, verificationMethod, verificationToken);
-        
-        // Use MongoDB array operation to update verification status
-        organizationRepository.updateDomainVerificationStatus(organizationId, domainId, Instant.now());
-        
-        log.info("Verified domain {} in organization ID: {}", domainId, organizationId);
-        
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
-    }
-
-    @Override
-    @Transactional
-    public Organization setPrimaryDomain(String organizationId, String domainId) {
-        log.debug("Setting domain {} as primary for organization ID: {}", domainId, organizationId);
-        
-        // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
-        
-        // Find domain to set as primary
-        Domain domain = findDomainInOrganization(organization, domainId);
-        if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
-        }
-        
-        // Business validation for setting primary domain
-        domainBusinessValidator.validateSetPrimaryDomain(organization, domain);
-        
-        // Use MongoDB array operations to update primary domain settings
-        organizationRepository.unsetAllPrimaryDomains(organizationId);
-        organizationRepository.setPrimaryDomain(organizationId, domainId);
-        
-        log.info("Set domain {} as primary for organization ID: {}", domainId, organizationId);
-        
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
-    }
-
-    @Override
-    public List<Domain> getDomainsForOrganization(String organizationId) {
-        log.debug("Getting domains for organization ID: {}", organizationId);
-        
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return new ArrayList<>();
-        }
-        
-        return organization.getDomains() != null ? organization.getDomains() : new ArrayList<>();
-    }
-
-    @Override
-    public Domain getDomainInOrganization(String organizationId, String domainId) {
-        log.debug("Getting domain {} for organization ID: {}", domainId, organizationId);
-        
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return null;
-        }
-        
-        return findDomainInOrganization(organization, domainId);
-    }
-
-    @Override
-    @Transactional
-    public Organization regenerateDomainVerificationToken(String organizationId, String domainId) {
-        log.debug("Regenerating verification token for domain {} in organization ID: {}", domainId, organizationId);
-        
-        // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
-        
-        // Find domain
-        Domain domain = findDomainInOrganization(organization, domainId);
-        if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
-        }
-        
-        // Generate new verification token
-        String newToken = generateVerificationToken(domain.getName(), domain.getVerificationMethod());
-        
-        // Use MongoDB array operation to update verification token
-        organizationRepository.updateDomainVerificationToken(organizationId, domainId, newToken);
-        
-        log.info("Regenerated verification token for domain {} in organization ID: {}", domainId, organizationId);
-        
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
-    }
- 
-    @Override
-    public String getDomainVerificationInstructions(String organizationId, String domainId) {
-        log.debug("Getting verification instructions for domain {} in organization ID: {}", domainId, organizationId);
-        
-        Domain domain = getDomainInOrganization(organizationId, domainId);
-        if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
-        }
-        
-        return generateVerificationInstructions(domain);
+    public DomainServiceImpl(DomainRepository<T> domainRepository) {
+        this.domainRepository = domainRepository;
     }
 
     // ========== UTILITY METHODS ==========
@@ -250,7 +48,7 @@ public class DomainServiceImpl implements DomainService {
             return false;
         }
         
-        return organizationRepository.existsByDomainsName(domainName.toLowerCase().trim());
+        return domainRepository.existsByDomainsName(domainName.toLowerCase().trim());
     }
 
     @Override
@@ -291,76 +89,9 @@ public class DomainServiceImpl implements DomainService {
         return true;
     }
 
-    @Override
-    public Domain getPrimaryDomainForOrganization(String organizationId) {
-        List<Domain> domains = getDomainsForOrganization(organizationId);
-        
-        return domains.stream()
-                .filter(Domain::getIsPrimary)
-                .findFirst()
-                .orElse(null);
-    }
-
-    @Override
-    public boolean hasVerifiedDomains(String organizationId) {
-        List<Domain> domains = getDomainsForOrganization(organizationId);
-        
-        return domains.stream()
-                .anyMatch(Domain::getIsVerified);
-    }
-
     // ========== PRIVATE HELPER METHODS ==========
 
-    private Organization getOrganizationAndValidate(String organizationId) {
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            throw new ValidationException("Organization not found with ID: " + organizationId);
-        }
-        return organization;
-    }
-
-    private Domain findDomainInOrganization(Organization organization, String domainId) {
-        if (organization.getDomains() == null) {
-            return null;
-        }
-        
-        return organization.getDomains().stream()
-                .filter(domain -> domainId.equals(domain.getId()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private void updateDomainFields(String organizationId, String domainId, Domain updatedDomain) {
-        // Use specific MongoDB array update operations for each field that needs updating
-        if (updatedDomain.getName() != null) {
-            organizationRepository.updateDomainName(organizationId, domainId, updatedDomain.getName());
-        }
-        
-        if (updatedDomain.getVerificationMethod() != null) {
-            organizationRepository.updateDomainVerificationMethod(organizationId, domainId, updatedDomain.getVerificationMethod());
-        }
-        
-        if (updatedDomain.getIsPrimary() != null) {
-            // If setting as primary, first unset all other primary domains
-            if (updatedDomain.getIsPrimary()) {
-                organizationRepository.unsetAllPrimaryDomains(organizationId);
-            }
-            organizationRepository.updateDomainPrimaryStatus(organizationId, domainId, updatedDomain.getIsPrimary());
-        }
-        
-        log.debug("Updated domain fields for domain {} in organization {}", domainId, organizationId);
-    }
-
-    private void applyDomainAdditionBusinessLogic(Organization organization, Domain domain) {
-        // Auto-set as primary if first domain
-        if (organization.getDomains().size() == 1) {
-            domain.setIsPrimary(true);
-        }
-        
-        log.debug("Applied domain addition business logic for organization: {}", organization.getName());
-    }
-
-    private String generateVerificationInstructions(Domain domain) {
+    protected String generateVerificationInstructions(Domain domain) {
         StringBuilder instructions = new StringBuilder();
         
         switch (domain.getVerificationMethod()) {
@@ -463,7 +194,7 @@ public class DomainServiceImpl implements DomainService {
         }
         
         Instant expiryTime = domain.getCreatedDate().plus(Duration.ofHours(
-            OrganizationConstants.DOMAIN_VERIFICATION_EXPIRY_HOURS));
+            DomainConstants.DOMAIN_VERIFICATION_EXPIRY_HOURS));
         
         boolean expired = Instant.now().isAfter(expiryTime);
         log.debug("Domain verification expired check for domain {}: {}", domain.getName(), expired);
@@ -541,7 +272,7 @@ public class DomainServiceImpl implements DomainService {
 
     // ========== PRIVATE HELPER METHODS ==========
 
-    private String getDnsInstructions(String domainName, String token) {
+    protected String getDnsInstructions(String domainName, String token) {
         return String.format(
             "To verify ownership of %s via DNS:\n" +
             "1. Add a TXT record to your domain's DNS settings\n" +
@@ -553,7 +284,7 @@ public class DomainServiceImpl implements DomainService {
         );
     }
 
-    private String getEmailInstructions(String domainName, String token) {
+    protected String getEmailInstructions(String domainName, String token) {
         return String.format(
             "To verify ownership of %s via email:\n" +
             "1. Check your email at admin@%s, webmaster@%s, or postmaster@%s\n" +
@@ -563,7 +294,7 @@ public class DomainServiceImpl implements DomainService {
         );
     }
 
-    private String getFileInstructions(String domainName, String token) {
+    protected String getFileInstructions(String domainName, String token) {
         return String.format(
             "To verify ownership of %s via file upload:\n" +
             "1. Create a file named 'codzs-domain-verification.txt'\n" +

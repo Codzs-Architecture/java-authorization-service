@@ -1,114 +1,16 @@
 package com.codzs.service.domain;
 
-import com.codzs.dto.organization.request.DomainRequestDto;
 import com.codzs.entity.domain.Domain;
-import com.codzs.entity.organization.Organization;
-
-import java.util.List;
 
 /**
- * Service interface for Domain-related business operations within organizations.
- * Manages domain operations as embedded objects within organizations
+ * Service interface for Domain-related business operations within entities.
+ * Manages domain operations as embedded objects within entities
  * with proper business validation and transaction management.
  * 
  * @author Codzs Team
  * @since 1.0
  */
-public interface DomainService {
-
-    // ========== API FLOW METHODS ==========
-
-    /**
-     * Adds a domain to an organization.
-     * API: POST /api/v1/organizations/{id}/domains
-     *
-     * @param organization the organization entity
-     * @param domain the domain entity to add
-     * @return the updated organization entity with new domain
-     */
-    Organization addDomainToOrganization(Organization organization, Domain domain);
-
-    /**
-     * Updates a domain within an organization.
-     * API: PUT /api/v1/organizations/{id}/domains/{domainId}
-     *
-     * @param organization the organization entity
-     * @param domain the domain entity with updates
-     * @return the updated organization entity
-     */
-    Organization updateDomainInOrganization(Organization organization, Domain domain);
-
-    /**
-     * Removes a domain from an organization.
-     * API: DELETE /api/v1/organizations/{id}/domains/{domainId}
-     *
-     * @param organizationId the organization ID
-     * @param domainId the domain ID to remove
-     * @return the updated organization entity without the domain
-     */
-    Organization removeDomainFromOrganization(String organizationId, String domainId);
-
-    /**
-     * Verifies a domain within an organization.
-     * API: PUT /api/v1/organizations/{id}/domains/{domainId}/verify
-     *
-     * @param organizationId the organization ID
-     * @param domainId the domain ID to verify
-     * @param verificationMethod the verification method used
-     * @param verificationToken the verification token (optional)
-     * @return the updated organization entity with verified domain
-     */
-    Organization verifyDomainInOrganization(String organizationId, String domainId, 
-                                          String verificationMethod, String verificationToken);
-
-    /**
-     * Sets a domain as primary within an organization.
-     * API: PUT /api/v1/organizations/{id}/domains/{domainId}/set-primary
-     *
-     * @param organizationId the organization ID
-     * @param domainId the domain ID to set as primary
-     * @return the updated organization entity with new primary domain
-     */
-    Organization setPrimaryDomain(String organizationId, String domainId);
-
-    /**
-     * Gets all domains for an organization.
-     * API: GET /api/v1/organizations/{id}/domains
-     *
-     * @param organizationId the organization ID
-     * @return list of domain entities
-     */
-    List<Domain> getDomainsForOrganization(String organizationId);
-
-    /**
-     * Gets a specific domain within an organization.
-     * API: GET /api/v1/organizations/{id}/domains/{domainId}
-     *
-     * @param organizationId the organization ID
-     * @param domainId the domain ID
-     * @return the domain entity or null if not found
-     */
-    Domain getDomainInOrganization(String organizationId, String domainId);
-
-    /**
-     * Regenerates verification token for a domain.
-     * API: POST /api/v1/organizations/{id}/domains/{domainId}/regenerate-token
-     *
-     * @param organizationId the organization ID
-     * @param domainId the domain ID
-     * @return the updated organization entity with new verification token
-     */
-    Organization regenerateDomainVerificationToken(String organizationId, String domainId);
-
-    /**
-     * Gets verification instructions for a domain.
-     * API: GET /api/v1/organizations/{id}/domains/{domainId}/verification-instructions
-     *
-     * @param organizationId the organization ID
-     * @param domainId the domain ID
-     * @return verification instructions as string
-     */
-    String getDomainVerificationInstructions(String organizationId, String domainId);
+public interface DomainService<T> {
 
     // ========== UTILITY METHODS ==========
 
@@ -146,23 +48,6 @@ public interface DomainService {
      * @return true if token is valid
      */
     boolean validateVerificationToken(Domain domain, String providedToken, String verificationMethod);
-
-    /**
-     * Gets primary domain for an organization.
-     *
-     * @param organizationId the organization ID
-     * @return the primary domain entity or null if none
-     */
-    Domain getPrimaryDomainForOrganization(String organizationId);
-
-    /**
-     * Checks if organization has verified domains.
-     *
-     * @param organizationId the organization ID
-     * @return true if organization has at least one verified domain
-     */
-    boolean hasVerifiedDomains(String organizationId);
-
 
     // ========== DOMAIN VERIFICATION METHODS ==========
 
@@ -209,14 +94,14 @@ public interface DomainService {
 
     /**
      * Validates verification method against domain constraints.
-     * Checks if verification method is available for domain/organization type.
+     * Checks if verification method is available for domain/entity type.
      *
      * @param domainName the domain name
      * @param verificationMethod the verification method
-     * @param organizationType the organization type
+     * @param entityType the entity type
      * @return true if verification method is valid for this context
      */
-    boolean isVerificationMethodValid(String domainName, String verificationMethod, String organizationType);
+    boolean isVerificationMethodValid(String domainName, String verificationMethod, String entityType);
 
     // ========== DNS VERIFICATION METHODS ==========
 
@@ -238,10 +123,10 @@ public interface DomainService {
      *
      * @param domainName the domain name
      * @param token the verification token
-     * @param organizationName the organization name
+     * @param entityName the entity name
      * @return true if email was sent successfully
      */
-    boolean sendVerificationEmail(String domainName, String token, String organizationName);
+    boolean sendVerificationEmail(String domainName, String token, String entityName);
 
     // ========== FILE VERIFICATION METHODS ==========
 
@@ -258,13 +143,13 @@ public interface DomainService {
     // ========== UTILITY METHODS ==========
 
     /**
-     * Gets available verification methods for an organization type.
-     * Different organization types may have different available methods.
+     * Gets available verification methods for an entity type.
+     * Different entity types may have different available methods.
      *
-     * @param organizationType the organization type
+     * @param entityType the entity type
      * @return array of available verification methods
      */
-    String[] getAvailableVerificationMethods(String organizationType);
+    String[] getAvailableVerificationMethods(String entityType);
 
     /**
      * Estimates verification completion time for a method.

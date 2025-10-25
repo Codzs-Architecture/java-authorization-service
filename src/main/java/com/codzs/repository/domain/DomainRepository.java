@@ -1,0 +1,85 @@
+package com.codzs.repository.domain;
+
+import com.codzs.entity.domain.Domain;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.Update;
+import org.springframework.stereotype.Repository;
+
+import java.time.Instant;
+
+/**
+ * Repository interface for Domain MongoDB operations.
+ * Provides methods for managing domains as embedded objects within <entity>s.
+ * 
+ * @author Codzs Team
+ * @since 1.0
+ */
+@Repository
+public interface DomainRepository<T> extends MongoRepository<T, String> {
+
+    // ========== DOMAIN OPERATIONS ==========
+
+    /**
+     * Adds a new domain to an entity.
+     * Uses MongoDB $push operator to add the domain to the domains array.
+     */
+    @Update("{ '$push': { 'domains': ?1 } }")
+    @Query("{ '_id': ?0 }")
+    void addDomainToEntity(String entityId, Domain domain);
+
+    /**
+     * Removes a domain from an entity.
+     * Uses MongoDB $pull operator to remove the domain by ID from the domains array.
+     */
+    @Update("{ '$pull': { 'domains': { 'id': ?1 } } }")
+    @Query("{ '_id': ?0 }")
+    void removeDomainFromEntity(String entityId, String domainId);
+
+    /**
+     * Updates an entire domain in one operation.
+     * Uses MongoDB positional operator ($) to update the specific domain in the array.
+     */
+    @Update("{ '$set': { 'domains.$': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomain(String entityId, String domainId, Domain domain);
+
+    /**
+     * Updates domain verification status and timestamp.
+     * Marks a domain as verified with the current timestamp.
+     */
+    @Update("{ '$set': { 'domains.$.isVerified': true, 'domains.$.verifiedDate': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomainVerificationStatus(String entityId, String domainId, Instant verifiedDate);
+
+    /**
+     * Unsets primary status for all domains in an entity.
+     * Used before setting a new primary domain.
+     */
+    @Update("{ '$set': { 'domains.$[elem].isPrimary': false } }")
+    @Query("{ '_id': ?0 }")
+    void unsetAllPrimaryDomains(String entityId);
+
+    /**
+     * Sets a domain as primary within an entity.
+     */
+    @Update("{ '$set': { 'domains.$.isPrimary': true } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void setPrimaryDomain(String entityId, String domainId);
+
+    /**
+     * Updates the verification token for a domain.
+     */
+    @Update("{ '$set': { 'domains.$.verificationToken': ?2 } }")
+    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    void updateDomainVerificationToken(String entityId, String domainId, String newToken);
+
+    // ========== QUERY OPERATIONS ==========
+
+    /**
+     * Checks if a domain name already exists globally across all entities.
+     * Used for validation during domain creation.
+     */
+    @Query("{ 'deletedOn': null, 'domains.name': ?0 }")
+    boolean existsByDomainsName(String domainName);
+}

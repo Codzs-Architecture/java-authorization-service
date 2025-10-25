@@ -133,6 +133,14 @@ public final class DomainConstants {
     public static final String VERIFICATION_TOKEN_SIZE_MESSAGE = 
         "Verification token must not exceed " + VERIFICATION_TOKEN_MAX_LENGTH + " characters";
     
+    // ========================= TIMING CONSTRAINTS =========================
+    
+    /**
+     * Domain verification token expiry time in hours.
+     * Verification tokens expire after this many hours.
+     */
+    public static final int DOMAIN_VERIFICATION_EXPIRY_HOURS = 24;
+    
     // ========================= CONSTRUCTOR =========================
     
     /**
