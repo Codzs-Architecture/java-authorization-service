@@ -53,7 +53,7 @@ public interface OrganizationSettingsService {
      * @param settingKey the setting key to retrieve
      * @return setting value or null if not found
      */
-    Object getSettingValue(String organizationId, String settingKey);
+    String getSettingValue(String organizationId, String settingKey);
 
     /**
      * Resets organization settings to default values.

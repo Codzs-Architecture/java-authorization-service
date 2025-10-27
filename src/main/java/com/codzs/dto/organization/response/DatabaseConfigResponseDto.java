@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * DTO for database configuration in organization responses.
@@ -32,6 +33,9 @@ public class DatabaseConfigResponseDto {
 
     @Schema(description = "List of database schemas")
     private List<DatabaseSchemaResponseDto> schemas;
+
+    @Schema(description = "Database connection test results (only included when testConnection=true)")
+    private boolean connectionTestResults;
 
     // Custom constructor for convenience
     public DatabaseConfigResponseDto(String connectionString, String certificate, List<DatabaseSchemaResponseDto> schemas) {

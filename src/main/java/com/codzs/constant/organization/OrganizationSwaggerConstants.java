@@ -55,6 +55,26 @@ public class OrganizationSwaggerConstants {
      */
     public static final String EXAMPLE_ORGANIZATION_ID = "550e8400-e29b-41d4-a716-446655440000";
     
+    /**
+     * Example tenant ID for documentation.
+     */
+    public static final String EXAMPLE_TENANT_ID = "550e8400-e29b-41d4-a716-446655440002";
+    
+    /**
+     * Example correlation ID for documentation.
+     */
+    public static final String EXAMPLE_CORRELATION_ID = "req_550e8400-e29b-41d4-a716-446655440003";
+    
+    /**
+     * Example domain ID for documentation.
+     */
+    public static final String EXAMPLE_DOMAIN_ID = "550e8400-e29b-41d4-a716-446655440004";
+    
+    /**
+     * Example schema ID for documentation.
+     */
+    public static final String EXAMPLE_SCHEMA_ID = "550e8400-e29b-41d4-a716-446655440005";
+    
     // ========================= SETTINGS EXAMPLES =========================
     
     /**

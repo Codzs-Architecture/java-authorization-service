@@ -4,6 +4,7 @@ import com.codzs.dto.organization.request.OrganizationCreateRequestDto;
 import com.codzs.dto.organization.request.OrganizationUpdateRequestDto;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.dto.organization.response.OrganizationResponseDto;
+import com.codzs.dto.organization.response.OrganizationSummaryResponseDto;
 import com.codzs.entity.organization.Organization;
 import org.mapstruct.*;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,14 @@ public interface OrganizationMapper {
     @Mapping(target = "expiresDate", ignore = true) // Will be calculated by business logic
     Organization toEntity(OrganizationCreateRequestDto requestDto);
 
+    /**
+     * Maps OrganizationCreateRequestDto to Organization entity.
+     * Sets default values and handles business logic for new organizations.
+     */
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "status", expression = "java(com.codzs.constant.organization.OrganizationStatusEnum.PENDING)")
+    @Mapping(target = "expiresDate", ignore = true) // Will be calculated by business logic
+    Organization toUpdateEntity(OrganizationUpdateRequestDto requestDto);
 
     // ========================= UPDATE MAPPINGS =========================
     
@@ -78,19 +87,19 @@ public interface OrganizationMapper {
     /**
      * Maps Organization entity to simplified response for autocomplete.
      */
-    @Mapping(target = "description", ignore = true)
+    // @Mapping(target = "description", ignore = true)
     @Mapping(target = "organizationType", ignore = true)
     @Mapping(target = "billingEmail", ignore = true)
-    @Mapping(target = "expiresDate", ignore = true)
-    @Mapping(target = "database", ignore = true)
-    @Mapping(target = "settings", ignore = true)
-    @Mapping(target = "metadata", ignore = true)
-    @Mapping(target = "domains", ignore = true)
-    @Mapping(target = "ownerUserIds", ignore = true)
+    // @Mapping(target = "expiresDate", ignore = true)
+    // @Mapping(target = "database", ignore = true)
+    // @Mapping(target = "settings", ignore = true)
+    // @Mapping(target = "metadata", ignore = true)
+    // @Mapping(target = "domains", ignore = true)
+    // @Mapping(target = "ownerUserIds", ignore = true)
     @Mapping(target = "parentOrganizationId", ignore = true)
-    @Mapping(target = "correlationId", ignore = true)
+    // @Mapping(target = "correlationId", ignore = true)
     @Named("toAutocompleteResponse")
-    OrganizationResponseDto toAutocompleteResponse(Organization organization);
+    OrganizationSummaryResponseDto toAutocompleteResponse(Organization organization);
 
     /**
      * Maps list of Organization entities to autocomplete response list.

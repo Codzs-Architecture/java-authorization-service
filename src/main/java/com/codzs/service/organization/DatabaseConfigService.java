@@ -44,9 +44,9 @@ public interface DatabaseConfigService {
      *
      * @param organizationId the organization ID
      * @param schema the database schema entity to add
-     * @return the updated organization entity with new schema
+     * @return list of all database schemas after addition
      */
-    Organization addDatabaseSchema(String organizationId, DatabaseSchema schema);
+    List<DatabaseSchema> addDatabaseSchema(String organizationId, DatabaseSchema schema);
 
     /**
      * Updates an existing database schema for an organization.
@@ -73,9 +73,23 @@ public interface DatabaseConfigService {
      * API: GET /api/v1/organizations/{id}/database/schemas
      *
      * @param organizationId the organization ID
-     * @return list of database schema entities
+     * @return list of all database schema entities
      */
     List<DatabaseSchema> getDatabaseSchemas(String organizationId);
+
+    /**
+     * Lists database schemas for an organization with optional filtering.
+     * API: GET /api/v1/organizations/{id}/database/schemas
+     *
+     * @param organizationId the organization ID
+     * @param forService filter by service type (optional)
+     * @param status filter by schema status (optional)
+     * @param headerOrganizationId organization context header (optional)
+     * @param tenantId tenant context header (optional)
+     * @return list of database schema entities (filtered if parameters provided)
+     */
+    List<DatabaseSchema> listDatabaseSchemas(String organizationId, String forService, String status,
+                                           String headerOrganizationId, String tenantId);
 
     /**
      * Gets a specific database schema for an organization.

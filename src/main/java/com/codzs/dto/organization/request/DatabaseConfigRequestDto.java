@@ -3,15 +3,11 @@ package com.codzs.dto.organization.request;
 import com.codzs.constant.organization.OrganizationSwaggerConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-
-import java.util.List;
 
 /**
  * DTO for database configuration in organization requests.
@@ -40,14 +36,8 @@ public class DatabaseConfigRequestDto {
             required = true)
     private String certificate;
 
-    @NotEmpty(message = "At least one schema is required")
-    @Valid
-    @Schema(description = "List of database schemas", required = true)
-    private List<DatabaseSchemaRequestDto> schemas;
-
-    public DatabaseConfigRequestDto(String connectionString, String certificate, List<DatabaseSchemaRequestDto> schemas) {
+    public DatabaseConfigRequestDto(String connectionString, String certificate) {
         this.connectionString = connectionString;
         this.certificate = certificate;
-        this.schemas = schemas;
     }
 }

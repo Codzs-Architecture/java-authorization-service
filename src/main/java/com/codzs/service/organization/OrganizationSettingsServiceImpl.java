@@ -2,7 +2,7 @@ package com.codzs.service.organization;
 
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationSettings;
-import com.codzs.exception.validation.ValidationException;
+import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationSettingsRepository;
 import com.codzs.validation.organization.OrganizationSettingsBusinessValidator;
 import lombok.extern.slf4j.Slf4j;
@@ -96,7 +96,7 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
     }
 
     @Override
-    public Object getSettingValue(String organizationId, String settingKey) {
+    public String getSettingValue(String organizationId, String settingKey) {
         log.debug("Getting setting {} for organization ID: {}", settingKey, organizationId);
         
         try {
@@ -219,11 +219,7 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
     // ========== PRIVATE HELPER METHODS ==========
 
     private Organization getOrganizationAndValidate(String organizationId) {
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            throw new ValidationException("Organization not found with ID: " + organizationId);
-        }
-        return organization;
+        return organizationService.findById(organizationId);
     }
 
     private void updateSpecificSetting(String organizationId, String settingKey, String settingValue) {
@@ -239,7 +235,7 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
         }
     }
 
-    private Object getSettingFromSettings(OrganizationSettings settings, String settingKey) {
+    private String getSettingFromSettings(OrganizationSettings settings, String settingKey) {
         return switch (settingKey) {
             case "timezone" -> settings.getTimezone();
             case "country" -> settings.getCountry();

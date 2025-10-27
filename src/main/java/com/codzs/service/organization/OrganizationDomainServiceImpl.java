@@ -3,7 +3,7 @@ package com.codzs.service.organization;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.domain.Domain;
 import com.codzs.entity.organization.Organization;
-import com.codzs.exception.validation.ValidationException;
+import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationDomainRepository;
 import com.codzs.service.domain.DomainServiceImpl;
 import com.codzs.validation.organization.OrganizationDomainBusinessValidator;
@@ -48,7 +48,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
 
     @Override
     @Transactional
-    public Organization addDomainToOrganization(String organizationId, Domain domain) {
+    public List<Domain> addDomainToOrganization(String organizationId, Domain domain) {
         log.debug("Adding domain {} to organization ID: {}", domain.getName(), organizationId);
         
         // Get organization and validate it exists
@@ -67,13 +67,13 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         log.info("Added domain {} to organization ID: {}", domain.getName(), organizationId);
         
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        // Return updated list of domains
+        return getDomainsForEntity(organizationId);
     }
 
     @Override
     @Transactional
-    public Organization updateDomainInOrganization(String organizationId, Domain domain) {
+    public List<Domain> updateDomainInOrganization(String organizationId, Domain domain) {
         log.debug("Updating domain {} in organization ID: {}", domain.getId(), organizationId);
         
         // Get organization and validate it exists
@@ -82,7 +82,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         // Find existing domain in organization
         Domain existingDomain = findDomainInOrganization(organization, domain.getId());
         if (existingDomain == null) {
-            throw new ValidationException("Domain not found with ID: " + domain.getId());
+            throw ExceptionUtils.domainNotFound(domain.getId());
         }
         
         // Business validation for domain update
@@ -93,13 +93,13 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         log.info("Updated domain {} in organization ID: {}", domain.getId(), organizationId);
         
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        // Return updated list of domains
+        return getDomainsForEntity(organizationId);
     }
 
     @Override
     @Transactional
-    public Organization removeDomainFromOrganization(String organizationId, String domainId) {
+    public List<Domain> removeDomainFromOrganization(String organizationId, String domainId) {
         log.debug("Removing domain {} from organization ID: {}", domainId, organizationId);
         
         // Get organization and validate it exists
@@ -108,7 +108,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         // Find domain to remove
         Domain domainToRemove = findDomainInOrganization(organization, domainId);
         if (domainToRemove == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
+            throw ExceptionUtils.domainNotFound(domainId);
         }
         
         // Business validation for domain removal
@@ -119,13 +119,13 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         log.info("Removed domain {} from organization ID: {}", domainId, organizationId);
         
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        // Return updated list of domains
+        return getDomainsForEntity(organizationId);
     }
 
     @Override
     @Transactional
-    public Organization verifyDomainInOrganization(String organizationId, String domainId, 
+    public Domain verifyDomainInOrganization(String organizationId, String domainId, 
                                                  String verificationMethod, String verificationToken) {
         log.debug("Verifying domain {} in organization ID: {}", domainId, organizationId);
         
@@ -135,7 +135,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         // Find domain to verify
         Domain domain = findDomainInOrganization(organization, domainId);
         if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
+            throw ExceptionUtils.domainNotFound(domainId);
         }
         
         // Business validation for domain verification
@@ -146,13 +146,13 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         log.info("Verified domain {} in organization ID: {}", domainId, organizationId);
         
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        // Return the verified domain
+        return getDomainInEntity(organizationId, domainId);
     }
 
     @Override
     @Transactional
-    public Organization setPrimaryDomain(String organizationId, String domainId) {
+    public List<Domain> setPrimaryDomain(String organizationId, String domainId) {
         log.debug("Setting domain {} as primary for organization ID: {}", domainId, organizationId);
         
         // Get organization and validate it exists
@@ -161,7 +161,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         // Find domain to set as primary
         Domain domain = findDomainInOrganization(organization, domainId);
         if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
+            throw ExceptionUtils.domainNotFound(domainId);
         }
         
         // Business validation for setting primary domain
@@ -173,8 +173,8 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         log.info("Set domain {} as primary for organization ID: {}", domainId, organizationId);
         
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        // Return updated list of domains
+        return getDomainsForEntity(organizationId);
     }
 
     @Override
@@ -205,7 +205,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
 
     @Override
     @Transactional
-    public Organization regenerateDomainVerificationToken(String organizationId, String domainId) {
+    public Domain regenerateDomainVerificationToken(String organizationId, String domainId) {
         log.debug("Regenerating verification token for domain {} in organization ID: {}", domainId, organizationId);
         
         // Get organization and validate it exists
@@ -214,7 +214,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         // Find domain
         Domain domain = findDomainInOrganization(organization, domainId);
         if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
+            throw ExceptionUtils.domainNotFound(domainId);
         }
         
         // Generate new verification token
@@ -225,8 +225,8 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         log.info("Regenerated verification token for domain {} in organization ID: {}", domainId, organizationId);
         
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        // Return the domain with updated verification token
+        return getDomainInEntity(organizationId, domainId);
     }
  
     @Override
@@ -235,7 +235,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         Domain domain = getDomainInEntity(organizationId, domainId);
         if (domain == null) {
-            throw new ValidationException("Domain not found with ID: " + domainId);
+            throw ExceptionUtils.domainNotFound(domainId);
         }
         
         return generateVerificationInstructions(domain);
@@ -317,11 +317,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
     // ========== PRIVATE HELPER METHODS ==========
 
     private Organization getOrganizationAndValidate(String organizationId) {
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            throw new ValidationException("Organization not found with ID: " + organizationId);
-        }
-        return organization;
+        return organizationService.findById(organizationId);
     }
 
     private Domain findDomainInOrganization(Organization organization, String domainId) {

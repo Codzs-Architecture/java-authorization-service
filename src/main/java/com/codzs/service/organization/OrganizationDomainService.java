@@ -24,9 +24,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      *
      * @param organizationId the organization ID
      * @param domain the domain entity to add
-     * @return the updated organization entity with new domain
+     * @return list of all domains in the organization after addition
      */
-    Organization addDomainToOrganization(String organizationId, Domain domain);
+    List<Domain> addDomainToOrganization(String organizationId, Domain domain);
 
     /**
      * Updates a domain within an organization.
@@ -34,9 +34,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      *
      * @param organizationId the organization ID
      * @param domain the domain entity with updates
-     * @return the updated organization entity
+     * @return list of all domains in the organization after update
      */
-    Organization updateDomainInOrganization(String organizationId, Domain domain);
+    List<Domain> updateDomainInOrganization(String organizationId, Domain domain);
 
     /**
      * Removes a domain from an organization.
@@ -44,9 +44,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      *
      * @param organizationId the organization ID
      * @param domainId the domain ID to remove
-     * @return the updated organization entity without the domain
+     * @return list of all domains in the organization after removal
      */
-    Organization removeDomainFromOrganization(String organizationId, String domainId);
+    List<Domain> removeDomainFromOrganization(String organizationId, String domainId);
 
     /**
      * Verifies a domain within an organization.
@@ -56,9 +56,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      * @param domainId the domain ID to verify
      * @param verificationMethod the verification method used
      * @param verificationToken the verification token (optional)
-     * @return the updated organization entity with verified domain
+     * @return the verified domain entity
      */
-    Organization verifyDomainInOrganization(String organizationId, String domainId, 
+    Domain verifyDomainInOrganization(String organizationId, String domainId, 
                                           String verificationMethod, String verificationToken);
 
     /**
@@ -67,9 +67,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      *
      * @param organizationId the organization ID
      * @param domainId the domain ID to set as primary
-     * @return the updated organization entity with new primary domain
+     * @return list of all domains in the organization after setting primary
      */
-    Organization setPrimaryDomain(String organizationId, String domainId);
+    List<Domain> setPrimaryDomain(String organizationId, String domainId);
 
     /**
      * Gets all domains for an organization.
@@ -96,9 +96,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      *
      * @param organizationId the organization ID
      * @param domainId the domain ID
-     * @return the updated organization entity with new verification token
+     * @return the domain entity with new verification token
      */
-    Organization regenerateDomainVerificationToken(String organizationId, String domainId);
+    Domain regenerateDomainVerificationToken(String organizationId, String domainId);
 
     /**
      * Gets verification instructions for a domain.

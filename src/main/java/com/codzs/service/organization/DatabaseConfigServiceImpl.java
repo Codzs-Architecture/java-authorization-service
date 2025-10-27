@@ -15,6 +15,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -80,7 +81,7 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
 
     @Override
     @Transactional
-    public Organization addDatabaseSchema(String organizationId, DatabaseSchema schema) {
+    public List<DatabaseSchema> addDatabaseSchema(String organizationId, DatabaseSchema schema) {
         log.debug("Adding database schema for organization ID: {}", organizationId);
         
         // Get organization and validate it exists
@@ -108,8 +109,8 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         log.info("Added database schema {} for organization ID: {}", 
                 schema.getSchemaName(), organizationId);
         
-        // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        // Return updated list of all schemas
+        return getDatabaseSchemas(organizationId);
     }
 
     @Override
@@ -166,14 +167,40 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
 
     @Override
     public List<DatabaseSchema> getDatabaseSchemas(String organizationId) {
-        log.debug("Getting database schemas for organization ID: {}", organizationId);
+        log.debug("Getting all database schemas for organization ID: {}", organizationId);
+        
+        // Delegate to the listDatabaseSchemas method without any filters
+        return listDatabaseSchemas(organizationId, null, null, null, null);
+    }
+
+    @Override
+    public List<DatabaseSchema> listDatabaseSchemas(String organizationId, String forService, String status,
+                                                   String headerOrganizationId, String tenantId) {
+        log.debug("Listing database schemas for organization ID: {}, forService: {}, status: {}", 
+                 organizationId, forService, status);
         
         DatabaseConfig databaseConfig = getDatabaseConfig(organizationId);
         if (databaseConfig == null || databaseConfig.getSchemas() == null) {
             return new ArrayList<>();
         }
         
-        return databaseConfig.getSchemas();
+        List<DatabaseSchema> schemas = databaseConfig.getSchemas();
+        
+        // Apply filtering if parameters are provided
+        if (forService != null && !forService.trim().isEmpty()) {
+            schemas = schemas.stream()
+                .filter(schema -> forService.equalsIgnoreCase(schema.getForService()))
+                .toList();
+        }
+        
+        if (status != null && !status.trim().isEmpty()) {
+            schemas = schemas.stream()
+                .filter(schema -> status.equalsIgnoreCase(schema.getStatus()))
+                .toList();
+        }
+        
+        log.debug("Returned {} filtered schemas for organization ID: {}", schemas.size(), organizationId);
+        return schemas;
     }
 
     @Override
@@ -293,6 +320,4 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         
         log.debug("Updated database config fields for organization {}", organizationId);
     }
-
-
 }

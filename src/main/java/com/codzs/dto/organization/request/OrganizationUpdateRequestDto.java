@@ -62,22 +62,6 @@ public class OrganizationUpdateRequestDto {
     @Schema(description = "Organization expiration date", example = OrganizationSwaggerConstants.EXAMPLE_EXPIRY_DATE)
     private Instant expiresDate;
 
-    @Valid
-    @Schema(description = "Database configuration for the organization")
-    private DatabaseConfigRequestDto database;
-
-    @Valid
-    @Schema(description = "Organization settings")
-    private OrganizationSettingsRequestDto settings;
-
-    @Valid
-    @Schema(description = "Organization metadata")
-    private OrganizationMetadataRequestDto metadata;
-
-    @Valid
-    @Schema(description = "Organization domains")
-    private List<DomainRequestDto> domains;
-
     @ValidEntityId(entityClass = User.class, allowNull = true, checkDeleted = ValidEntityId.CheckDeletedStatus.NON_DELETED,
                    message = "Invalid user ID(s). One or more referenced users do not exist or are deleted.")
     @Schema(description = "List of owner user IDs", example = OrganizationSwaggerConstants.EXAMPLE_USER_ID_LIST)

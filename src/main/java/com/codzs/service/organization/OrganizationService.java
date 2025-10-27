@@ -46,6 +46,16 @@ public interface OrganizationService {
     Organization getOrganizationById(String organizationId);
 
     /**
+     * Retrieves organization by ID with optional field filtering.
+     * API: GET /api/v1/organizations/{id}?include=settings,domains,plan
+     *
+     * @param organizationId the organization ID
+     * @param include list of fields to include (settings, domains, plan)
+     * @return the organization entity with filtered fields
+     */
+    Organization getOrganizationById(String organizationId, List<String> include);
+
+    /**
      * Lists organizations with filters and pagination.
      * API: GET /api/v1/organizations
      *
@@ -129,7 +139,7 @@ public interface OrganizationService {
      * @param deletedBy the user performing the deletion
      * @return the soft deleted organization entity
      */
-    Organization deleteOrganization(String organizationId, String deletedBy);
+    Organization deleteOrganization(String organizationId);
 
     // ========== UTILITY METHODS FOR BUSINESS VALIDATION ==========
 

@@ -2,8 +2,10 @@ package com.codzs.service.organization;
 
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.entity.organization.Organization;
+import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.validation.organization.OrganizationBusinessValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.data.domain.Page;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,12 +35,15 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final OrganizationBusinessValidator organizationBusinessValidator;
+    private final ObjectMapper objectMapper;
 
     @Autowired
     public OrganizationServiceImpl(OrganizationRepository organizationRepository,
-                                 OrganizationBusinessValidator organizationBusinessValidator) {
+                                 OrganizationBusinessValidator organizationBusinessValidator,
+                                 ObjectMapper objectMapper) {
         this.organizationRepository = organizationRepository;
         this.organizationBusinessValidator = organizationBusinessValidator;
+        this.objectMapper = objectMapper;
     }
 
     // ========== API FLOW METHODS ==========
@@ -81,13 +87,30 @@ public class OrganizationServiceImpl implements OrganizationService {
         // Return updated organization
         return getOrganizationAndValidate(organization.getId());
     }
-
+ 
     @Override
     public Organization getOrganizationById(String organizationId) {
         log.debug("Getting organization by ID: {}", organizationId);
         
         return organizationRepository.findByIdAndDeletedOnIsNull(organizationId)
-                .orElse(null);
+                .orElseThrow(() -> ExceptionUtils.organizationNotFound(organizationId));
+    }
+
+    @Override
+    public Organization getOrganizationById(String organizationId, List<String> include) {
+        log.debug("Getting organization by ID: {} with include filters: {}", organizationId, include);
+        
+        // Get the full organization first
+        Organization organization = organizationRepository.findByIdAndDeletedOnIsNull(organizationId)
+                .orElseThrow(() -> ExceptionUtils.organizationNotFound(organizationId));
+        
+        // If no include filter specified, return full organization
+        if (include == null || include.isEmpty()) {
+            return organization;
+        }
+        
+        // Apply filtering based on include parameters
+        return applyIncludeFiltering(organization, include);
     }
 
     @Override
@@ -214,7 +237,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     @Transactional
-    public Organization deleteOrganization(String organizationId, String deletedBy) {
+    public Organization deleteOrganization(String organizationId) {
         log.debug("Soft deleting organization ID: {} by user: {}", organizationId, deletedBy);
         
         // Get organization and validate it exists
@@ -238,7 +261,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public Organization findById(String organizationId) {
         return organizationRepository.findByIdAndDeletedOnIsNull(organizationId)
-                .orElse(null);
+                .orElseThrow(() -> ExceptionUtils.organizationNotFound(organizationId));
     }
 
     @Override
@@ -353,11 +376,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     // ========== PRIVATE HELPER METHODS ==========
 
     private Organization getOrganizationAndValidate(String organizationId) {
-        Organization organization = findById(organizationId);
-        if (organization == null) {
-            throw new com.codzs.exception.validation.ValidationException("Organization not found with ID: " + organizationId);
-        }
-        return organization;
+        return findById(organizationId);
     }
 
     private void applyCreationBusinessLogic(Organization organization) {
@@ -447,6 +466,57 @@ public class OrganizationServiceImpl implements OrganizationService {
                 })
                 .filter(status -> status != null)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Applies field filtering to organization based on include parameters.
+     * Starts with complete organization and removes fields not in include list.
+     */
+    private Organization applyIncludeFiltering(Organization organization, List<String> include) {
+        log.debug("Applying include filtering for fields: {}", include);
+        
+        try {
+            // Create a deep copy of the organization using Jackson ObjectMapper
+            Organization filteredOrg = objectMapper.readValue(
+                objectMapper.writeValueAsString(organization), 
+                Organization.class
+            );
+            
+            // Convert include list to lowercase for case-insensitive comparison
+            List<String> includeFields = include.stream()
+                    .map(field -> field.toLowerCase().trim())
+                    .collect(Collectors.toList());
+            
+            // Remove fields that are NOT in the include list
+            if (!includeFields.contains("setting")) {
+                filteredOrg.setSettings(null);
+                log.debug("Excluding settings field");
+            }
+            
+            if (!includeFields.contains("domains")) {
+                filteredOrg.setDomains(null);
+                log.debug("Excluding domains field");
+            }
+            
+            if (!includeFields.contains("metadata")) {
+                filteredOrg.setMetadata(null);
+                log.debug("Excluding metadata field");
+            }
+            
+            if (!includeFields.contains("database")) {
+                filteredOrg.setDatabase(null);
+                log.debug("Excluding database field");
+            }
+            
+            // Note: Basic organization fields (id, name, status, etc.) are always included
+            
+            log.debug("Applied filtering - excluded fields not in: {}", includeFields);
+            return filteredOrg;
+            
+        } catch (Exception e) {
+            log.error("Failed to create deep copy of organization during filtering", e);
+            throw new RuntimeException("Failed to apply include filtering", e);
+        }
     }
 
 }

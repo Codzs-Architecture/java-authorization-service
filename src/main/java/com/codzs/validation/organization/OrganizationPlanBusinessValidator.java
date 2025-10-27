@@ -94,13 +94,6 @@ public class OrganizationPlanBusinessValidator {
                 "Plan is not compatible with organization type: " + organization.getOrganizationType()));
         }
 
-        if (organization.getMetadata() != null && organization.getMetadata().getSize() != null) {
-            if (!isPlanCompatibleWithOrganizationSize(plan, organization.getMetadata().getSize())) {
-                errors.add(new ValidationException.ValidationError("planId", 
-                    "Plan is not compatible with organization size"));
-            }
-        }
-
         if (organization.getSettings() != null && organization.getSettings().getCountry() != null) {
             if (!planService.isPlanAvailableInRegion(plan.getId(), organization.getSettings().getCountry())) {
                 errors.add(new ValidationException.ValidationError("planId", 
@@ -129,14 +122,6 @@ public class OrganizationPlanBusinessValidator {
 
     private void validatePlanTransitionTiming(OrganizationPlan currentPlan, OrganizationPlan newPlan, 
                                             List<ValidationException.ValidationError> errors) {
-        if (currentPlan.getValidFrom() != null) {
-            Instant minimumTermEnd = currentPlan.getValidFrom().plus(30, ChronoUnit.DAYS);
-            if (Instant.now().isBefore(minimumTermEnd)) {
-                errors.add(new ValidationException.ValidationError("planId", 
-                    "Cannot change plan before minimum term completion"));
-            }
-        }
-
         if (newPlan.getValidFrom() != null && newPlan.getValidFrom().isAfter(Instant.now())) {
             Instant minimumAdvanceTime = Instant.now().plus(24, ChronoUnit.HOURS);
             if (newPlan.getValidFrom().isBefore(minimumAdvanceTime)) {
