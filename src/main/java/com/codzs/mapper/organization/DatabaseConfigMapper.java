@@ -52,7 +52,6 @@ public interface DatabaseConfigMapper {
      * Audit fields are automatically populated by Spring Data MongoDB auditing.
      */
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "schemaName", target = "schemaName", qualifiedByName = "normalizeSchemaName")
     DatabaseSchema toSchemaEntity(DatabaseSchemaRequestDto requestDto);
 
     /**
@@ -64,10 +63,8 @@ public interface DatabaseConfigMapper {
      * Audit fields are automatically updated by Spring Data MongoDB auditing.
      */
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "schemaName", target = "schemaName", qualifiedByName = "normalizeSchemaName")
     void updateSchemaEntity(@MappingTarget DatabaseSchema schema, 
                            DatabaseSchemaRequestDto requestDto);
-
 
     /**
      * Maps DatabaseSchema entity to DatabaseSchemaResponseDto.
@@ -78,32 +75,4 @@ public interface DatabaseConfigMapper {
      * Maps list of DatabaseSchema entities to list of response DTOs.
      */
     List<DatabaseSchemaResponseDto> toSchemaResponseList(List<DatabaseSchema> schemas);
-
-    // ========================= UTILITY METHODS =========================
-    
-    /**
-     * Normalizes schema name according to naming convention.
-     * Format: codzs_<org_abbr>_<service_type>_<env>
-     */
-    @Named("normalizeSchemaName")
-    default String normalizeSchemaName(String schemaName) {
-        if (schemaName == null || schemaName.trim().isEmpty()) {
-            return null;
-        }
-        
-        // Convert to lowercase and replace any invalid characters
-        String normalized = schemaName.trim().toLowerCase();
-        
-        // Replace spaces and special characters with underscores
-        normalized = normalized.replaceAll("[^a-z0-9_]", "_");
-        
-        // Remove multiple consecutive underscores
-        normalized = normalized.replaceAll("_{2,}", "_");
-        
-        // Remove leading/trailing underscores
-        normalized = normalized.replaceAll("^_+|_+$", "");
-        
-        return normalized;
-    }
-
 }

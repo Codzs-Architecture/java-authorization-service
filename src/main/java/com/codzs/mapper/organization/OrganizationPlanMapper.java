@@ -35,7 +35,7 @@ public interface OrganizationPlanMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "isActive", constant = "true")
-    @Mapping(target = "validFrom", expression = "java(requestDto.getValidFrom() != null ? requestDto.getValidFrom() : java.time.Instant.now())")
+    @Mapping(source = "validFrom", target = "validFrom", dateFormat = CommonConstants.UTC_TIMESTAMP_PATTERN)
     OrganizationPlan toEntity(OrganizationPlanRequestDto requestDto);
 
     /**
@@ -57,13 +57,9 @@ public interface OrganizationPlanMapper {
      * Audit fields are automatically updated by Spring Data MongoDB auditing.
      */
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "organizationId", ignore = true) // Cannot change organization
+    @Mapping(target = "organizationId", ignore = true)
     void updateEntity(@MappingTarget OrganizationPlan organizationPlan, 
                      OrganizationPlanRequestDto requestDto);
-
-    /**
-     * Post-mapping method to set non-audit fields for updates.
-     */
 
     // ========================= RESPONSE MAPPINGS =========================
     
@@ -115,117 +111,4 @@ public interface OrganizationPlanMapper {
     @IterableMapping(qualifiedByName = "toPlanHistoryResponse")
     List<OrganizationPlanResponseDto> toPlanHistoryResponseList(List<OrganizationPlan> organizationPlans);
 
-    // ========================= UTILITY METHODS =========================
-    
-    /**
-     * Converts Instant to UTC formatted string.
-     */
-    default String instantToUtcString(Instant instant) {
-        return instant != null ? instant.toString() : null;
-    }
-
-    /**
-     * Converts UTC formatted string to Instant.
-     */
-    default Instant utcStringToInstant(String utcString) {
-        return utcString != null && !utcString.trim().isEmpty() ? Instant.parse(utcString) : null;
-    }
-
-
-    /**
-     * Checks if plan is currently active and valid.
-     */
-    default boolean isCurrentlyValid(OrganizationPlan organizationPlan) {
-        if (organizationPlan == null || !organizationPlan.getIsActive()) {
-            return false;
-        }
-        
-        Instant now = Instant.now();
-        
-        // Check validFrom
-        if (organizationPlan.getValidFrom() != null && now.isBefore(organizationPlan.getValidFrom())) {
-            return false;
-        }
-        
-        // Check validTo
-        if (organizationPlan.getValidTo() != null && now.isAfter(organizationPlan.getValidTo())) {
-            return false;
-        }
-        
-        return true;
-    }
-
-    /**
-     * Checks if plan is expired.
-     */
-    default boolean isExpired(OrganizationPlan organizationPlan) {
-        if (organizationPlan == null || organizationPlan.getValidTo() == null) {
-            return false;
-        }
-        
-        return Instant.now().isAfter(organizationPlan.getValidTo());
-    }
-
-    /**
-     * Calculates plan duration in days.
-     */
-    default Long calculatePlanDurationDays(OrganizationPlan organizationPlan) {
-        if (organizationPlan == null || 
-            organizationPlan.getValidFrom() == null || 
-            organizationPlan.getValidTo() == null) {
-            return null;
-        }
-        
-        return java.time.Duration.between(
-            organizationPlan.getValidFrom(), 
-            organizationPlan.getValidTo()
-        ).toDays();
-    }
-
-    /**
-     * Gets remaining days for the plan.
-     */
-    default Long getRemainingDays(OrganizationPlan organizationPlan) {
-        if (organizationPlan == null || organizationPlan.getValidTo() == null) {
-            return null;
-        }
-        
-        Instant now = Instant.now();
-        if (now.isAfter(organizationPlan.getValidTo())) {
-            return 0L; // Expired
-        }
-        
-        return java.time.Duration.between(now, organizationPlan.getValidTo()).toDays();
-    }
-
-    // ========================= BUSINESS LOGIC HELPERS =========================
-    
-    /**
-     * Deactivates organization plan and sets update fields.
-     * Note: lastModifiedBy and lastModifiedDate are automatically updated by Spring Data auditing.
-     */
-    @AfterMapping
-    default void handlePlanDeactivation(@MappingTarget OrganizationPlan organizationPlan, 
-                                       @Context boolean shouldDeactivate) {
-        if (shouldDeactivate) {
-            organizationPlan.setIsActive(false);
-        }
-    }
-
-    /**
-     * Activates organization plan and sets update fields.
-     * Note: lastModifiedBy and lastModifiedDate are automatically updated by Spring Data auditing.
-     */
-    @AfterMapping
-    default void handlePlanActivation(@MappingTarget OrganizationPlan organizationPlan, 
-                                     @Context boolean shouldActivate) {
-        if (shouldActivate) {
-            organizationPlan.setIsActive(true);
-            
-            // Set validFrom to now if not already set
-            if (organizationPlan.getValidFrom() == null) {
-                organizationPlan.setValidFrom(Instant.now());
-            }
-        }
-    }
 }

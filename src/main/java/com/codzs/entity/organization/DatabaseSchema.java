@@ -3,6 +3,8 @@ package com.codzs.entity.organization;
 import org.springframework.data.annotation.Id;
 
 import com.codzs.framework.entity.BaseEntity;
+import com.codzs.util.DomainUtil;
+import com.codzs.util.OrganizationDatabaseConfigUtil;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
@@ -41,5 +43,9 @@ public class DatabaseSchema extends BaseEntity {
         this.forService = forService;
         this.schemaName = schemaName;
         this.description = description;
+    }
+
+    public void setSchemaName(String schemaName) {
+      this.schemaName = OrganizationDatabaseConfigUtil.normalizeSchemaName(schemaName);
     }
 }

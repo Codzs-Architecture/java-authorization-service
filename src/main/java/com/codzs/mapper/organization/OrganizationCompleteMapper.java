@@ -3,6 +3,7 @@ package com.codzs.mapper.organization;
 import com.codzs.dto.organization.request.OrganizationCreateRequestDto;
 import com.codzs.dto.organization.request.OrganizationUpdateRequestDto;
 import com.codzs.dto.organization.response.OrganizationResponseDto;
+import com.codzs.dto.organization.response.OrganizationSummaryResponseDto;
 import com.codzs.entity.organization.Organization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,7 @@ public class OrganizationCompleteMapper {
     private DatabaseConfigMapper databaseConfigMapper;
     
     @Autowired
-    private OrganizationSettingsMapper settingsMapper;
+    private OrganizationSettingMapper settingMapper;
     
     @Autowired
     private OrganizationMetadataMapper metadataMapper;
@@ -55,21 +56,15 @@ public class OrganizationCompleteMapper {
             organization.setDatabase(databaseConfigMapper.toEntity(requestDto.getDatabase()));
         }
         
-        if (requestDto.getSettings() != null) {
-            organization.setSettings(settingsMapper.toEntity(requestDto.getSettings()));
+        if (requestDto.getSetting() != null) {
+            organization.setSetting(settingMapper.toEntity(requestDto.getSetting()));
         }
         
         if (requestDto.getMetadata() != null) {
             organization.setMetadata(metadataMapper.toEntity(requestDto.getMetadata()));
         }
         
-        if (requestDto.getDomains() != null && !requestDto.getDomains().isEmpty()) {
-            organization.setDomains(
-                requestDto.getDomains().stream()
-                    .map(domainMapper::toEntity)
-                    .toList()
-            );
-        }
+        // Note: Domain creation is handled through separate domain management endpoints
         
         return organization;
     }
@@ -90,41 +85,8 @@ public class OrganizationCompleteMapper {
         // populated by Spring Data MongoDB auditing
         organizationMapper.updateEntity(organization, requestDto);
         
-        // Update nested objects using dedicated mappers
-        if (requestDto.getDatabase() != null) {
-            if (organization.getDatabase() == null) {
-                organization.setDatabase(databaseConfigMapper.toEntity(requestDto.getDatabase()));
-            } else {
-                databaseConfigMapper.updateEntity(organization.getDatabase(), requestDto.getDatabase());
-            }
-        }
-        
-        if (requestDto.getSettings() != null) {
-            if (organization.getSettings() == null) {
-                organization.setSettings(settingsMapper.toEntity(requestDto.getSettings()));
-            } else {
-                settingsMapper.updateEntity(organization.getSettings(), requestDto.getSettings());
-            }
-        }
-        
-        if (requestDto.getMetadata() != null) {
-            if (organization.getMetadata() == null) {
-                organization.setMetadata(metadataMapper.toEntity(requestDto.getMetadata()));
-            } else {
-                metadataMapper.updateEntity(organization.getMetadata(), requestDto.getMetadata());
-            }
-        }
-        
-        if (requestDto.getDomains() != null) {
-            if (organization.getDomains() != null) {
-                organization.getDomains().clear();
-            }
-            organization.setDomains(
-                requestDto.getDomains().stream()
-                    .map(domainMapper::toEntity)
-                    .toList()
-            );
-        }
+        // Note: Database, setting, metadata, and domain updates are handled through 
+        // separate dedicated management endpoints
     }
 
     // ========================= RESPONSE MAPPINGS =========================
@@ -145,8 +107,8 @@ public class OrganizationCompleteMapper {
             responseDto.setDatabase(databaseConfigMapper.toResponse(organization.getDatabase()));
         }
         
-        if (organization.getSettings() != null) {
-            responseDto.setSettings(settingsMapper.toResponse(organization.getSettings()));
+        if (organization.getSetting() != null) {
+            responseDto.setSetting(settingMapper.toResponse(organization.getSetting()));
         }
         
         if (organization.getMetadata() != null) {
@@ -178,14 +140,14 @@ public class OrganizationCompleteMapper {
     /**
      * Maps Organization entity to autocomplete response (simplified).
      */
-    public OrganizationResponseDto toAutocompleteResponse(Organization organization) {
+    public OrganizationSummaryResponseDto toAutocompleteResponse(Organization organization) {
         return organizationMapper.toAutocompleteResponse(organization);
     }
 
     /**
      * Maps list of Organization entities to autocomplete response list.
      */
-    public List<OrganizationResponseDto> toAutocompleteResponseList(List<Organization> organizations) {
+    public List<OrganizationSummaryResponseDto> toAutocompleteResponseList(List<Organization> organizations) {
         return organizationMapper.toAutocompleteResponseList(organizations);
     }
 

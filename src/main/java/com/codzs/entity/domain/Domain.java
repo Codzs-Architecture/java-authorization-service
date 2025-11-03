@@ -19,6 +19,7 @@ import com.codzs.constant.domain.DomainConstants;
 import com.codzs.constant.domain.DomainVerificationMethodEnum;
 import com.codzs.framework.entity.EntityDefaultInitializer;
 import com.codzs.framework.helper.SpringContextHelper;
+import com.codzs.util.DomainUtil;
 
 /**
  * Embedded Domain sub-object within Organization and Partner entities.
@@ -81,6 +82,10 @@ public class Domain {
         this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
         this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
         // this.createdDate = Instant.now();
+    }
+
+    public void setName(String name) {
+      this.name = DomainUtil.normalizeDomainName(name);
     }
 
     // Utility method to mark domain as verified
