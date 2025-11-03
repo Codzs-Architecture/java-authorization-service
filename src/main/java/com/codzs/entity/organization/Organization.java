@@ -1,8 +1,11 @@
 package com.codzs.entity.organization;
 
 import com.codzs.constant.organization.OrganizationStatusEnum;
+import com.codzs.constant.organization.OrganizationTypeEnum;
 import com.codzs.entity.domain.Domain;
 import com.codzs.framework.entity.BaseEntity;
+import com.codzs.framework.entity.EntityDefaultInitializer;
+import com.codzs.framework.helper.SpringContextHelper;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
@@ -13,6 +16,8 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -22,7 +27,7 @@ import java.util.List;
 
 /**
  * MongoDB Document representing organizations within the Codzs Platform.
- * This entity stores organization information including settings, domains,
+ * This entity stores organization information including setting, domains,
  * database configuration, and hierarchical relationships.
  * 
  * Storage Database: codzs_auth_{env}
@@ -32,6 +37,31 @@ import java.util.List;
  * @since 1.0
  */
 @Document(collection = "organization")
+@CompoundIndexes({
+    // Primary filtering index - Most critical for findWithFilters performance
+    @CompoundIndex(name = "org_filter_idx", def = "{'deletedDate': 1, 'status': 1, 'organizationType': 1}"),
+    
+    // Hierarchy management index - Critical for parent-child queries
+    @CompoundIndex(name = "org_hierarchy_idx", def = "{'parentOrganizationId': 1, 'deletedDate': 1, 'status': 1}"),
+    
+    // Search and status index - Critical for autocomplete functionality
+    @CompoundIndex(name = "org_search_idx", def = "{'deletedDate': 1, 'status': 1, 'name': 1}"),
+    
+    // Metadata filtering index - Important for advanced filtering
+    @CompoundIndex(name = "org_metadata_idx", def = "{'deletedDate': 1, 'metadata.industry': 1, 'metadata.size': 1}"),
+    
+    // Access control index - Important for user-based queries
+    @CompoundIndex(name = "org_access_idx", def = "{'ownerUserIds': 1, 'deletedDate': 1}"),
+    
+    // Domain operations index - Important for domain validation
+    @CompoundIndex(name = "org_domain_idx", def = "{'deletedDate': 1, 'domains.name': 1}"),
+    
+    // Audit and time-based index - Useful for sorting and reporting
+    @CompoundIndex(name = "org_audit_idx", def = "{'deletedDate': 1, 'createdDate': -1}"),
+    
+    // Expiration management index - Useful for maintenance operations
+    @CompoundIndex(name = "org_expiry_idx", def = "{'deletedDate': 1, 'expiresDate': 1, 'status': 1}")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -61,10 +91,9 @@ public class Organization extends BaseEntity {
 
     @NotNull(message = "Organization status is required")
     @Indexed
-    private OrganizationStatusEnum status;
+    private OrganizationStatusEnum status = OrganizationStatusEnum.ACTIVE;
 
     @NotBlank(message = "Organization type is required")
-    @Indexed
     private String organizationType;
 
     @NotBlank(message = "Billing email is required")
@@ -78,21 +107,21 @@ public class Organization extends BaseEntity {
 
     @NotNull(message = "Database configuration is required")
     @Valid
-    private DatabaseConfig database;
+    private DatabaseConfig database = new DatabaseConfig();
 
     @Valid
-    private OrganizationSettings settings;
+    private OrganizationSetting setting = new OrganizationSetting();
 
     @Valid
-    private OrganizationMetadata metadata;
+    private OrganizationMetadata metadata = new OrganizationMetadata();
 
     @Valid
     @Schema(description = "Organization domains")
-    private List<Domain> domains;
+    private List<Domain> domains = List.of();
 
     @NotEmpty(message = "At least one owner user ID is required")
     @Indexed
-    private List<String> ownerUserIds;
+    private List<String> ownerUserIds = List.of();
 
     @Indexed
     private String parentOrganizationId;
@@ -113,8 +142,12 @@ public class Organization extends BaseEntity {
     // Initialize default values for default constructor
     @PostConstruct
     private void initDefaults() {
-        if (this.status == null) {
-            this.status = OrganizationStatusEnum.getDefault();
+        OrganizationTypeEnum organizationTypeEnum = SpringContextHelper.getBean(OrganizationTypeEnum.class);
+
+        this.status = EntityDefaultInitializer.setDefaultIfNull(this.status, OrganizationStatusEnum.getDefault());
+        this.organizationType = EntityDefaultInitializer.setDefaultIfNull(this.organizationType, organizationTypeEnum.getDefaultValue());
+        if (this.displayName == null && this.name != null) {
+            this.displayName = this.name;
         }
     }
 

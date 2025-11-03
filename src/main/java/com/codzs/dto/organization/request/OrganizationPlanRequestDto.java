@@ -1,6 +1,6 @@
 package com.codzs.dto.organization.request;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.framework.annotation.validation.ValidEntityId;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.entity.organization.Organization;
@@ -27,34 +27,34 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @ToString
-@Schema(description = "Organization plan association request")
+@Schema(description = OrganizationSchemaConstants.ORG_PLAN_REQUEST_DESCRIPTION)
 public class OrganizationPlanRequestDto {
 
-    @Schema(description = "Organization ID", example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID, required = true)
-    @NotBlank(message = "Organization ID is required")
+    @Schema(description = OrganizationSchemaConstants.ORG_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID, required = true)
+    @NotBlank(message = OrganizationSchemaConstants.ORG_ID_REQUIRED_MESSAGE)
     @ValidEntityId(entityClass = Organization.class, checkDeleted = ValidEntityId.CheckDeletedStatus.NON_DELETED,
-                   message = "Invalid organization ID. The referenced organization does not exist or is deleted.")
+                   message = OrganizationSchemaConstants.INVALID_ORG_ENTITY_MESSAGE)
     private String organizationId;
 
-    @Schema(description = "Plan ID", example = OrganizationSwaggerConstants.EXAMPLE_PLAN_ID, required = true)
-    @NotBlank(message = "Plan ID is required")
+    @Schema(description = OrganizationSchemaConstants.PLAN_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_PLAN_ID, required = true)
+    @NotBlank(message = OrganizationSchemaConstants.PLAN_ID_REQUIRED_MESSAGE)
     @ValidEntityId(entityClass = Plan.class, checkDeleted = ValidEntityId.CheckDeletedStatus.NON_DELETED,
-                   message = "Invalid plan ID. The referenced plan does not exist or is deleted.")
+                   message = OrganizationSchemaConstants.INVALID_PLAN_ENTITY_MESSAGE)
     private String planId;
 
-    @Schema(description = "Comment for plan association", example = OrganizationSwaggerConstants.EXAMPLE_PLAN_COMMENT)
-    @NotBlank(message = "Comment is required")
-    @Size(max = 1000, message = "Comment must not exceed 1000 characters")
+    @Schema(description = OrganizationSchemaConstants.PLAN_COMMENT_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_PLAN_COMMENT)
+    @NotBlank(message = OrganizationSchemaConstants.COMMENT_REQUIRED_MESSAGE)
+    @Size(max = OrganizationSchemaConstants.MAX_PLAN_COMMENT_LENGTH, message = OrganizationSchemaConstants.COMMENT_SIZE_MESSAGE)
     private String comment;
 
-    @Schema(description = "Plan valid from timestamp", example = OrganizationSwaggerConstants.EXAMPLE_PLAN_VALID_FROM)
+    @Schema(description = OrganizationSchemaConstants.PLAN_VALID_FROM_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_START_FROM)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
     private Instant validFrom;
 
-    @Schema(description = "Plan valid to timestamp", example = OrganizationSwaggerConstants.EXAMPLE_PLAN_VALID_TO)
+    @Schema(description = OrganizationSchemaConstants.PLAN_VALID_TO_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_END_TO)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
     private Instant validTo;
 
-    @Schema(description = "Whether this plan association is active", example = "true")
+    @Schema(description = OrganizationSchemaConstants.PLAN_ACTIVE_DESCRIPTION, example = "true")
     private Boolean isActive;
 }

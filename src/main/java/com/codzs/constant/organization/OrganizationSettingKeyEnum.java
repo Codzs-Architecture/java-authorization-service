@@ -39,6 +39,9 @@ public class OrganizationSettingKeyEnum extends ConfigParameterBase {
     
     @Value("${organization.setting.key.description:}")
     private String description;
+    
+    @Value("${organization.setting.key.default:}")
+    private String defaultValue;
 
     @Override
     protected String getOptionsString() {
@@ -48,5 +51,10 @@ public class OrganizationSettingKeyEnum extends ConfigParameterBase {
     @Override
     protected String getDescription() {
         return description;
+    }
+
+    @Override
+    public String getDefaultValue() {
+        return defaultValue;
     }
 }

@@ -1,5 +1,6 @@
 package com.codzs.dto.organization.response;
 
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,31 +21,31 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Organization summary response for list views")
+@Schema(description = OrganizationSchemaConstants.ORG_SUMMARY_RESPONSE_DESCRIPTION)
 public class OrganizationSummaryResponseDto {
 
-    @Schema(description = "Organization unique identifier", example = "550e8400-e29b-41d4-a716-446655440000")
+    @Schema(description = OrganizationSchemaConstants.ORG_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
     private String id;
 
-    @Schema(description = "Organization name", example = "Acme Corporation")
+    @Schema(description = OrganizationSchemaConstants.ORG_NAME_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_NAME)
     private String name;
 
-    @Schema(description = "Organization abbreviation", example = "ACME")
+    @Schema(description = OrganizationSchemaConstants.ORG_ABBR_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ABBR)
     private String abbr;
 
-    @Schema(description = "Organization display name", example = "Acme Corporation Inc.")
+    @Schema(description = OrganizationSchemaConstants.ORG_DISPLAY_NAME_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_DISPLAY_NAME)
     private String displayName;
 
-    @Schema(description = "Organization status", example = "ACTIVE")
+    @Schema(description = OrganizationSchemaConstants.STATUS_DESCRIPTION, example = "ACTIVE")
     private OrganizationStatusEnum status;
 
-    @Schema(description = "Organization type", example = "ENTERPRISE")
+    @Schema(description = OrganizationSchemaConstants.ORG_TYPE_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_TYPE)
     private String organizationType;
 
-    @Schema(description = "Primary billing contact email", example = "billing@acme.com")
+    @Schema(description = OrganizationSchemaConstants.BILLING_EMAIL_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_BILLING_EMAIL)
     private String billingEmail;
 
-    @Schema(description = "Parent organization ID", example = "550e8400-e29b-41d4-a716-446655440001")
+    @Schema(description = OrganizationSchemaConstants.PARENT_ORG_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_PARENT_ORG_ID)
     private String parentOrganizationId;
 
     // Custom constructor for convenience

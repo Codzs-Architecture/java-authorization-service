@@ -1,6 +1,6 @@
 package com.codzs.dto.organization.request;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.constant.organization.OrganizationTypeEnum;
 import com.codzs.entity.security.User;
 import com.codzs.entity.organization.Organization;
@@ -8,7 +8,6 @@ import com.codzs.framework.annotation.validation.ValidDynamicEnum;
 import com.codzs.framework.annotation.validation.ValidEntityId;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,50 +25,50 @@ import java.util.List;
  * @since 1.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Request DTO for updating an existing organization")
+@Schema(description = OrganizationSchemaConstants.ORG_UPDATE_REQUEST_DESCRIPTION)
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
 public class OrganizationUpdateRequestDto {
 
-    @Size(min = 2, max = 100, message = "Organization name must be between 2 and 100 characters")
-    @Schema(description = "Organization name", example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_NAME)
+    @Size(min = 2, max = OrganizationSchemaConstants.MAX_NAME_LENGTH, message = OrganizationSchemaConstants.ORG_NAME_SIZE_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.ORG_NAME_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_NAME)
     private String name;
 
-    @Size(min = 2, max = 10, message = "Organization abbreviation must be between 2 and 10 characters")
-    @Pattern(regexp = "^[A-Z0-9]+$", message = "Organization abbreviation must contain only uppercase alphanumeric characters")
-    @Schema(description = "Organization abbreviation", example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ABBR)
+    @Size(min = 2, max = OrganizationSchemaConstants.MAX_ABBR_LENGTH, message = OrganizationSchemaConstants.ORG_ABBR_SIZE_MESSAGE)
+    @Pattern(regexp = OrganizationSchemaConstants.ORG_ABBR_PATTERN, message = OrganizationSchemaConstants.ORG_ABBR_PATTERN_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.ORG_ABBR_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ABBR)
     private String abbr;
 
-    @Size(min = 2, max = 255, message = "Display name must be between 2 and 255 characters")
-    @Schema(description = "Organization display name", example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_DISPLAY_NAME)
+    @Size(min = 2, max = OrganizationSchemaConstants.MAX_DISPLAY_NAME_LENGTH, message = OrganizationSchemaConstants.DISPLAY_NAME_SIZE_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.ORG_DISPLAY_NAME_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_DISPLAY_NAME)
     private String displayName;
 
-    @Size(max = 1000, message = "Description must not exceed 1000 characters")
-    @Schema(description = "Organization description", example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_DESCRIPTION)
+    @Size(max = OrganizationSchemaConstants.MAX_DESCRIPTION_LENGTH, message = OrganizationSchemaConstants.DESCRIPTION_SIZE_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.ORG_DESCRIPTION_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_DESCRIPTION)
     private String description;
 
-    @ValidDynamicEnum(enumClass = OrganizationTypeEnum.class, allowNull = true, message = "Invalid organization type")
-    @Schema(description = "Organization type", example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_TYPE, allowableValues = {"ENTERPRISE", "STANDARD", "STARTUP", "INDIVIDUAL"})
+    @ValidDynamicEnum(enumClass = OrganizationTypeEnum.class, allowNull = true, message = OrganizationSchemaConstants.ORG_TYPE_INVALID_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.ORG_TYPE_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_TYPE, allowableValues = {"ENTERPRISE", "STANDARD", "STARTUP", "INDIVIDUAL"})
     private String organizationType;
 
-    @Email(message = "Billing email must be a valid email format")
-    @Size(max = 255, message = "Billing email must not exceed 255 characters")
-    @Schema(description = "Primary billing contact email", example = OrganizationSwaggerConstants.EXAMPLE_BILLING_EMAIL)
+    @Email(message = OrganizationSchemaConstants.BILLING_EMAIL_FORMAT_MESSAGE)
+    @Size(max = 255, message = OrganizationSchemaConstants.BILLING_EMAIL_SIZE_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.BILLING_EMAIL_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_BILLING_EMAIL)
     private String billingEmail;
 
-    @Schema(description = "Organization expiration date", example = OrganizationSwaggerConstants.EXAMPLE_EXPIRY_DATE)
+    @Schema(description = OrganizationSchemaConstants.EXPIRY_DATE_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_EXPIRY_DATE)
     private Instant expiresDate;
 
     @ValidEntityId(entityClass = User.class, allowNull = true, checkDeleted = ValidEntityId.CheckDeletedStatus.NON_DELETED,
-                   message = "Invalid user ID(s). One or more referenced users do not exist or are deleted.")
-    @Schema(description = "List of owner user IDs", example = OrganizationSwaggerConstants.EXAMPLE_USER_ID_LIST)
+                   message = OrganizationSchemaConstants.INVALID_USER_ENTITY_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.OWNER_USER_IDS_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_USER_ID_LIST)
     private List<String> ownerUserIds;
 
     @ValidEntityId(entityClass = Organization.class, allowNull = true, checkDeleted = ValidEntityId.CheckDeletedStatus.NON_DELETED,
-                   message = "Invalid organization ID. The referenced organization does not exist or is deleted.")
-    @Schema(description = "Parent organization ID", example = OrganizationSwaggerConstants.EXAMPLE_PARENT_ORG_ID)
+                   message = OrganizationSchemaConstants.INVALID_ORG_ENTITY_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.PARENT_ORG_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_PARENT_ORG_ID)
     private String parentOrganizationId;
 
 }

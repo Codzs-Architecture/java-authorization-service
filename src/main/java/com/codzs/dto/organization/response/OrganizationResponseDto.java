@@ -1,10 +1,12 @@
 package com.codzs.dto.organization.response;
 
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.framework.dto.BaseDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,52 +28,56 @@ import java.util.List;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Organization response DTO")
+@JsonPropertyOrder({"id", "name", "abbr", "displayName", "description", 
+                   "organizationType", "billingEmail", "expiresDate", "database", 
+                   "setting", "metadata", "domains", "ownerUserIds", "parentOrganizationId", "status", 
+                   "lastModifiedDate", "lastModifiedBy", "createdDate", "createdBy"})
+@Schema(description = OrganizationSchemaConstants.ORG_RESPONSE_DESCRIPTION)
 public class OrganizationResponseDto extends BaseDto {
 
-    @Schema(description = "Organization unique identifier", example = "550e8400-e29b-41d4-a716-446655440000")
+    @Schema(description = OrganizationSchemaConstants.ORG_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
     private String id;
 
-    @Schema(description = "Organization name", example = "Acme Corporation")
+    @Schema(description = OrganizationSchemaConstants.ORG_NAME_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_NAME)
     private String name;
 
-    @Schema(description = "Organization abbreviation", example = "ACME")
+    @Schema(description = OrganizationSchemaConstants.ORG_ABBR_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ABBR)
     private String abbr;
 
-    @Schema(description = "Organization display name", example = "Acme Corporation Inc.")
+    @Schema(description = OrganizationSchemaConstants.ORG_DISPLAY_NAME_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_DISPLAY_NAME)
     private String displayName;
 
-    @Schema(description = "Organization description", example = "Leading provider of enterprise solutions")
+    @Schema(description = OrganizationSchemaConstants.ORG_DESCRIPTION_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_DESCRIPTION)
     private String description;
 
-    @Schema(description = "Organization status", example = "ACTIVE")
-    private OrganizationStatusEnum status;
-
-    @Schema(description = "Organization type", example = "ENTERPRISE")
+    @Schema(description = OrganizationSchemaConstants.ORG_TYPE_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_TYPE)
     private String organizationType;
 
-    @Schema(description = "Primary billing contact email", example = "billing@acme.com")
+    @Schema(description = OrganizationSchemaConstants.BILLING_EMAIL_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_BILLING_EMAIL)
     private String billingEmail;
 
-    @Schema(description = "Organization expiration date", example = "2025-12-31T23:59:59Z")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
+    @Schema(description = OrganizationSchemaConstants.EXPIRY_DATE_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_EXPIRY_DATE)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.ISO_INSTANT_PATTERN)
     private Instant expiresDate;
 
-    @Schema(description = "Database configuration for the organization")
+    @Schema(description = OrganizationSchemaConstants.DATABASE_RESPONSE_DESCRIPTION)
     private DatabaseConfigResponseDto database;
 
-    @Schema(description = "Organization settings")
-    private OrganizationSettingsResponseDto settings;
+    @Schema(description = OrganizationSchemaConstants.SETTING_RESPONSE_DESCRIPTION)
+    private OrganizationSettingResponseDto setting;
 
-    @Schema(description = "Organization metadata")
+    @Schema(description = OrganizationSchemaConstants.METADATA_RESPONSE_DESCRIPTION)
     private OrganizationMetadataResponseDto metadata;
 
-    @Schema(description = "Organization domains")
+    @Schema(description = OrganizationSchemaConstants.DOMAINS_RESPONSE_DESCRIPTION)
     private List<DomainResponseDto> domains;
 
-    @Schema(description = "List of owner user IDs", example = "[\"550e8400-e29b-41d4-a716-446655440000\"]")
+    @Schema(description = OrganizationSchemaConstants.OWNER_USER_IDS_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_USER_ID_LIST)
     private List<String> ownerUserIds;
 
-    @Schema(description = "Parent organization ID", example = "550e8400-e29b-41d4-a716-446655440001")
+    @Schema(description = OrganizationSchemaConstants.PARENT_ORG_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_PARENT_ORG_ID)
     private String parentOrganizationId;
+
+    @Schema(description = OrganizationSchemaConstants.STATUS_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_PLAN_ACTIVE)
+    private OrganizationStatusEnum status;
 }

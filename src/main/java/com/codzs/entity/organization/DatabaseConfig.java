@@ -34,6 +34,6 @@ public class DatabaseConfig {
 
     @NotEmpty(message = "At least one schema is required")
     @Valid
-    private List<DatabaseSchema> schemas;
+    private List<DatabaseSchema> schemas = List.of();
 
 }

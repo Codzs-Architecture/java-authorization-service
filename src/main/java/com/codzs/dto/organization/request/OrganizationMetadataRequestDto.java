@@ -1,6 +1,6 @@
 package com.codzs.dto.organization.request;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.constant.organization.OrganizationIndustryEnum;
 import com.codzs.constant.organization.OrganizationSizeEnum;
 import com.codzs.framework.annotation.validation.ValidDynamicEnum;
@@ -19,22 +19,22 @@ import lombok.ToString;
  * @since 1.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Organization metadata for categorization")
+@Schema(description = OrganizationSchemaConstants.ORG_METADATA_DESCRIPTION)
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
 public class OrganizationMetadataRequestDto {
 
-    @ValidDynamicEnum(enumClass = OrganizationIndustryEnum.class, allowNull = true, message = "Invalid organization industry")
-    @Schema(description = "Organization industry", 
-            example = OrganizationSwaggerConstants.EXAMPLE_INDUSTRY, 
+    @ValidDynamicEnum(enumClass = OrganizationIndustryEnum.class, allowNull = true, message = OrganizationSchemaConstants.INDUSTRY_INVALID_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.INDUSTRY_DESCRIPTION, 
+            example = OrganizationSchemaConstants.EXAMPLE_INDUSTRY, 
             allowableValues = {"TECHNOLOGY", "FINANCE", "HEALTHCARE", "EDUCATION", "RETAIL", "MANUFACTURING", "CONSULTING", "MEDIA", "NONPROFIT", "GOVERNMENT", "REAL_ESTATE", "CONSTRUCTION", "TRANSPORTATION", "ENERGY", "TELECOMMUNICATIONS", "OTHER"})
     private String industry;
 
-    @ValidDynamicEnum(enumClass = OrganizationSizeEnum.class, allowNull = true, message = "Invalid organization size")
-    @Schema(description = "Organization size by employee count", 
-            example = OrganizationSwaggerConstants.EXAMPLE_SIZE, 
+    @ValidDynamicEnum(enumClass = OrganizationSizeEnum.class, allowNull = true, message = OrganizationSchemaConstants.SIZE_INVALID_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.SIZE_DESCRIPTION, 
+            example = OrganizationSchemaConstants.EXAMPLE_SIZE, 
             allowableValues = {"1-10", "11-200", "201-500", "500+"})
     private String size;
 

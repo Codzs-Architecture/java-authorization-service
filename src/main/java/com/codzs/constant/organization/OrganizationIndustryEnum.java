@@ -40,8 +40,8 @@ public class OrganizationIndustryEnum extends ConfigParameterBase {
     @Value("${organization.industry.description:}")
     private String description;
     
-    // @Value("${organization.industry.default:MEDIA}")
-    // private String defaultValue;
+    @Value("${organization.industry.default:}")
+    private String defaultValue;
 
     @Override
     protected String getOptionsString() {
@@ -53,8 +53,8 @@ public class OrganizationIndustryEnum extends ConfigParameterBase {
         return description;
     }
 
-    // @Override
-    // public String getDefaultValue() {
-    //     return defaultValue;
-    // }
+    @Override
+    public String getDefaultValue() {
+        return defaultValue;
+    }
 }

@@ -1,5 +1,6 @@
 package com.codzs.dto.organization.response;
 
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.framework.dto.BaseDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,18 +21,18 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString(callSuper = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Database schema response")
+@Schema(description = OrganizationSchemaConstants.DATABASE_SCHEMA_RESPONSE_DESCRIPTION)
 public class DatabaseSchemaResponseDto extends BaseDto {
 
-    @Schema(description = "Schema unique identifier", example = "550e8400-e29b-41d4-a716-446655440000")
+    @Schema(description = OrganizationSchemaConstants.SCHEMA_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_ID)
     private String id;
 
-    @Schema(description = "Type of service this schema supports", example = "auth")
+    @Schema(description = OrganizationSchemaConstants.SERVICE_TYPE_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_SERVICE_TYPE)
     private String forService;
 
-    @Schema(description = "Database schema name", example = "codzs_acme_auth_dev")
+    @Schema(description = OrganizationSchemaConstants.SCHEMA_NAME_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_NAME)
     private String schemaName;
 
-    @Schema(description = "Schema description", example = "Authentication service schema for Acme organization")
+    @Schema(description = OrganizationSchemaConstants.SCHEMA_DESCRIPTION_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_DESCRIPTION)
     private String description;
 }

@@ -1,7 +1,6 @@
 package com.codzs.dto.organization.request;
 
-import com.codzs.constant.organization.OrganizationConstants;
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.framework.annotation.validation.ValidDynamicEnum;
 import com.codzs.framework.constant.ServiceTypeEnum;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,36 +21,36 @@ import lombok.ToString;
  * @since 1.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Database schema configuration")
+@Schema(description = OrganizationSchemaConstants.DATABASE_SCHEMA_DESCRIPTION)
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
 public class DatabaseSchemaRequestDto {
 
-    @NotBlank(message = OrganizationConstants.SERVICE_TYPE_REQUIRED_MESSAGE)
-    @ValidDynamicEnum(enumClass = ServiceTypeEnum.class, message = "Invalid service type")
-    @Schema(description = "Type of service this schema supports", 
-            example = OrganizationSwaggerConstants.EXAMPLE_SERVICE_TYPE, 
+    @NotBlank(message = OrganizationSchemaConstants.SERVICE_TYPE_REQUIRED_MESSAGE)
+    @ValidDynamicEnum(enumClass = ServiceTypeEnum.class, message = OrganizationSchemaConstants.SERVICE_TYPE_INVALID_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.SERVICE_TYPE_DESCRIPTION, 
+            example = OrganizationSchemaConstants.EXAMPLE_SERVICE_TYPE, 
             required = true, 
             allowableValues = {"auth", "billing", "analytics", "audit", "resource", "bff"})
     private String forService;
 
-    @NotBlank(message = OrganizationConstants.SCHEMA_NAME_REQUIRED_MESSAGE)
-    @Size(min = OrganizationConstants.MIN_SCHEMA_NAME_LENGTH, 
-          max = OrganizationConstants.MAX_SCHEMA_NAME_LENGTH, 
-          message = "Schema name must be between " + OrganizationConstants.MIN_SCHEMA_NAME_LENGTH + " and " + OrganizationConstants.MAX_SCHEMA_NAME_LENGTH + " characters")
-    @Pattern(regexp = OrganizationConstants.SCHEMA_NAME_PATTERN, 
-             message = OrganizationConstants.SCHEMA_NAME_PATTERN_MESSAGE)
-    @Schema(description = "Database schema name", 
-            example = OrganizationSwaggerConstants.EXAMPLE_SCHEMA_NAME, 
+    @NotBlank(message = OrganizationSchemaConstants.SCHEMA_NAME_REQUIRED_MESSAGE)
+    @Size(min = OrganizationSchemaConstants.MIN_SCHEMA_NAME_LENGTH, 
+          max = OrganizationSchemaConstants.MAX_SCHEMA_NAME_LENGTH, 
+          message = OrganizationSchemaConstants.SCHEMA_NAME_SIZE_MESSAGE)
+    @Pattern(regexp = OrganizationSchemaConstants.SCHEMA_NAME_PATTERN, 
+             message = OrganizationSchemaConstants.SCHEMA_NAME_PATTERN_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.SCHEMA_NAME_DESCRIPTION, 
+            example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_NAME, 
             required = true)
     private String schemaName;
 
-    @Size(max = OrganizationConstants.MAX_DESCRIPTION_LENGTH, 
-        message = "Description must not exceed 1000 characters")
-    @Schema(description = "Schema description", 
-            example = OrganizationSwaggerConstants.EXAMPLE_SCHEMA_DESCRIPTION)
+    @Size(max = OrganizationSchemaConstants.MAX_DESCRIPTION_LENGTH, 
+        message = OrganizationSchemaConstants.SCHEMA_DESCRIPTION_SIZE_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.SCHEMA_DESCRIPTION_DESCRIPTION, 
+            example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_DESCRIPTION)
     private String description;
 
     public DatabaseSchemaRequestDto(String forService, String schemaName, String description) {

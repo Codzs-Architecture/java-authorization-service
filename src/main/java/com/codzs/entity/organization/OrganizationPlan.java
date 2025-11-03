@@ -1,7 +1,6 @@
 package com.codzs.entity.organization;
 
-import com.codzs.entity.plan.Plan;
-import com.codzs.framework.annotation.validation.ValidEntityId;
+import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.framework.entity.BaseEntity;
 
 import jakarta.validation.constraints.NotBlank;
@@ -75,7 +74,7 @@ public class OrganizationPlan extends BaseEntity {
         this.organizationId = organizationId;
         this.planId = planId;
         this.comment = comment;
-        this.isActive = true;
+        this.isActive = OrganizationConstants.DEFAULT_ORGANIZATION_PLAN_IS_ACTIVE;
         this.validFrom = Instant.now();
     }
 
@@ -84,16 +83,6 @@ public class OrganizationPlan extends BaseEntity {
         this(organizationId, planId, comment, createdBy);
         this.validFrom = validFrom;
         this.validTo = validTo;
-    }
-
-    // Initialize defaults for no-args constructor
-    private void initDefaults() {
-        if (this.isActive == null) {
-            this.isActive = true;
-        }
-        if (this.validFrom == null) {
-            this.validFrom = Instant.now();
-        }
     }
 
     // Utility methods

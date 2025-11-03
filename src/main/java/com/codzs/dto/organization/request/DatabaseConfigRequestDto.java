@@ -1,9 +1,10 @@
 package com.codzs.dto.organization.request;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,22 +18,24 @@ import lombok.ToString;
  * @since 1.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Database configuration for organization")
+@Schema(description = OrganizationSchemaConstants.DATABASE_CONFIG_DESCRIPTION)
 @Getter
 @Setter
 @NoArgsConstructor
 @ToString
 public class DatabaseConfigRequestDto {
 
-    @NotBlank(message = "Connection string is required")
-    @Schema(description = "Database connection string", 
-            example = OrganizationSwaggerConstants.EXAMPLE_CONNECTION_STRING, 
+    @NotBlank(message = OrganizationSchemaConstants.CONNECTION_STRING_REQUIRED_MESSAGE)
+    @Size(max = 1000, message = OrganizationSchemaConstants.CONNECTION_STRING_SIZE_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.CONNECTION_STRING_DESCRIPTION, 
+            example = OrganizationSchemaConstants.EXAMPLE_CONNECTION_STRING, 
             required = true)
     private String connectionString;
 
-    @NotBlank(message = "Certificate is required")
-    @Schema(description = "Database certificate", 
-            example = OrganizationSwaggerConstants.EXAMPLE_CERTIFICATE, 
+    @NotBlank(message = OrganizationSchemaConstants.CERTIFICATE_REQUIRED_MESSAGE)
+    @Size(max = 5000, message = OrganizationSchemaConstants.CERTIFICATE_SIZE_MESSAGE)
+    @Schema(description = OrganizationSchemaConstants.CERTIFICATE_DESCRIPTION, 
+            example = OrganizationSchemaConstants.EXAMPLE_CERTIFICATE, 
             required = true)
     private String certificate;
 

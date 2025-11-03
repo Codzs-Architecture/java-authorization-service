@@ -1,5 +1,6 @@
 package com.codzs.entity.domain;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,6 +14,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 import java.util.UUID;
+
+import com.codzs.constant.domain.DomainConstants;
+import com.codzs.constant.domain.DomainVerificationMethodEnum;
+import com.codzs.framework.entity.EntityDefaultInitializer;
+import com.codzs.framework.helper.SpringContextHelper;
 
 /**
  * Embedded Domain sub-object within Organization and Partner entities.
@@ -39,30 +45,22 @@ public class Domain {
     @Size(max = 255, message = "Domain name must not exceed 255 characters")
     @Pattern(regexp = "^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.[a-zA-Z]{2,}$", 
              message = "Invalid domain name format")
-    @Schema(description = "Domain name", example = "company.com", required = true)
     private String name;
 
     @NotNull(message = "Verification status is required")
-    @Schema(description = "Whether domain ownership is verified", example = "false", required = true)
     private Boolean isVerified;
 
     @NotNull(message = "Primary status is required")
-    @Schema(description = "Whether this is the primary domain", example = "false", required = true)
     private Boolean isPrimary;
 
     @Size(max = 100, message = "Verification token must not exceed 100 characters")
-    @Schema(description = "Token for domain verification", example = "verification-token-123")
     private String verificationToken;
-
+ 
     @NotBlank(message = "Verification method is required")
-    @Schema(description = "Domain verification method", example = "DNS", required = true, 
-            allowableValues = {"DNS", "EMAIL", "FILE"})
     private String verificationMethod;
 
-    @Schema(description = "Domain creation timestamp", example = "2024-01-20T10:30:00Z")
     private Instant createdDate;
 
-    @Schema(description = "Domain verification timestamp", example = "2024-01-20T12:30:00Z")
     private Instant verifiedDate;
 
     // Constructor for new domain creation
@@ -70,9 +68,9 @@ public class Domain {
         this.id = UUID.randomUUID().toString();
         this.name = name;
         this.verificationMethod = verificationMethod;
-        this.isVerified = false;
-        this.isPrimary = false;
-        this.createdDate = Instant.now();
+        this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
+        this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
+        // this.createdDate = Instant.now();
     }
 
     // Constructor with ID for existing domain
@@ -80,9 +78,9 @@ public class Domain {
         this.id = id;
         this.name = name;
         this.verificationMethod = verificationMethod;
-        this.isVerified = false;
-        this.isPrimary = false;
-        this.createdDate = Instant.now();
+        this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
+        this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
+        // this.createdDate = Instant.now();
     }
 
     // Utility method to mark domain as verified
@@ -99,5 +97,21 @@ public class Domain {
     // Utility method to remove primary status
     public void removePrimaryStatus() {
         this.isPrimary = false;
+    }
+
+    // Initialize default values for default constructor
+    @PostConstruct
+    private void initDefaults() {
+        DomainVerificationMethodEnum domainVerificationMethodEnum = SpringContextHelper.getBean(DomainVerificationMethodEnum.class);
+
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
+        this.isVerified = EntityDefaultInitializer.setDefaultIfNull(this.isVerified, DomainConstants.DEFAULT_IS_VERIFIED);
+        this.isPrimary = EntityDefaultInitializer.setDefaultIfNull(this.isPrimary, DomainConstants.DEFAULT_IS_PRIMARY);
+        this.verificationMethod = EntityDefaultInitializer.setDefaultIfNull(this.verificationMethod, domainVerificationMethodEnum.getDefaultValue());
+        // if (this.createdDate == null) {
+        //     this.createdDate = Instant.now();
+        // }
     }
 }

@@ -15,62 +15,17 @@ public final class OrganizationConstants {
      */
     public static final String DEFAULT_ROLE_CONTEXT_TYPE = "ORGANIZATION";
 
-    // ========== Validation Constants ==========
-    
-    /**
-     * Maximum length for organization name.
-     */
-    public static final int MAX_NAME_LENGTH = 100;
-    
-    /**
-     * Maximum length for organization abbreviation.
-     */
-    public static final int MAX_ABBR_LENGTH = 10;
-    
-    /**
-     * Maximum length for organization display name.
-     */
-    public static final int MAX_DISPLAY_NAME_LENGTH = 255;
-    
-    /**
-     * Maximum length for organization description.
-     */
-    public static final int MAX_DESCRIPTION_LENGTH = 1000;
-    
-    /**
-     * Maximum length for language setting.
-     */
-    public static final int MAX_LANGUAGE_LENGTH = 50;
-    
-    /**
-     * Maximum length for timezone setting.
-     */
-    public static final int MAX_TIMEZONE_LENGTH = 50;
-    
-    /**
-     * Maximum length for currency setting.
-     */
-    public static final int MAX_CURRENCY_LENGTH = 10;
-    
-    /**
-     * Maximum length for country setting.
-     */
-    public static final int MAX_COUNTRY_LENGTH = 10;
-    
-    /**
-     * Minimum length for database schema name.
-     */
-    public static final int MIN_SCHEMA_NAME_LENGTH = 5;
-    
-    /**
-     * Maximum length for database schema name.
-     */
-    public static final int MAX_SCHEMA_NAME_LENGTH = 100;
-    
-    /**
-     * Maximum length for plan comment.
-     */
-    public static final int MAX_PLAN_COMMENT_LENGTH = 1000;
+    public static final String ORGANIZATION_SETTING = "SETTING";
+    public static final String ORGANIZATION_DOMAIN = "DOMAIN";
+    public static final String ORGANIZATION_METADATA = "METADATA";
+    public static final String ORGANIZATION_DATABASE = "DATABASE";
+
+    public static final String SETTING_TIMEZONE = "timezone";
+    public static final String SETTING_LANGUAGE = "language";
+    public static final String SETTING_CURRENCY = "currency";
+    public static final String SETTING_COUNTRY = "country";
+
+    public static final Boolean DEFAULT_ORGANIZATION_PLAN_IS_ACTIVE = true;    
 
     // ========== Business Rules ==========
     
@@ -120,61 +75,4 @@ public final class OrganizationConstants {
      * Cache TTL for organization plans data (2 hours).
      */
     public static final long CACHE_TTL_ORGANIZATION_PLANS = 7200;
-
-    // ========================= PATTERNS =========================
-    
-    /**
-     * Regular expression pattern for database schema names.
-     * Format: codzs_<org_abbr>_<service>_<env>
-     */
-    public static final String SCHEMA_NAME_PATTERN = "^codzs_[a-zA-Z0-9_]+_[a-zA-Z0-9_]+_[a-zA-Z0-9_]+$";
-
-    // ========================= PATTERN MESSAGES =========================
-    
-    /**
-     * Error message for invalid schema name pattern.
-     */
-    public static final String SCHEMA_NAME_PATTERN_MESSAGE = "Schema name must follow pattern: codzs_<org_abbr>_<service>_<env>";
-
-    // ========================= VALIDATION MESSAGES =========================
-    
-    /**
-     * Error message for organization name validation.
-     */
-    public static final String ORG_NAME_REQUIRED_MESSAGE = "Organization name is required";
-    
-    /**
-     * Error message for organization abbreviation validation.
-     */
-    public static final String ORG_ABBR_REQUIRED_MESSAGE = "Organization abbreviation is required";
-    
-    /**
-     * Error message for organization display name validation.
-     */
-    public static final String ORG_DISPLAY_NAME_REQUIRED_MESSAGE = "Organization display name is required";
-    
-    /**
-     * Error message for organization type validation.
-     */
-    public static final String ORG_TYPE_REQUIRED_MESSAGE = "Organization type is required";
-    
-    /**
-     * Error message for billing email validation.
-     */
-    public static final String BILLING_EMAIL_REQUIRED_MESSAGE = "Billing email is required";
-    
-    /**
-     * Error message for billing email format validation.
-     */
-    public static final String BILLING_EMAIL_FORMAT_MESSAGE = "Billing email must be a valid email address";
-    
-    /**
-     * Error message for service type validation.
-     */
-    public static final String SERVICE_TYPE_REQUIRED_MESSAGE = "Service type is required";
-    
-    /**
-     * Error message for schema name validation.
-     */
-    public static final String SCHEMA_NAME_REQUIRED_MESSAGE = "Schema name is required";
 }

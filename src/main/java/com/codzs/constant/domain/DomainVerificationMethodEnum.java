@@ -39,6 +39,9 @@ public class DomainVerificationMethodEnum extends ConfigParameterBase {
     
     @Value("${domain.verification.method.description:}")
     private String description;
+    
+    @Value("${domain.verification.method.default:}")
+    private String defaultValue;
 
     @Override
     protected String getOptionsString() {
@@ -48,5 +51,10 @@ public class DomainVerificationMethodEnum extends ConfigParameterBase {
     @Override
     protected String getDescription() {
         return description;
+    }
+
+    @Override
+    public String getDefaultValue() {
+        return defaultValue;
     }
 }

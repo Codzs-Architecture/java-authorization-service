@@ -1,5 +1,6 @@
 package com.codzs.dto.organization.response;
 
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -8,7 +9,6 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * DTO for database configuration in organization responses.
@@ -22,19 +22,19 @@ import java.util.Map;
 @NoArgsConstructor
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(description = "Database configuration response")
+@Schema(description = OrganizationSchemaConstants.DATABASE_CONFIG_RESPONSE_DESCRIPTION)
 public class DatabaseConfigResponseDto {
 
-    @Schema(description = "Database connection string", example = "mongodb://localhost:27017/codzs_acme_auth_dev")
+    @Schema(description = OrganizationSchemaConstants.CONNECTION_STRING_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_CONNECTION_STRING)
     private String connectionString;
 
-    @Schema(description = "Database certificate", example = "-----BEGIN CERTIFICATE-----...")
+    @Schema(description = OrganizationSchemaConstants.CERTIFICATE_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_CERTIFICATE)
     private String certificate;
 
-    @Schema(description = "List of database schemas")
+    @Schema(description = OrganizationSchemaConstants.SCHEMAS_LIST_DESCRIPTION)
     private List<DatabaseSchemaResponseDto> schemas;
 
-    @Schema(description = "Database connection test results (only included when testConnection=true)")
+    @Schema(description = OrganizationSchemaConstants.TEST_RESULTS_DESCRIPTION)
     private boolean connectionTestResults;
 
     // Custom constructor for convenience

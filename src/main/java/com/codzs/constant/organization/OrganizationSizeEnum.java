@@ -39,6 +39,9 @@ public class OrganizationSizeEnum extends ConfigParameterBase {
     
     @Value("${organization.size.description:}")
     private String description;
+    
+    @Value("${organization.size.default:}")
+    private String defaultValue;
 
     @Override
     protected String getOptionsString() {
@@ -48,5 +51,10 @@ public class OrganizationSizeEnum extends ConfigParameterBase {
     @Override
     protected String getDescription() {
         return description;
+    }
+
+    @Override
+    public String getDefaultValue() {
+        return defaultValue;
     }
 }
