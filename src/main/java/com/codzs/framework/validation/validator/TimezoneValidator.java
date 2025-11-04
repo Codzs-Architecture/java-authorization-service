@@ -5,8 +5,8 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.codzs.framework.annotation.validation.ValidTimezone;
 import com.codzs.framework.service.localization.LocalizationCodeService;
+import com.codzs.framework.validation.annotation.ValidTimezone;
 
 /**
  * Validator for ValidTimezone annotation.

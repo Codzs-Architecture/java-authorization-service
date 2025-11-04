@@ -1,8 +1,8 @@
 package com.codzs.dto.organization.request;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
-import com.codzs.framework.annotation.validation.ValidDynamicEnum;
 import com.codzs.framework.constant.ServiceTypeEnum;
+import com.codzs.framework.validation.annotation.ValidDynamicEnum;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

@@ -1,9 +1,12 @@
-package com.codzs.framework.annotation.validation;
+package com.codzs.framework.validation.annotation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
+
+import com.codzs.framework.validation.validator.EntityIdListValidator;
+import com.codzs.framework.validation.validator.EntityIdValidator;
 
 /**
  * Custom validation annotation to validate that a string ID or list of string IDs

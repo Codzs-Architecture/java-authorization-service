@@ -59,11 +59,11 @@ public class OAuth2RegisteredClient {
 
     @NotBlank(message = "Client settings are required")
     @Size(max = 2000, message = "Client settings must not exceed 2000 characters")
-    private String clientSettings;
+    private String clientSetting;
 
     @NotBlank(message = "Token settings are required")
     @Size(max = 2000, message = "Token settings must not exceed 2000 characters")
-    private String tokenSettings;
+    private String tokenSetting;
 
     // Constructors
     public OAuth2RegisteredClient() {
@@ -110,11 +110,11 @@ public class OAuth2RegisteredClient {
     public String getScopes() { return scopes; }
     public void setScopes(String scopes) { this.scopes = scopes; }
 
-    public String getClientSettings() { return clientSettings; }
-    public void setClientSettings(String clientSettings) { this.clientSettings = clientSettings; }
+    public String getClientSetting() { return clientSetting; }
+    public void setClientSetting(String clientSetting) { this.clientSetting = clientSetting; }
 
-    public String getTokenSettings() { return tokenSettings; }
-    public void setTokenSettings(String tokenSettings) { this.tokenSettings = tokenSettings; }
+    public String getTokenSetting() { return tokenSetting; }
+    public void setTokenSetting(String tokenSetting) { this.tokenSetting = tokenSetting; }
 
     @Override
     public String toString() {

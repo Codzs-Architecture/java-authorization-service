@@ -4,7 +4,7 @@ import com.codzs.constant.domain.DomainConstants;
 import com.codzs.constant.domain.DomainSchemaConstants;
 import com.codzs.constant.domain.DomainVerificationMethodEnum;
 import com.codzs.framework.annotation.validation.ApplyDefaults;
-import com.codzs.framework.annotation.validation.ValidDynamicEnum;
+import com.codzs.framework.validation.annotation.ValidDynamicEnum;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

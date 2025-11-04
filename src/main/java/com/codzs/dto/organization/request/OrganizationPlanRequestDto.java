@@ -1,8 +1,8 @@
 package com.codzs.dto.organization.request;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
-import com.codzs.framework.annotation.validation.ValidEntityId;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.validation.annotation.ValidEntityId;
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.plan.Plan;
 import com.fasterxml.jackson.annotation.JsonFormat;

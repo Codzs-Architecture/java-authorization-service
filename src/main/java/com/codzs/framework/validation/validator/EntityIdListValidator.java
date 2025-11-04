@@ -1,4 +1,4 @@
-package com.codzs.framework.annotation.validation;
+package com.codzs.framework.validation.validator;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
 
 import com.codzs.framework.entity.BaseEntity;
+import com.codzs.framework.validation.annotation.ValidEntityId;
 
 import java.util.List;
 

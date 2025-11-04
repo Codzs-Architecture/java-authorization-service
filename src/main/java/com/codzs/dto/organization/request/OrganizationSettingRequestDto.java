@@ -2,11 +2,11 @@ package com.codzs.dto.organization.request;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.framework.annotation.validation.ApplyDefaults;
-import com.codzs.framework.annotation.validation.ValidCountryCode;
-import com.codzs.framework.annotation.validation.ValidCurrencyCode;
-import com.codzs.framework.annotation.validation.ValidTimezone;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.validation.annotation.ValidCountryCode;
+import com.codzs.framework.validation.annotation.ValidCurrencyCode;
 import com.codzs.framework.validation.annotation.ValidLanguageCode;
+import com.codzs.framework.validation.annotation.ValidTimezone;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
