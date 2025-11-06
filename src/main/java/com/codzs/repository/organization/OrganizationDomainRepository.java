@@ -1,7 +1,8 @@
 package com.codzs.repository.organization;
 
+import com.codzs.base.repository.domain.DomainRepository;
 import com.codzs.entity.organization.Organization;
-import com.codzs.repository.domain.DomainRepository;
+
 import org.springframework.stereotype.Repository;
 
 /**

@@ -1,5 +1,7 @@
 package com.codzs.entity.organization;
 
+import org.mapstruct.AfterMapping;
+
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.framework.entity.EntityDefaultInitializer;
 
@@ -21,7 +23,6 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @ToString
 public class OrganizationSetting {
@@ -38,9 +39,13 @@ public class OrganizationSetting {
     @Size(max = 10, message = "Country must not exceed 10 characters")
     private String country;
 
-    // Initialize default values for default constructor
-    @PostConstruct
-    private void initDefaults() {
+    public OrganizationSetting() {
+        this.applyDefaults();
+    }
+    
+    // Initialize default values before persisting to database
+    @AfterMapping
+    public void applyDefaults() {
         this.language = EntityDefaultInitializer.setDefaultIfNull(this.language, CommonConstants.DEFAULT_LANGUAGE);
         this.timezone = EntityDefaultInitializer.setDefaultIfNull(this.timezone, CommonConstants.DEFAULT_TIMEZONE);
         this.currency = EntityDefaultInitializer.setDefaultIfNull(this.currency, CommonConstants.DEFAULT_CURRENCY);

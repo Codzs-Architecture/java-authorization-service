@@ -3,19 +3,22 @@ package com.codzs.service.organization;
 import com.codzs.entity.organization.DatabaseConfig;
 import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
-import com.codzs.exception.validation.ValidationException;
 import com.codzs.repository.organization.DatabaseConfigRepository;
+import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.validation.organization.DatabaseConfigBusinessValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codzs.exception.validation.ValidationException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -29,18 +32,21 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-public class DatabaseConfigServiceImpl implements DatabaseConfigService {
+public class DatabaseConfigServiceImpl extends BaseOrganizationServiceImpl implements DatabaseConfigService {
 
     private final DatabaseConfigRepository databaseConfigRepository;
-    private final OrganizationService organizationService;
     private final DatabaseConfigBusinessValidator databaseConfigBusinessValidator;
+    
+    @Value("${spring.profiles.active:dev}")
+    private String activeProfile;
 
     @Autowired
     public DatabaseConfigServiceImpl(DatabaseConfigRepository databaseConfigRepository,
-                                   OrganizationService organizationService,
-                                   DatabaseConfigBusinessValidator databaseConfigBusinessValidator) {
+                                   DatabaseConfigBusinessValidator databaseConfigBusinessValidator,
+                                   OrganizationRepository organizationRepository, 
+                                   ObjectMapper objectMapper) {
+        super(organizationRepository, objectMapper);
         this.databaseConfigRepository = databaseConfigRepository;
-        this.organizationService = organizationService;
         this.databaseConfigBusinessValidator = databaseConfigBusinessValidator;
     }
 
@@ -67,16 +73,12 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
     }
 
     @Override
-    public DatabaseConfig getDatabaseConfig(String organizationId) {
+    public Optional<DatabaseConfig> getDatabaseConfig(String organizationId) {
         log.debug("Getting database config for organization ID: {}", organizationId);
         
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return null;
-        }
-        
-        return organization.getDatabase();
+        return getOrgById(organizationId)
+                .map(Organization::getDatabase)
+                .filter(database -> database != null);
     }
 
     @Override
@@ -93,7 +95,8 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         }
         
         // Business validation for schema addition
-        databaseConfigBusinessValidator.validateDatabaseSchemaAddition(organization, schema);
+        boolean isSchemaNameExists = this.isSchemaNameExists(organizationId, schema.getSchemaName(), null);
+        databaseConfigBusinessValidator.validateDatabaseSchemaAddition(schema, isSchemaNameExists);
         
         // Set schema ID if not present
         if (!StringUtils.hasText(schema.getId())) {
@@ -128,7 +131,8 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         }
         
         // Business validation for schema update
-        databaseConfigBusinessValidator.validateDatabaseSchemaUpdate(organization, schema);
+        boolean isSchemaNameExists = this.isSchemaNameExists(organizationId, schema.getSchemaName(), schema.getId());
+        databaseConfigBusinessValidator.validateDatabaseSchemaUpdate(schema, isSchemaNameExists);
         
         // Use MongoDB array operation to update entire schema in one go
         databaseConfigRepository.updateDatabaseSchema(organizationId, schema.getId(), schema);
@@ -170,78 +174,68 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         log.debug("Getting all database schemas for organization ID: {}", organizationId);
         
         // Delegate to the listDatabaseSchemas method without any filters
-        return listDatabaseSchemas(organizationId, null, null, null, null);
+        return listDatabaseSchemas(organizationId, null, null);
     }
 
     @Override
-    public List<DatabaseSchema> listDatabaseSchemas(String organizationId, String forService, String status,
-                                                   String headerOrganizationId, String tenantId) {
+    public List<DatabaseSchema> listDatabaseSchemas(String organizationId, String forService, String status) {
         log.debug("Listing database schemas for organization ID: {}, forService: {}, status: {}", 
                  organizationId, forService, status);
         
-        DatabaseConfig databaseConfig = getDatabaseConfig(organizationId);
-        if (databaseConfig == null || databaseConfig.getSchemas() == null) {
-            return new ArrayList<>();
-        }
-        
-        List<DatabaseSchema> schemas = databaseConfig.getSchemas();
-        
-        // Apply filtering if parameters are provided
-        if (forService != null && !forService.trim().isEmpty()) {
-            schemas = schemas.stream()
-                .filter(schema -> forService.equalsIgnoreCase(schema.getForService()))
-                .toList();
-        }
-        
-        if (status != null && !status.trim().isEmpty()) {
-            schemas = schemas.stream()
-                .filter(schema -> status.equalsIgnoreCase(schema.getStatus()))
-                .toList();
-        }
-        
-        log.debug("Returned {} filtered schemas for organization ID: {}", schemas.size(), organizationId);
-        return schemas;
+        return getDatabaseConfig(organizationId)
+                .map(DatabaseConfig::getSchemas)
+                .filter(schemas -> schemas != null)
+                .map(schemas -> {
+                    // Apply filtering if parameters are provided
+                    List<DatabaseSchema> filteredSchemas = schemas;
+                    
+                    if (forService != null && !forService.trim().isEmpty()) {
+                        filteredSchemas = filteredSchemas.stream()
+                            .filter(schema -> forService.equalsIgnoreCase(schema.getForService()))
+                            .toList();
+                    }
+                    
+                    // Note: Status filtering is not implemented as DatabaseSchema entity doesn't have a status field
+                    // TODO: Implement status field in DatabaseSchema entity if needed
+                    if (status != null && !status.trim().isEmpty()) {
+                        log.warn("Status filtering requested but not implemented for DatabaseSchema: {}", status);
+                    }
+                    
+                    log.debug("Returned {} filtered schemas for organization ID: {}", filteredSchemas.size(), organizationId);
+                    return filteredSchemas;
+                })
+                .orElse(new ArrayList<>());
     }
 
     @Override
-    public DatabaseSchema getDatabaseSchema(String organizationId, String schemaId) {
+    public Optional<DatabaseSchema> getDatabaseSchema(String organizationId, String schemaId) {
         log.debug("Getting database schema {} for organization ID: {}", schemaId, organizationId);
         
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return null;
-        }
-        
-        return findSchemaById(organization, schemaId);
+        return getOrgById(organizationId)
+                .map(organization -> findSchemaById(organization, schemaId))
+                .filter(schema -> schema != null);
     }
 
     @Override
     public boolean testDatabaseConnection(String organizationId) {
         log.debug("Testing database connection for organization ID: {}", organizationId);
         
-        DatabaseConfig databaseConfig = getDatabaseConfig(organizationId);
-        if (databaseConfig == null) {
-            log.warn("No database configuration found for organization ID: {}", organizationId);
-            return false;
-        }
-        
-        // TODO: Implement actual database connection testing
-        // This would involve creating a connection with the provided connection string
-        // and certificate, and testing basic connectivity
-        log.debug("Database connection test not implemented yet for organization ID: {}", organizationId);
-        
-        return true; // Placeholder - assume connection is valid
+        return getDatabaseConfig(organizationId)
+                .map(databaseConfig -> {
+                    // TODO: Implement actual database connection testing
+                    // This would involve creating a connection with the provided connection string
+                    // and certificate, and testing basic connectivity
+                    log.debug("Database connection test not implemented yet for organization ID: {}", organizationId);
+                    
+                    return true; // Placeholder - assume connection is valid
+                })
+                .orElseGet(() -> {
+                    log.warn("No database configuration found for organization ID: {}", organizationId);
+                    return false;
+                });
     }
 
     // ========== UTILITY METHODS ==========
-
-    @Override
-    public boolean validateDatabaseConfig(String organizationId, DatabaseConfig databaseConfig) {
-        // Basic validation is handled by entity annotations (@NotBlank, @NotEmpty)
-        // This method can focus on business-specific validation if needed
-        return databaseConfig != null;
-    }
 
     @Override
     public String generateSchemaName(String organizationAbbr, String serviceType, String environment) {
@@ -258,7 +252,7 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
         if (StringUtils.hasText(environment)) {
             schemaName.append(environment.toLowerCase());
         } else {
-            schemaName.append("dev");
+            schemaName.append(activeProfile);
         }
         
         return schemaName.toString();
@@ -280,14 +274,6 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
 
     // ========== PRIVATE HELPER METHODS ==========
 
-    private Organization getOrganizationAndValidate(String organizationId) {
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            throw new ValidationException("Organization not found with ID: " + organizationId);
-        }
-        return organization;
-    }
-
     private DatabaseSchema findSchemaById(Organization organization, String schemaId) {
         if (organization.getDatabase() == null || organization.getDatabase().getSchemas() == null) {
             return null;
@@ -299,11 +285,10 @@ public class DatabaseConfigServiceImpl implements DatabaseConfigService {
                 .orElse(null);
     }
 
-
     private void applySchemaAdditionBusinessLogic(Organization organization, DatabaseSchema schema) {
         // Generate schema name if not provided
         if (!StringUtils.hasText(schema.getSchemaName())) {
-            String generatedName = generateSchemaName(organization.getAbbr(), schema.getForService(), "dev");
+            String generatedName = generateSchemaName(organization.getAbbr(), schema.getForService(), activeProfile);
             schema.setSchemaName(generatedName);
         }
     }

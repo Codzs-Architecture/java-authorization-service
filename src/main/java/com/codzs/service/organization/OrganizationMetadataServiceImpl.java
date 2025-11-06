@@ -2,9 +2,10 @@ package com.codzs.service.organization;
 
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationMetadata;
-import com.codzs.exception.validation.ValidationException;
 import com.codzs.repository.organization.OrganizationMetadataRepository;
+import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.validation.organization.OrganizationMetadataBusinessValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.codzs.constant.organization.OrganizationIndustryEnum;
 import com.codzs.constant.organization.OrganizationSizeEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service implementation for OrganizationMetadata-related business operations.
@@ -27,23 +28,22 @@ import java.util.List;
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-public class OrganizationMetadataServiceImpl implements OrganizationMetadataService {
+public class OrganizationMetadataServiceImpl extends BaseOrganizationServiceImpl implements OrganizationMetadataService {
 
     private final OrganizationMetadataRepository organizationMetadataRepository;
-    private final OrganizationService organizationService;
     private final OrganizationMetadataBusinessValidator organizationMetadataBusinessValidator;
     private final OrganizationIndustryEnum organizationIndustryEnum;
     private final OrganizationSizeEnum organizationSizeEnum;
 
     @Autowired
     public OrganizationMetadataServiceImpl(OrganizationMetadataRepository organizationMetadataRepository,
-                                         OrganizationService organizationService,
-                                         OrganizationMetadataBusinessValidator organizationMetadataBusinessValidator,
                                          OrganizationIndustryEnum organizationIndustryEnum,
-                                         OrganizationSizeEnum organizationSizeEnum) {
+                                         OrganizationSizeEnum organizationSizeEnum,
+                                         OrganizationRepository organizationRepository, 
+                                         ObjectMapper objectMapper) {
+        super(organizationRepository, objectMapper);
         this.organizationMetadataRepository = organizationMetadataRepository;
-        this.organizationService = organizationService;
-        this.organizationMetadataBusinessValidator = organizationMetadataBusinessValidator;
+        this.organizationMetadataBusinessValidator = new OrganizationMetadataBusinessValidator();
         this.organizationIndustryEnum = organizationIndustryEnum;
         this.organizationSizeEnum = organizationSizeEnum;
     }
@@ -58,8 +58,12 @@ public class OrganizationMetadataServiceImpl implements OrganizationMetadataServ
         // Get organization and validate it exists
         Organization organization = getOrganizationAndValidate(organizationId);
         
+        // Get validation data for metadata
+        boolean isValidIndustry = metadata.getIndustry() == null || isValidIndustry(metadata.getIndustry());
+        boolean isValidSize = metadata.getSize() == null || isValidSize(metadata.getSize());
+        
         // Business validation for metadata update
-        organizationMetadataBusinessValidator.validateMetadataUpdate(organization, metadata);
+        organizationMetadataBusinessValidator.validateMetadataUpdate(organization, metadata, isValidIndustry, isValidSize);
         
         // Use MongoDB operation to update metadata directly
         organizationMetadataRepository.updateOrganizationMetadata(organizationId, metadata);
@@ -71,16 +75,12 @@ public class OrganizationMetadataServiceImpl implements OrganizationMetadataServ
     }
 
     @Override
-    public OrganizationMetadata getOrganizationMetadata(String organizationId) {
+    public Optional<OrganizationMetadata> getOrganizationMetadata(String organizationId) {
         log.debug("Getting organization metadata for organization ID: {}", organizationId);
         
-        try {
-            Organization organization = getOrganizationAndValidate(organizationId);
-            return organization.getMetadata();
-        } catch (ValidationException e) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return null;
-        }
+        return getOrgById(organizationId)
+                .map(Organization::getMetadata)
+                .filter(metadata -> metadata != null);
     }
 
     @Override
@@ -91,8 +91,11 @@ public class OrganizationMetadataServiceImpl implements OrganizationMetadataServ
         // Get organization and validate it exists
         Organization organization = getOrganizationAndValidate(organizationId);
         
+        // Get validation data for industry
+        boolean isValidIndustry = isValidIndustry(industry);
+        
         // Business validation for industry update
-        organizationMetadataBusinessValidator.validateIndustryUpdate(organization, industry);
+        organizationMetadataBusinessValidator.validateIndustryUpdate(organization, industry, isValidIndustry);
         
         // Use MongoDB operation to update industry directly
         organizationMetadataRepository.updateIndustry(organizationId, industry);
@@ -111,8 +114,11 @@ public class OrganizationMetadataServiceImpl implements OrganizationMetadataServ
         // Get organization and validate it exists
         Organization organization = getOrganizationAndValidate(organizationId);
         
+        // Get validation data for size
+        boolean isValidSize = isValidSize(size);
+        
         // Business validation for size update
-        organizationMetadataBusinessValidator.validateSizeUpdate(organization, size);
+        organizationMetadataBusinessValidator.validateSizeUpdate(organization, size, isValidSize);
         
         // Use MongoDB operation to update size directly
         organizationMetadataRepository.updateSize(organizationId, size);
@@ -174,13 +180,4 @@ public class OrganizationMetadataServiceImpl implements OrganizationMetadataServ
         return organizationSizeEnum.getOptions();
     }
 
-    // ========== PRIVATE HELPER METHODS ==========
-
-    private Organization getOrganizationAndValidate(String organizationId) {
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            throw new ValidationException("Organization not found with ID: " + organizationId);
-        }
-        return organization;
-    }
 }

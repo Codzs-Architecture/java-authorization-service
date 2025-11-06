@@ -16,7 +16,7 @@ import java.util.Optional;
 /**
  * Repository interface for Organization MongoDB documents.
  * Provides methods for managing organizations with root-level attribute operations only.
- * Nested sub-objects (settings, metadata, domains, database) are handled by their respective repositories.
+ * Nested sub-objects (setting, metadata, domains, database) are handled by their respective repositories.
  * 
  * @author Codzs Team
  * @since 1.0
@@ -26,15 +26,15 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
 
     // ========== BASIC CRUD OPERATIONS ==========
     
-    Optional<Organization> findByIdAndDeletedOnIsNull(String id);
+    Optional<Organization> findByIdAndDeletedDateIsNull(String id);
     
-    Optional<Organization> findByNameAndDeletedOnIsNull(String name);
+    Optional<Organization> findByNameAndDeletedDateIsNull(String name);
     
-    Optional<Organization> findByAbbrAndDeletedOnIsNull(String abbr);
+    Optional<Organization> findByAbbrAndDeletedDateIsNull(String abbr);
     
-    boolean existsByNameAndDeletedOnIsNull(String name);
+    boolean existsByNameAndDeletedDateIsNull(String name);
     
-    boolean existsByAbbrAndDeletedOnIsNull(String abbr);
+    boolean existsByAbbrAndDeletedDateIsNull(String abbr);
 
     // ========== ROOT-LEVEL ATTRIBUTE UPDATES ==========
     
@@ -76,33 +76,33 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
 
     // ========== STATUS-BASED QUERIES ==========
     
-    List<Organization> findByStatusAndDeletedOnIsNull(OrganizationStatusEnum status);
+    List<Organization> findByStatusAndDeletedDateIsNull(OrganizationStatusEnum status);
     
-    Page<Organization> findByStatusAndDeletedOnIsNull(OrganizationStatusEnum status, Pageable pageable);
+    Page<Organization> findByStatusAndDeletedDateIsNull(OrganizationStatusEnum status, Pageable pageable);
 
     // ========== SEARCH AND FILTERING ==========
     
     @Query("{ 'deletedDate': null, $and: [ " +
            "{ $or: [ " +
            "  { 'status': { $in: ?0 } }, " +
-           "  { $expr: { $eq: [{ $size: ?0 }, 0] } } " +
+           "  { $expr: { $eq: [{ $size: { $ifNull: [?0, []] } }, 0] } } " +
            "] }, " +
            "{ $or: [ " +
            "  { 'organizationType': { $in: ?1 } }, " +
-           "  { $expr: { $eq: [{ $size: ?1 }, 0] } } " +
+           "  { $expr: { $eq: [{ $size: { $ifNull: [?1, []] } }, 0] } } " +
            "] }, " +
            "{ $or: [ " +
            "  { 'metadata.industry': { $in: ?2 } }, " +
-           "  { $expr: { $eq: [{ $size: ?2 }, 0] } } " +
+           "  { $expr: { $eq: [{ $size: { $ifNull: [?2, []] } }, 0] } } " +
            "] }, " +
            "{ $or: [ " +
            "  { 'metadata.size': { $in: ?3 } }, " +
-           "  { $expr: { $eq: [{ $size: ?3 }, 0] } } " +
+           "  { $expr: { $eq: [{ $size: { $ifNull: [?3, []] } }, 0] } } " +
            "] }, " +
            "{ $or: [ " +
            "  { 'name': { $regex: ?4, $options: 'i' } }, " +
            "  { 'displayName': { $regex: ?4, $options: 'i' } }, " +
-           "  { $expr: { $eq: [?4, ''] } } " +
+           "  { $expr: { $eq: [{ $ifNull: [?4, ''] }, ''] } } " +
            "] } " +
            "] }")
     Page<Organization> findWithFilters(List<OrganizationStatusEnum> statuses, 
@@ -123,18 +123,18 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
 
     // ========== HIERARCHY MANAGEMENT ==========
     
-    List<Organization> findByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId);
+    List<Organization> findByParentOrganizationIdAndDeletedDateIsNull(String parentOrganizationId);
     
-    Page<Organization> findByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId, Pageable pageable);
+    Page<Organization> findByParentOrganizationIdAndDeletedDateIsNull(String parentOrganizationId, Pageable pageable);
     
     @Query("{ 'deletedDate': null, 'parentOrganizationId': ?0, $and: [ " +
            "{ $or: [ " +
            "  { 'status': { $in: ?1 } }, " +
-           "  { $expr: { $eq: [{ $size: ?1 }, 0] } } " +
+           "  { $expr: { $eq: [{ $size: { $ifNull: [?1, []] } }, 0] } } " +
            "] }, " +
            "{ $or: [ " +
            "  { 'organizationType': { $in: ?2 } }, " +
-           "  { $expr: { $eq: [{ $size: ?2 }, 0] } } " +
+           "  { $expr: { $eq: [{ $size: { $ifNull: [?2, []] } }, 0] } } " +
            "] } " +
            "] }")
     Page<Organization> findChildrenWithFilters(String parentOrganizationId, 
@@ -152,7 +152,7 @@ public interface OrganizationRepository extends MongoRepository<Organization, St
 
     // ========== UTILITY METHODS FOR VALIDATION ==========
     
-    long countByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId);
+    long countByParentOrganizationIdAndDeletedDateIsNull(String parentOrganizationId);
     
-    boolean existsByParentOrganizationIdAndDeletedOnIsNull(String parentOrganizationId);
+    boolean existsByParentOrganizationIdAndDeletedDateIsNull(String parentOrganizationId);
 }

@@ -15,11 +15,6 @@ public final class OrganizationConstants {
      */
     public static final String DEFAULT_ROLE_CONTEXT_TYPE = "ORGANIZATION";
 
-    public static final String ORGANIZATION_SETTING = "SETTING";
-    public static final String ORGANIZATION_DOMAIN = "DOMAIN";
-    public static final String ORGANIZATION_METADATA = "METADATA";
-    public static final String ORGANIZATION_DATABASE = "DATABASE";
-
     public static final String SETTING_TIMEZONE = "timezone";
     public static final String SETTING_LANGUAGE = "language";
     public static final String SETTING_CURRENCY = "currency";

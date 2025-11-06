@@ -17,6 +17,13 @@ spring:
 
   # MongoDB and Mongock configuration handled in config server
   # See: java-codzs-config/management-domain/java-authorization-service/
+  
+  data:
+    mongodb:
+      # Enable query logging (local override)
+      # This can be overridden by config server settings
+      repositories:
+        enabled: true
 
 # Entry to show this information on spring boot admin
 #info:
@@ -59,6 +66,10 @@ logging:
     org.springframework.jdbc: DEBUG
     org.springframework.web.client: DEBUG
     org.springframework.http: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.springframework.data.mongodb.repository: DEBUG
+    org.springframework.data.mongodb.core.QueryOperations: DEBUG
+    org.springframework.data.mongodb.core.ReactiveMongoTemplate: DEBUG
     com.codzs: DEBUG
 
 acl:

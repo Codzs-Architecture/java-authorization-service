@@ -69,17 +69,4 @@ public class DomainRequestDto {
         this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
         this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
     }
-
-    /**
-     * Applies default values for null fields
-     */
-    public void applyDefaults() {
-        if (this.isVerified == null) {
-            this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
-        }
-        if (this.isPrimary == null) {
-            this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
-        }
-    }
-
 }

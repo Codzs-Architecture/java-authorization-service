@@ -1,6 +1,7 @@
 package com.codzs.service.organization;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationMetadata;
@@ -32,9 +33,9 @@ public interface OrganizationMetadataService {
      * API: GET /api/v1/organizations/{id}/metadata
      *
      * @param organizationId the organization ID
-     * @return organization metadata or null if not found
+     * @return Optional containing organization metadata, or empty if not found
      */
-    OrganizationMetadata getOrganizationMetadata(String organizationId);
+    Optional<OrganizationMetadata> getOrganizationMetadata(String organizationId);
 
     /**
      * Updates organization industry.

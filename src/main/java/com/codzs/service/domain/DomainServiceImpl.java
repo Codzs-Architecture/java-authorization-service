@@ -1,9 +1,10 @@
 package com.codzs.service.domain;
 
-import com.codzs.constant.domain.DomainConstants;
+import com.codzs.constant.domain.DomainSchemaConstants;
+import com.codzs.constant.domain.DomainVerificationMethodEnum;
 // OrganizationConstants removed - generic service doesn't have entity-specific constants
 import com.codzs.entity.domain.Domain;
-import com.codzs.repository.domain.DomainRepository;
+import com.codzs.framework.helper.SpringContextHelper;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,24 +32,13 @@ import java.util.regex.Pattern;
 @Transactional(readOnly = true)
 public class DomainServiceImpl<T> implements DomainService<T> {
 
-    protected final DomainRepository<T> domainRepository;
+    // protected final DomainRepository<T> domainRepository;
     
-    private static final Pattern DOMAIN_PATTERN = Pattern.compile(DomainConstants.DOMAIN_BUSINESS_VALIDATION_PATTERN);
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile(DomainSchemaConstants.DOMAIN_BUSINESS_VALIDATION_PATTERN);
 
     @Autowired
-    public DomainServiceImpl(DomainRepository<T> domainRepository) {
-        this.domainRepository = domainRepository;
-    }
-
-    // ========== UTILITY METHODS ==========
-
-    @Override
-    public boolean isDomainAlreadyRegistered(String domainName) {
-        if (!StringUtils.hasText(domainName)) {
-            return false;
-        }
-        
-        return domainRepository.existsByDomainsName(domainName.toLowerCase().trim());
+    public DomainServiceImpl() {
+        // this.domainRepository = domainRepository;
     }
 
     @Override
@@ -59,7 +49,7 @@ public class DomainServiceImpl<T> implements DomainService<T> {
         
         String normalized = domainName.toLowerCase().trim();
         return DOMAIN_PATTERN.matcher(normalized).matches() && 
-               normalized.length() <= DomainConstants.MAX_DOMAIN_NAME_LENGTH;
+               normalized.length() <= DomainSchemaConstants.DOMAIN_NAME_MAX_LENGTH;
     }
 
     @Override
@@ -194,7 +184,7 @@ public class DomainServiceImpl<T> implements DomainService<T> {
         }
         
         Instant expiryTime = domain.getCreatedDate().plus(Duration.ofHours(
-            DomainConstants.DOMAIN_VERIFICATION_EXPIRY_HOURS));
+            DomainSchemaConstants.DOMAIN_VERIFICATION_EXPIRY_HOURS));
         
         boolean expired = Instant.now().isAfter(expiryTime);
         log.debug("Domain verification expired check for domain {}: {}", domain.getName(), expired);
@@ -251,12 +241,14 @@ public class DomainServiceImpl<T> implements DomainService<T> {
 
     @Override
     public String[] getAvailableVerificationMethods(String organizationType) {
+        DomainVerificationMethodEnum domainVerificationMethodEnum = SpringContextHelper.getBean(DomainVerificationMethodEnum.class);
+
         if ("INDIVIDUAL".equals(organizationType)) {
             // Individual organizations have limited verification options
             return new String[]{"EMAIL", "FILE"};
         } else {
             // Business organizations have all verification methods
-            return new String[]{"DNS", "EMAIL", "FILE"};
+            return domainVerificationMethodEnum.getOptions().toArray(new String[0]);
         }
     }
 

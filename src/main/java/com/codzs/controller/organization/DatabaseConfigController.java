@@ -1,6 +1,6 @@
 package com.codzs.controller.organization;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.dto.organization.request.DatabaseConfigRequestDto;
 import com.codzs.dto.organization.request.DatabaseSchemaRequestDto;
 import com.codzs.dto.organization.response.DatabaseConfigResponseDto;
@@ -10,7 +10,7 @@ import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
-import com.codzs.framework.validation.annotation.ValidUUID;
+import com.codzs.framework.validation.annotation.ValidObjectId;
 import com.codzs.mapper.organization.DatabaseConfigMapper;
 import com.codzs.service.organization.DatabaseConfigService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,8 +30,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
+ 
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/organizations/{organizationId}/database")
@@ -60,10 +59,10 @@ public class DatabaseConfigController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<DatabaseConfigResponseDto> getDatabaseConfiguration(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("organizationId") 
+            String organizationId,
             
             @Parameter(description = "Include connection string in response (admin only)", example = "false")
             @RequestParam(value = "includeConnectionString", defaultValue = "false") 
@@ -85,41 +84,42 @@ public class DatabaseConfigController {
         log.info("Getting database configuration for organization: {}, includeConnectionString: {}, testConnection: {}", 
             organizationId, includeConnectionString, testConnection);
         
-        DatabaseConfig databaseConfig = databaseConfigService.getDatabaseConfig(
-            organizationId.toString()
-        );
-
-        // Map to response DTO
-        DatabaseConfigResponseDto response = databaseConfigMapper.toResponse(databaseConfig);
-        
-        // Filter sensitive fields based on request parameters
-        if (!includeConnectionString) {
-            response.setConnectionString(null);
-            log.debug("Connection string excluded from response for organization: {}", organizationId);
-        }
-        
-        if (!includeCertificate) {
-            response.setCertificate(null);
-            log.debug("Certificate excluded from response for organization: {}", organizationId);
-        }
-        
-        // Test connection if requested
-        if (testConnection) {
-            boolean testResults = testConnection(organizationId);
-            response.setConnectionTestResults(testResults);
-        }
-            
-        log.info("Successfully retrieved database configuration for organization: {}", organizationId);
-        return ResponseEntity.ok(response);
+        return databaseConfigService.getDatabaseConfig(organizationId)
+                .map(databaseConfig -> {
+                    // Map to response DTO
+                    DatabaseConfigResponseDto response = databaseConfigMapper.toResponse(databaseConfig);
+                    
+                    // Filter sensitive fields based on request parameters
+                    if (!includeConnectionString) {
+                        response.setConnectionString(null);
+                        log.debug("Connection string excluded from response for organization: {}", organizationId);
+                    }
+                    
+                    if (!includeCertificate) {
+                        response.setCertificate(null);
+                        log.debug("Certificate excluded from response for organization: {}", organizationId);
+                    }
+                    
+                    // Test connection if requested
+                    if (testConnection) {
+                        boolean testResults = testConnection(organizationId);
+                        response.setConnectionTestResults(testResults);
+                    }
+                    
+                    log.info("Successfully retrieved database configuration for organization: {}", organizationId);
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    log.warn("Database configuration not found for organization: {}", organizationId);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
-    private boolean testConnection(UUID organizationId) {
+    private boolean testConnection(String organizationId) {
         boolean testResults = false;
         try {
             log.info("Testing database connectivity for organization: {}", organizationId);
-            testResults = databaseConfigService.testDatabaseConnection(
-                organizationId.toString()
-            );
+            testResults = databaseConfigService.testDatabaseConnection(organizationId);
             log.info("Database connectivity test completed for organization: {}", organizationId);
         } catch (Exception e) {
             log.error("Database connectivity test failed for organization: {}", organizationId, e);
@@ -146,10 +146,10 @@ public class DatabaseConfigController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<DatabaseConfigResponseDto> updateDatabaseConnection(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("organizationId") 
+            String organizationId,
             
             @Parameter(description = "Database connection update request", required = true)
             @Valid 
@@ -158,16 +158,17 @@ public class DatabaseConfigController {
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        
+            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+    {
+
         log.info("Updating database connection for organization: {}", organizationId);
         
         DatabaseConfig databaseConfigEntity = databaseConfigMapper.toEntity(request);
-        Organization updatedConfig = databaseConfigService.updateDatabaseConfig(
-            organizationId.toString(), databaseConfigEntity.getConnectionString(), databaseConfigEntity.getCertificate()
+        Organization organization = databaseConfigService.updateDatabaseConfig(
+            organizationId, databaseConfigEntity.getConnectionString(), databaseConfigEntity.getCertificate()
         );
         
-        DatabaseConfigResponseDto response = databaseConfigMapper.toResponse(updatedConfig.getDatabase());
+        DatabaseConfigResponseDto response = databaseConfigMapper.toResponse(organization.getDatabase());
         
         log.info("Successfully updated database connection for organization: {}", organizationId);
         return ResponseEntity.ok(response);
@@ -243,22 +244,17 @@ public class DatabaseConfigController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Boolean> testDatabaseConnectivity(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
-            
-            @Parameter(description = "Include performance metrics", example = "false")
-            @RequestParam(value = "includePerformance", defaultValue = "false")
-            Boolean includePerformance,
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("organizationId") 
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
             @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
     {
         
-        log.info("Testing database connectivity for organization: {}, includePerformance: {}", 
-            organizationId, includePerformance);
+        log.info("Testing database connectivity for organization: {}", organizationId);
         
         boolean testResults = testConnection(organizationId);
         
@@ -284,10 +280,10 @@ public class DatabaseConfigController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<DatabaseSchemaResponseDto> addDatabaseSchema(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("organizationId") 
+            String organizationId,
             
             @Parameter(description = "Database schema creation request", required = true)
             @Valid 
@@ -296,19 +292,20 @@ public class DatabaseConfigController {
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+    {
         
         log.info("Adding database schema for organization: {}, forService: {}", 
             organizationId, request.getForService());
         
-        DatabaseSchema schemaEntity = databaseConfigMapper.toSchemaEntity(request);
+        DatabaseSchema databaseSchema = databaseConfigMapper.toSchemaEntity(request);
         List<DatabaseSchema> allSchemas = databaseConfigService.addDatabaseSchema(
-            organizationId.toString(), schemaEntity
+            organizationId, databaseSchema
         );
         
         // Find the newly created schema (it should be the one with the ID we set)
         DatabaseSchema createdSchema = allSchemas.stream()
-            .filter(schema -> schemaEntity.getId().equals(schema.getId()))
+            .filter(schema -> databaseSchema.getId().equals(schema.getId()))
             .findFirst()
             .orElseThrow(() -> new RuntimeException("Created schema not found in returned list"));
         
@@ -336,10 +333,10 @@ public class DatabaseConfigController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<List<DatabaseSchemaResponseDto>> listDatabaseSchemas(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("organizationId") 
+            String organizationId,
             
             @Parameter(description = "Filter by service type", example = "auth")
             @RequestParam(value = "forService", required = false) 
@@ -358,7 +355,7 @@ public class DatabaseConfigController {
             organizationId, forService, status);
         
         List<DatabaseSchema> schemas = databaseConfigService.listDatabaseSchemas(
-            organizationId.toString(), forService, status, headerOrganizationId, tenantId
+            organizationId, forService, status
         );
         
         List<DatabaseSchemaResponseDto> response = schemas.stream()
@@ -386,15 +383,15 @@ public class DatabaseConfigController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<DatabaseSchemaResponseDto> getDatabaseSchemaDetails(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("organizationId") 
+            String organizationId,
             
-            @Parameter(description = "Schema ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_SCHEMA_ID)
-            @ValidUUID(allowNull = false, fieldName = "Schema ID")
-            @PathVariable 
-            UUID schemaId,
+            @Parameter(description = "Schema ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("schemaId") 
+            String schemaId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -403,14 +400,17 @@ public class DatabaseConfigController {
         
         log.info("Getting schema details for organization: {}, schema: {}", organizationId, schemaId);
         
-        DatabaseSchema schema = databaseConfigService.getDatabaseSchema(
-            organizationId.toString(), schemaId.toString()
-        );
-        
-        DatabaseSchemaResponseDto response = databaseConfigMapper.toSchemaResponse(schema);
-        
-        log.info("Successfully retrieved schema details: {} for organization: {}", schemaId, organizationId);
-        return ResponseEntity.ok(response);
+        return databaseConfigService.getDatabaseSchema(organizationId, schemaId)
+                .map(schema -> {
+                    DatabaseSchemaResponseDto response = databaseConfigMapper.toSchemaResponse(schema);
+                    
+                    log.info("Successfully retrieved schema details: {} for organization: {}", schemaId, organizationId);
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    log.warn("Database schema not found: {} for organization: {}", schemaId, organizationId);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @DeleteMapping("/schemas/{schemaId}")
@@ -427,15 +427,14 @@ public class DatabaseConfigController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> removeDatabaseSchema(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false)
+            @PathVariable("organizationId") 
+            String organizationId,
             
-            @Parameter(description = "Schema ID to remove", required = true, example = OrganizationSwaggerConstants.EXAMPLE_SCHEMA_ID)
-            @ValidUUID(allowNull = false, fieldName = "Schema ID")
+            @Parameter(description = "Schema ID to remove", required = true, example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_ID)
             @PathVariable 
-            UUID schemaId,
+            String schemaId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -445,7 +444,7 @@ public class DatabaseConfigController {
         log.info("Removing database schema for organization: {}, schema: {}", organizationId, schemaId);
         
         databaseConfigService.removeDatabaseSchema(
-            organizationId.toString(), schemaId.toString()
+            organizationId, schemaId
         );
         
         log.info("Successfully removed schema: {} from organization: {}", schemaId, organizationId);

@@ -1,13 +1,12 @@
 package com.codzs.controller.organization;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.dto.organization.request.OrganizationPlanRequestDto;
 import com.codzs.dto.organization.response.OrganizationPlanResponseDto;
 import com.codzs.entity.organization.OrganizationPlan;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
 import com.codzs.framework.constant.PaginationConstant;
-import com.codzs.framework.validation.annotation.ValidUUID;
 import com.codzs.mapper.organization.OrganizationPlanMapper;
 import com.codzs.service.organization.OrganizationPlanService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -64,11 +62,10 @@ public class OrganizationPlanController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<OrganizationPlanResponseDto> getCurrentActivePlan(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @ValidUUID(message = "Invalid Organization ID format")
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -77,7 +74,7 @@ public class OrganizationPlanController {
         log.info("Getting plan for organization: {}", organizationId);
         
         OrganizationPlan organizationPlan = organizationPlanService.getCurrentActivePlan(
-            organizationId.toString()
+            organizationId
         );
         
         OrganizationPlanResponseDto response = organizationPlanMapper.toResponse(organizationPlan);
@@ -105,11 +102,10 @@ public class OrganizationPlanController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<OrganizationPlanResponseDto> updateOrganizationPlan(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @ValidUUID(message = "Invalid Organization ID format")
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @Parameter(description = "Plan update request", required = true)
             @Valid 
@@ -125,7 +121,7 @@ public class OrganizationPlanController {
         
         OrganizationPlan planEntity = organizationPlanMapper.toEntity(request);
         OrganizationPlan updatedPlan = organizationPlanService.changeOrganizationPlan(
-            organizationId.toString(), planEntity);
+            organizationId, planEntity);
         
         OrganizationPlanResponseDto response = organizationPlanMapper.toResponse(updatedPlan);
         
@@ -151,11 +147,10 @@ public class OrganizationPlanController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Page<OrganizationPlanResponseDto>> getOrganizationPlanHistory(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @ValidUUID(message = "Invalid Organization ID format")
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @Parameter(description = "Page number (1-based)", example = "1")
             @Min(value = 1, message = "Page number must be at least 1") 
@@ -192,7 +187,7 @@ public class OrganizationPlanController {
         Instant endInstant = endDate != null ? endDate.atTime(23, 59, 59, 999_999_999).atZone(ZoneOffset.UTC).toInstant() : null;
         
         Page<OrganizationPlan> planHistoryPage = organizationPlanService.getOrganizationPlanHistory(
-            organizationId.toString(), startInstant, endInstant, pageable
+            organizationId, startInstant, endInstant, pageable
         );
         
         Page<OrganizationPlanResponseDto> response = planHistoryPage.map(organizationPlanMapper::toResponse);

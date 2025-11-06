@@ -22,7 +22,7 @@ import java.util.Optional;
 public interface OrganizationPlanRepository extends MongoRepository<OrganizationPlan, String> {
 
     // Current active plan queries
-    Optional<OrganizationPlan> findByOrganizationIdAndIsActiveTrueAndDeletedOnIsNull(String organizationId);
+    Optional<OrganizationPlan> findByOrganizationIdAndIsActiveTrueAndDeletedDateIsNull(String organizationId);
     
     @Query("{ 'organizationId': ?0, 'isActive': true, 'deletedDate': null, " +
            "$or: [ " +
@@ -32,9 +32,9 @@ public interface OrganizationPlanRepository extends MongoRepository<Organization
     Optional<OrganizationPlan> findCurrentValidPlan(String organizationId, Instant currentTime);
 
     // Plan history and listing
-    List<OrganizationPlan> findByOrganizationIdAndDeletedOnIsNullOrderByCreatedDateDesc(String organizationId);
+    List<OrganizationPlan> findByOrganizationIdAndDeletedDateIsNullOrderByCreatedDateDesc(String organizationId);
     
-    Page<OrganizationPlan> findByOrganizationIdAndDeletedOnIsNullOrderByCreatedDateDesc(String organizationId, Pageable pageable);
+    Page<OrganizationPlan> findByOrganizationIdAndDeletedDateIsNullOrderByCreatedDateDesc(String organizationId, Pageable pageable);
 
     // Plan history with date filtering
     @Query("{ 'organizationId': ?0, 'deletedDate': null, " +
@@ -45,7 +45,7 @@ public interface OrganizationPlanRepository extends MongoRepository<Organization
                                                             Pageable pageable);
 
     // Plan validation and conflict checks
-    boolean existsByOrganizationIdAndPlanIdAndIsActiveTrueAndDeletedOnIsNull(String organizationId, String planId);
+    boolean existsByOrganizationIdAndPlanIdAndIsActiveTrueAndDeletedDateIsNull(String organizationId, String planId);
     
     @Query("{ 'organizationId': ?0, 'isActive': true, 'deletedDate': null, " +
            "'validFrom': { $lte: ?1 }, " +
@@ -64,10 +64,10 @@ public interface OrganizationPlanRepository extends MongoRepository<Organization
     List<OrganizationPlan> findExpiredActivePlans(Instant currentTime);
 
     // Bulk operations for organization deletion
-    List<OrganizationPlan> findByOrganizationIdAndDeletedOnIsNull(String organizationId);
+    List<OrganizationPlan> findByOrganizationIdAndDeletedDateIsNull(String organizationId);
 
     // Plan usage analytics
-    long countByPlanIdAndIsActiveTrueAndDeletedOnIsNull(String planId);
+    long countByPlanIdAndIsActiveTrueAndDeletedDateIsNull(String planId);
     
     @Query("{ 'planId': ?0, 'isActive': true, 'deletedDate': null, " +
            "'validFrom': { $lte: ?1 }, " +
@@ -83,5 +83,5 @@ public interface OrganizationPlanRepository extends MongoRepository<Organization
     
     boolean existsByOrganizationIdAndIsActiveTrue(String organizationId);
     
-    Optional<OrganizationPlan> findTopByOrganizationIdAndDeletedOnIsNullOrderByCreatedDateDesc(String organizationId);
+    Optional<OrganizationPlan> findTopByOrganizationIdAndDeletedDateIsNullOrderByCreatedDateDesc(String organizationId);
 }

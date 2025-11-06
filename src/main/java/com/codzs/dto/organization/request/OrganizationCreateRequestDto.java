@@ -76,7 +76,6 @@ public class OrganizationCreateRequestDto {
             example = OrganizationSchemaConstants.EXAMPLE_EXPIRY_DATE)
     private Instant expiresDate;
 
-//     @NotNull(message = "Database configuration is required")
     @Valid
     @Schema(description = OrganizationSchemaConstants.DATABASE_CONFIG_DESCRIPTION, required = true)
     private DatabaseConfigRequestDto database;
@@ -107,9 +106,11 @@ public class OrganizationCreateRequestDto {
             example = OrganizationSchemaConstants.EXAMPLE_PARENT_ORG_ID)
     private String parentOrganizationId;
 
-    public OrganizationSettingRequestDto getSetting()   {
-        this.setting.applyDefaults();
+//     public OrganizationSettingRequestDto getSetting()   {
+//         if (this.setting == null) {
+//             this.setting = new OrganizationSettingRequestDto();
+//         }
 
-        return this.setting;
-    }
+//         return this.setting;
+//     }
 }

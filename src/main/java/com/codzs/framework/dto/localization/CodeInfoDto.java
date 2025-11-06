@@ -1,4 +1,4 @@
-package com.codzs.dto.localization;
+package com.codzs.framework.dto.localization;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,7 +19,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Localization code information")
-public class CodeDto {
+public class CodeInfoDto {
 
     @Schema(description = "Code value (e.g., 'US', 'USD', 'UTC', 'en')", 
             example = "US", 
@@ -38,7 +38,7 @@ public class CodeDto {
     /**
      * Convenience constructor without isDefault (defaults to false).
      */
-    public CodeDto(String code, String value) {
+    public CodeInfoDto(String code, String value) {
         this.code = code;
         this.value = value;
         this.isDefault = false;

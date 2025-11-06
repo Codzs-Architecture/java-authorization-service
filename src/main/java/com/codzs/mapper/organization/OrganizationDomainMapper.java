@@ -36,7 +36,7 @@ public interface OrganizationDomainMapper extends BaseMapper{
     @Mapping(target = "isVerified", ignore = true)
     @Mapping(target = "verificationToken", ignore = true)
     @Mapping(target = "verifiedDate", ignore = true)
-    @Mapping(source = "createdDate", target = "createdDate", dateFormat = CommonConstants.UTC_TIMESTAMP_PATTERN)
+    // @Mapping(source = "createdDate", target = "createdDate", dateFormat = CommonConstants.UTC_TIMESTAMP_PATTERN)
     Domain toEntity(DomainRequestDto requestDto);
 
     // ========================= UPDATE MAPPINGS =========================

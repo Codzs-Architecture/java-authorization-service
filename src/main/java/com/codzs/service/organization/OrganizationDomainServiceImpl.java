@@ -5,8 +5,10 @@ import com.codzs.entity.domain.Domain;
 import com.codzs.entity.organization.Organization;
 import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationDomainRepository;
+import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.service.domain.DomainServiceImpl;
 import com.codzs.validation.organization.OrganizationDomainBusinessValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -32,16 +35,18 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organization> implements OrganizationDomainService {
 
-    private final OrganizationService organizationService;
+    private final BaseOrganizationServiceImpl baseOrganizationService;
     private final OrganizationDomainBusinessValidator organizationDomainBusinessValidator;
+    private final OrganizationDomainRepository organizationDomainRepository;
     
     @Autowired
-    public OrganizationDomainServiceImpl(OrganizationDomainRepository domainRepository,
-                           OrganizationService organizationService,
-                           OrganizationDomainBusinessValidator organizationDomainBusinessValidator) {
-        super(domainRepository);
-        this.organizationService = organizationService;
-        this.organizationDomainBusinessValidator = organizationDomainBusinessValidator;
+    public OrganizationDomainServiceImpl(OrganizationDomainRepository organizationDomainRepository,
+                           OrganizationRepository organizationRepository, 
+                           ObjectMapper objectMapper) {
+        super();
+        this.organizationDomainRepository = organizationDomainRepository;
+        this.baseOrganizationService = new BaseOrganizationServiceImpl(organizationRepository, objectMapper);
+        this.organizationDomainBusinessValidator = new OrganizationDomainBusinessValidator();
     }
 
     // ========== API FLOW METHODS ==========
@@ -52,18 +57,22 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         log.debug("Adding domain {} to organization ID: {}", domain.getName(), organizationId);
         
         // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
+        Organization organization = baseOrganizationService.getOrganizationAndValidate(organizationId);
+        
+        // Get domain data for validation
+        boolean isDomainAlreadyRegistered = isDomainAlreadyRegistered(domain.getName());
         
         // Business validation for domain addition
-        organizationDomainBusinessValidator.validateDomainAddition(organization, domain, OrganizationConstants.MAX_DOMAINS_PER_ORGANIZATION);
+        organizationDomainBusinessValidator.validateDomainAddition(organization, domain, OrganizationConstants.MAX_DOMAINS_PER_ORGANIZATION, isDomainAlreadyRegistered);
         
         // Ensure domain has ID if not provided
         if (domain.getId() == null) {
             domain.setId(UUID.randomUUID().toString());
         }
+        domain.setVerificationToken(generateVerificationToken(domain.getId(), domain.getVerificationMethod()));
         
         // Use MongoDB array operation to add domain directly
-        domainRepository.addDomainToEntity(organizationId, domain);
+        organizationDomainRepository.addDomainToEntity(organizationId, domain);
         
         log.info("Added domain {} to organization ID: {}", domain.getName(), organizationId);
         
@@ -77,7 +86,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         log.debug("Updating domain {} in organization ID: {}", domain.getId(), organizationId);
         
         // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
+        Organization organization = baseOrganizationService.getOrganizationAndValidate(organizationId);
         
         // Find existing domain in organization
         Domain existingDomain = findDomainInOrganization(organization, domain.getId());
@@ -85,11 +94,15 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
             throw ExceptionUtils.domainNotFound(domain.getId());
         }
         
+        // Get domain data for validation
+        boolean isDomainAlreadyRegistered = !existingDomain.getName().equals(domain.getName()) && 
+            isDomainAlreadyRegistered(domain.getName());
+        
         // Business validation for domain update
-        organizationDomainBusinessValidator.validateDomainUpdate(existingDomain, domain);
+        organizationDomainBusinessValidator.validateDomainUpdate(existingDomain, domain, isDomainAlreadyRegistered);
         
         // Use MongoDB array operation to update entire domain in one go
-        domainRepository.updateDomain(organizationId, domain.getId(), domain);
+        organizationDomainRepository.updateDomain(organizationId, domain.getId(), domain);
         
         log.info("Updated domain {} in organization ID: {}", domain.getId(), organizationId);
         
@@ -103,7 +116,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         log.debug("Removing domain {} from organization ID: {}", domainId, organizationId);
         
         // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
+        Organization organization = baseOrganizationService.getOrganizationAndValidate(organizationId);
         
         // Find domain to remove
         Domain domainToRemove = findDomainInOrganization(organization, domainId);
@@ -111,11 +124,15 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
             throw ExceptionUtils.domainNotFound(domainId);
         }
         
+        // Get user data for validation 
+        boolean hasUsersInDomain = hasUsersInDomain(organization.getId(), domainToRemove.getName());
+        int userCountInDomain = getUserCountByDomain(organization.getId(), domainToRemove.getName());
+        
         // Business validation for domain removal
-        organizationDomainBusinessValidator.validateDomainRemoval(organization, domainId);
+        organizationDomainBusinessValidator.validateDomainRemoval(organization, domainId, hasUsersInDomain, userCountInDomain);
         
         // Use MongoDB array operation to remove domain directly
-        domainRepository.removeDomainFromEntity(organizationId, domainId);
+        organizationDomainRepository.removeDomainFromEntity(organizationId, domainId);
         
         log.info("Removed domain {} from organization ID: {}", domainId, organizationId);
         
@@ -130,7 +147,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         log.debug("Verifying domain {} in organization ID: {}", domainId, organizationId);
         
         // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
+        Organization organization = baseOrganizationService.getOrganizationAndValidate(organizationId);
         
         // Find domain to verify
         Domain domain = findDomainInOrganization(organization, domainId);
@@ -138,16 +155,20 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
             throw ExceptionUtils.domainNotFound(domainId);
         }
         
+        // Get domain verification data for validation
+        boolean isValidVerificationToken = validateVerificationToken(domain, verificationToken, verificationMethod);
+        boolean isVerificationExpired = isVerificationExpired(domain);
+        
         // Business validation for domain verification
-        organizationDomainBusinessValidator.validateDomainVerificationRequest(domain, verificationMethod, verificationToken);
+        organizationDomainBusinessValidator.validateDomainVerificationRequest(domain, verificationMethod, verificationToken, isValidVerificationToken, isVerificationExpired);
         
         // Use MongoDB array operation to update verification status
-        domainRepository.updateDomainVerificationStatus(organizationId, domainId, Instant.now());
+        organizationDomainRepository.updateDomainVerificationStatus(organizationId, domainId, Instant.now());
         
         log.info("Verified domain {} in organization ID: {}", domainId, organizationId);
         
         // Return the verified domain
-        return getDomainInEntity(organizationId, domainId);
+        return getDomainInEntity(organizationId, domainId).orElse(null);
     }
 
     @Override
@@ -156,7 +177,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         log.debug("Setting domain {} as primary for organization ID: {}", domainId, organizationId);
         
         // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
+        Organization organization = baseOrganizationService.getOrganizationAndValidate(organizationId);
         
         // Find domain to set as primary
         Domain domain = findDomainInOrganization(organization, domainId);
@@ -167,9 +188,9 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         // Business validation for setting primary domain
         organizationDomainBusinessValidator.validateSetPrimaryDomain(domain);
         
-        // Use MongoDB array operations to update primary domain settings
-        domainRepository.unsetAllPrimaryDomains(organizationId);
-        domainRepository.setPrimaryDomain(organizationId, domainId);
+        // Use MongoDB array operations to update primary domain setting
+        organizationDomainRepository.unsetAllPrimaryDomains(organizationId);
+        organizationDomainRepository.setPrimaryDomain(organizationId, domainId);
         
         log.info("Set domain {} as primary for organization ID: {}", domainId, organizationId);
         
@@ -181,26 +202,19 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
     public List<Domain> getDomainsForEntity(String organizationId) {
         log.debug("Getting domains for organization ID: {}", organizationId);
         
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return new ArrayList<>();
-        }
-        
-        return organization.getDomains() != null ? organization.getDomains() : new ArrayList<>();
+        return baseOrganizationService.getOrgById(organizationId)
+                .map(Organization::getDomains)
+                .filter(domains -> domains != null)
+                .orElse(new ArrayList<>());
     }
 
     @Override
-    public Domain getDomainInEntity(String organizationId, String domainId) {
+    public Optional<Domain> getDomainInEntity(String organizationId, String domainId) {
         log.debug("Getting domain {} for organization ID: {}", domainId, organizationId);
         
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return null;
-        }
-        
-        return findDomainInOrganization(organization, domainId);
+        return baseOrganizationService.getOrgById(organizationId)
+                .map(organization -> findDomainInOrganization(organization, domainId))
+                .filter(domain -> domain != null);
     }
 
     @Override
@@ -209,7 +223,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         log.debug("Regenerating verification token for domain {} in organization ID: {}", domainId, organizationId);
         
         // Get organization and validate it exists
-        Organization organization = getOrganizationAndValidate(organizationId);
+        Organization organization = baseOrganizationService.getOrganizationAndValidate(organizationId);
         
         // Find domain
         Domain domain = findDomainInOrganization(organization, domainId);
@@ -221,24 +235,21 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         String newToken = generateVerificationToken(domain.getName(), domain.getVerificationMethod());
         
         // Use MongoDB array operation to update verification token
-        domainRepository.updateDomainVerificationToken(organizationId, domainId, newToken);
+        organizationDomainRepository.updateDomainVerificationToken(organizationId, domainId, newToken);
         
         log.info("Regenerated verification token for domain {} in organization ID: {}", domainId, organizationId);
         
         // Return the domain with updated verification token
-        return getDomainInEntity(organizationId, domainId);
+        return getDomainInEntity(organizationId, domainId).orElse(null);
     }
  
     @Override
     public String getDomainVerificationInstructions(String organizationId, String domainId) {
         log.debug("Getting verification instructions for domain {} in organization ID: {}", domainId, organizationId);
         
-        Domain domain = getDomainInEntity(organizationId, domainId);
-        if (domain == null) {
-            throw ExceptionUtils.domainNotFound(domainId);
-        }
-        
-        return generateVerificationInstructions(domain);
+        return getDomainInEntity(organizationId, domainId)
+                .map(this::generateVerificationInstructions)
+                .orElseThrow(() -> ExceptionUtils.domainNotFound(domainId));
     }
 
     // ========== UTILITY METHODS ==========
@@ -271,13 +282,12 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
     }
 
     @Override
-    public Domain getPrimaryDomainForEntity(String organizationId) {
+    public Optional<Domain> getPrimaryDomainForEntity(String organizationId) {
         List<Domain> domains = getDomainsForEntity(organizationId);
         
         return domains.stream()
                 .filter(Domain::getIsPrimary)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     @Override
@@ -314,11 +324,16 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         return 0;
     }
 
-    // ========== PRIVATE HELPER METHODS ==========
-
-    private Organization getOrganizationAndValidate(String organizationId) {
-        return organizationService.findById(organizationId);
+    @Override
+    public boolean isDomainAlreadyRegistered(String domainName) {
+        if (!StringUtils.hasText(domainName)) {
+            return false;
+        }
+        
+        return organizationDomainRepository.existsByDomainsName(domainName.toLowerCase().trim());
     }
+
+    // ========== PRIVATE HELPER METHODS ==========
 
     private Domain findDomainInOrganization(Organization organization, String domainId) {
         if (organization.getDomains() == null) {

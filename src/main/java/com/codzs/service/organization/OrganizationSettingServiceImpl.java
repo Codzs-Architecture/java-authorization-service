@@ -1,20 +1,27 @@
 package com.codzs.service.organization;
 
+import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.organization.Organization;
-import com.codzs.entity.organization.OrganizationSettings;
-import com.codzs.framework.exception.util.ExceptionUtils;
-import com.codzs.repository.organization.OrganizationSettingsRepository;
-import com.codzs.validation.organization.OrganizationSettingsBusinessValidator;
+import com.codzs.entity.organization.OrganizationSetting;
+import com.codzs.repository.organization.OrganizationRepository;
+import com.codzs.repository.organization.OrganizationSettingRepository;
+import com.codzs.validation.organization.OrganizationSettingBusinessValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codzs.exception.validation.ValidationException;
+import com.codzs.framework.constant.CommonConstants;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
- * Service implementation for OrganizationSettings-related business operations.
+ * Service implementation for OrganizationSetting-related business operations.
  * Manages organization settings including language, timezone, currency, and country
  * with proper business validation and transaction management. Follows entity-first design pattern.
  * 
@@ -24,37 +31,42 @@ import java.util.Arrays;
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-public class OrganizationSettingsServiceImpl implements OrganizationSettingsService {
+public class OrganizationSettingServiceImpl extends BaseOrganizationServiceImpl implements OrganizationSettingService {
 
-    private final OrganizationSettingsRepository organizationSettingsRepository;
-    private final OrganizationService organizationService;
-    private final OrganizationSettingsBusinessValidator organizationSettingsBusinessValidator;
+    private final OrganizationSettingRepository organizationSettingRepository;
+    private final OrganizationSettingBusinessValidator organizationSettingBusinessValidator;
 
     @Autowired
-    public OrganizationSettingsServiceImpl(OrganizationSettingsRepository organizationSettingsRepository,
-                                         OrganizationService organizationService,
-                                         OrganizationSettingsBusinessValidator organizationSettingsBusinessValidator) {
-        this.organizationSettingsRepository = organizationSettingsRepository;
-        this.organizationService = organizationService;
-        this.organizationSettingsBusinessValidator = organizationSettingsBusinessValidator;
+    public OrganizationSettingServiceImpl(OrganizationSettingRepository organizationSettingRepository,
+                                         OrganizationRepository organizationRepository, 
+                                         ObjectMapper objectMapper) {
+        super(organizationRepository, objectMapper);
+        this.organizationSettingRepository = organizationSettingRepository;
+        this.organizationSettingBusinessValidator = new OrganizationSettingBusinessValidator();
     }
 
     // ========== API FLOW METHODS ==========
 
     @Override
     @Transactional
-    public Organization updateOrganizationSettings(String organizationId, OrganizationSettings settings) {
+    public Organization updateOrganizationSetting(String organizationId, OrganizationSetting setting) {
         log.debug("Updating organization settings for organization ID: {}", organizationId);
         
         // Get organization and validate it exists
         Organization organization = getOrganizationAndValidate(organizationId);
         
+        // Get validation data for settings
+        boolean isValidTimezone = setting.getTimezone() == null || isValidSettingValue(OrganizationConstants.SETTING_TIMEZONE, setting.getTimezone());
+        boolean isValidCountry = setting.getCountry() == null || isValidSettingValue(OrganizationConstants.SETTING_COUNTRY, setting.getCountry());
+        boolean isValidLanguage = setting.getLanguage() == null || isValidSettingValue(OrganizationConstants.SETTING_LANGUAGE, setting.getLanguage());
+        boolean isValidCurrency = setting.getCurrency() == null || isValidSettingValue(OrganizationConstants.SETTING_CURRENCY, setting.getCurrency());
+        
         // Business validation for settings update
-        organizationSettingsBusinessValidator.validateSettingsUpdate(organization, settings);
+        organizationSettingBusinessValidator.validateSettingUpdate(organization, setting, isValidTimezone, isValidCountry, isValidLanguage, isValidCurrency);
         
         // Use MongoDB operation to update settings directly
-        organizationSettingsRepository.updateAllSettings(organizationId, settings, 
-            java.time.Instant.now(), "system"); // TODO: Get actual user from security context
+        organizationSettingRepository.updateAllSetting(organizationId, setting, 
+            Instant.now(), getCurrentUser());
         
         log.info("Updated organization settings for organization ID: {}", organizationId);
         
@@ -63,16 +75,12 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
     }
 
     @Override
-    public OrganizationSettings getOrganizationSettings(String organizationId) {
+    public Optional<OrganizationSetting> getOrganizationSetting(String organizationId) {
         log.debug("Getting organization settings for organization ID: {}", organizationId);
         
-        try {
-            Organization organization = getOrganizationAndValidate(organizationId);
-            return organization.getSettings();
-        } catch (ValidationException e) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return null;
-        }
+        return getOrgById(organizationId)
+                .map(Organization::getSetting)
+                .filter(setting -> setting != null);
     }
 
     @Override
@@ -83,8 +91,12 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
         // Get organization and validate it exists
         Organization organization = getOrganizationAndValidate(organizationId);
         
+        // Get validation data for setting
+        boolean isValidKey = isValidSettingKey(settingKey);
+        boolean isValidValue = isValidSettingValue(settingKey, settingValue);
+        
         // Business validation for setting update
-        organizationSettingsBusinessValidator.validateSettingUpdate(organization, settingKey, settingValue);
+        organizationSettingBusinessValidator.validateSettingUpdate(organization, settingKey, settingValue, isValidKey, isValidValue);
         
         // Use MongoDB operation to update specific setting directly
         updateSpecificSetting(organizationId, settingKey, settingValue.toString());
@@ -96,42 +108,33 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
     }
 
     @Override
-    public String getSettingValue(String organizationId, String settingKey) {
+    public Optional<String> getSettingValue(String organizationId, String settingKey) {
         log.debug("Getting setting {} for organization ID: {}", settingKey, organizationId);
         
-        try {
-            Organization organization = getOrganizationAndValidate(organizationId);
-            OrganizationSettings settings = organization.getSettings();
-            if (settings == null) {
-                log.warn("No settings found for organization ID: {}", organizationId);
-                return null;
-            }
-            return getSettingFromSettings(settings, settingKey);
-        } catch (ValidationException e) {
-            log.warn("Organization not found with ID: {}", organizationId);
-            return null;
-        }
+        return getOrganizationSetting(organizationId)
+                .map(setting -> getSettingFromSetting(setting, settingKey))
+                .filter(value -> value != null);
     }
 
     @Override
     @Transactional
-    public Organization resetToDefaultSettings(String organizationId) {
+    public Organization resetToDefaultSetting(String organizationId) {
         log.debug("Resetting settings to default for organization ID: {}", organizationId);
         
         // Get organization and validate it exists
         Organization organization = getOrganizationAndValidate(organizationId);
         
         // Business validation for settings reset
-        organizationSettingsBusinessValidator.validateSettingsReset(organization);
+        organizationSettingBusinessValidator.validateSettingReset(organization);
         
         // Create default settings
-        OrganizationSettings defaultSettings = createDefaultSettings(
+        OrganizationSetting defaultSetting = createDefaultSetting(
                 organization.getOrganizationType(), 
-                organization.getSettings() != null ? organization.getSettings().getCountry() : null);
+                organization.getSetting() != null ? organization.getSetting().getCountry() : null);
         
         // Use MongoDB operation to update settings to defaults
-        organizationSettingsRepository.updateAllSettings(organizationId, defaultSettings, 
-            java.time.Instant.now(), "system"); // TODO: Get actual user from security context
+        organizationSettingRepository.updateAllSetting(organizationId, defaultSetting, 
+            java.time.Instant.now(), getCurrentUser());
         
         log.info("Reset settings to default for organization ID: {}", organizationId);
         
@@ -142,28 +145,28 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
     // ========== UTILITY METHODS ==========
 
     @Override
-    public boolean validateOrganizationSettings(String organizationId, OrganizationSettings settings) {
-        if (settings == null) {
+    public boolean validateOrganizationSetting(String organizationId, OrganizationSetting setting) {
+        if (setting == null) {
             return false;
         }
         
         // Validate timezone
-        if (StringUtils.hasText(settings.getTimezone()) && !isValidTimezone(settings.getTimezone())) {
+        if (StringUtils.hasText(setting.getTimezone()) && !isValidTimezone(setting.getTimezone())) {
             return false;
         }
         
         // Validate country
-        if (StringUtils.hasText(settings.getCountry()) && !isValidCountryCode(settings.getCountry())) {
+        if (StringUtils.hasText(setting.getCountry()) && !isValidCountryCode(setting.getCountry())) {
             return false;
         }
         
         // Validate language
-        if (StringUtils.hasText(settings.getLanguage()) && !isValidLanguageCode(settings.getLanguage())) {
+        if (StringUtils.hasText(setting.getLanguage()) && !isValidLanguageCode(setting.getLanguage())) {
             return false;
         }
         
         // Validate currency
-        if (StringUtils.hasText(settings.getCurrency()) && !isValidCurrencyCode(settings.getCurrency())) {
+        if (StringUtils.hasText(setting.getCurrency()) && !isValidCurrencyCode(setting.getCurrency())) {
             return false;
         }
         
@@ -171,18 +174,18 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
     }
 
     @Override
-    public OrganizationSettings createDefaultSettings(String organizationType, String country) {
-        OrganizationSettings settings = new OrganizationSettings();
+    public OrganizationSetting createDefaultSetting(String organizationType, String country) {
+        OrganizationSetting setting = new OrganizationSetting();
         
         // Set default values based on organization type and country
-        settings.setCountry(StringUtils.hasText(country) ? country : "US");
-        settings.setTimezone(getDefaultTimezone(settings.getCountry()));
-        settings.setLanguage(getDefaultLanguage(settings.getCountry()));
-        settings.setCurrency(getDefaultCurrency(settings.getCountry()));
+        setting.setCountry(StringUtils.hasText(country) ? country : CommonConstants.DEFAULT_COUNTRY);
+        setting.setTimezone(getDefaultTimezone(setting.getCountry()));
+        setting.setLanguage(getDefaultLanguage(setting.getCountry()));
+        setting.setCurrency(getDefaultCurrency(setting.getCountry()));
         
         log.debug("Created default settings for organization type: {} and country: {}", organizationType, country);
         
-        return settings;
+        return setting;
     }
 
     @Override
@@ -203,44 +206,45 @@ public class OrganizationSettingsServiceImpl implements OrganizationSettingsServ
         }
         
         return switch (settingKey) {
-            case "timezone" -> isValidTimezone(settingValue.toString());
-            case "country" -> isValidCountryCode(settingValue.toString());
-            case "language" -> isValidLanguageCode(settingValue.toString());
-            case "currency" -> isValidCurrencyCode(settingValue.toString());
+            case OrganizationConstants.SETTING_TIMEZONE -> isValidTimezone(settingValue.toString());
+            case OrganizationConstants.SETTING_COUNTRY -> isValidCountryCode(settingValue.toString());
+            case OrganizationConstants.SETTING_LANGUAGE -> isValidLanguageCode(settingValue.toString());
+            case OrganizationConstants.SETTING_CURRENCY -> isValidCurrencyCode(settingValue.toString());
             default -> false;
         };
     }
 
     @Override
     public String[] getAvailableSettingKeys() {
-        return new String[]{"timezone", "country", "language", "currency"};
+        return new String[]{
+            OrganizationConstants.SETTING_TIMEZONE, 
+            OrganizationConstants.SETTING_COUNTRY, 
+            OrganizationConstants.SETTING_LANGUAGE, 
+            OrganizationConstants.SETTING_CURRENCY
+        };
     }
 
     // ========== PRIVATE HELPER METHODS ==========
 
-    private Organization getOrganizationAndValidate(String organizationId) {
-        return organizationService.findById(organizationId);
-    }
-
     private void updateSpecificSetting(String organizationId, String settingKey, String settingValue) {
         java.time.Instant now = java.time.Instant.now();
-        String user = "system"; // TODO: Get actual user from security context
+        String user = getCurrentUser();
         
         switch (settingKey) {
-            case "timezone" -> organizationSettingsRepository.updateTimezone(organizationId, settingValue, now, user);
-            case "country" -> organizationSettingsRepository.updateCountry(organizationId, settingValue, now, user);
-            case "language" -> organizationSettingsRepository.updateLanguage(organizationId, settingValue, now, user);
-            case "currency" -> organizationSettingsRepository.updateCurrency(organizationId, settingValue, now, user);
+            case OrganizationConstants.SETTING_TIMEZONE -> organizationSettingRepository.updateTimezone(organizationId, settingValue, now, user);
+            case OrganizationConstants.SETTING_COUNTRY -> organizationSettingRepository.updateCountry(organizationId, settingValue, now, user);
+            case OrganizationConstants.SETTING_LANGUAGE -> organizationSettingRepository.updateLanguage(organizationId, settingValue, now, user);
+            case OrganizationConstants.SETTING_CURRENCY -> organizationSettingRepository.updateCurrency(organizationId, settingValue, now, user);
             default -> throw new ValidationException("Unknown setting key: " + settingKey);
         }
     }
 
-    private String getSettingFromSettings(OrganizationSettings settings, String settingKey) {
+    private String getSettingFromSetting(OrganizationSetting setting, String settingKey) {
         return switch (settingKey) {
-            case "timezone" -> settings.getTimezone();
-            case "country" -> settings.getCountry();
-            case "language" -> settings.getLanguage();
-            case "currency" -> settings.getCurrency();
+            case OrganizationConstants.SETTING_TIMEZONE -> setting.getTimezone();
+            case OrganizationConstants.SETTING_COUNTRY -> setting.getCountry();
+            case OrganizationConstants.SETTING_LANGUAGE -> setting.getLanguage();
+            case OrganizationConstants.SETTING_CURRENCY -> setting.getCurrency();
             default -> null;
         };
     }

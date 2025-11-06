@@ -5,6 +5,7 @@ import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service interface for DatabaseConfig-related business operations.
@@ -34,9 +35,9 @@ public interface DatabaseConfigService {
      * API: GET /api/v1/organizations/{id}/database
      *
      * @param organizationId the organization ID
-     * @return the database configuration entity or null if not found
+     * @return Optional containing the database configuration entity, or empty if not found
      */
-    DatabaseConfig getDatabaseConfig(String organizationId);
+    Optional<DatabaseConfig> getDatabaseConfig(String organizationId);
 
     /**
      * Adds a new database schema to an organization.
@@ -88,8 +89,7 @@ public interface DatabaseConfigService {
      * @param tenantId tenant context header (optional)
      * @return list of database schema entities (filtered if parameters provided)
      */
-    List<DatabaseSchema> listDatabaseSchemas(String organizationId, String forService, String status,
-                                           String headerOrganizationId, String tenantId);
+    List<DatabaseSchema> listDatabaseSchemas(String organizationId, String forService, String status);
 
     /**
      * Gets a specific database schema for an organization.
@@ -97,9 +97,9 @@ public interface DatabaseConfigService {
      *
      * @param organizationId the organization ID
      * @param schemaId the schema ID
-     * @return the database schema entity or null if not found
+     * @return Optional containing the database schema entity, or empty if not found
      */
-    DatabaseSchema getDatabaseSchema(String organizationId, String schemaId);
+    Optional<DatabaseSchema> getDatabaseSchema(String organizationId, String schemaId);
 
     /**
      * Tests database connectivity for an organization.
@@ -111,15 +111,6 @@ public interface DatabaseConfigService {
     boolean testDatabaseConnection(String organizationId);
 
     // ========== UTILITY METHODS ==========
-
-    /**
-     * Validates database configuration business rules.
-     *
-     * @param organizationId the organization ID
-     * @param databaseConfig the database configuration to validate
-     * @return true if valid
-     */
-    boolean validateDatabaseConfig(String organizationId, DatabaseConfig databaseConfig);
 
     /**
      * Generates default schema name for a service.

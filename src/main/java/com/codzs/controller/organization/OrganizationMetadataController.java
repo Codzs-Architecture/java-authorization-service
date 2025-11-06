@@ -1,12 +1,11 @@
 package com.codzs.controller.organization;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.dto.organization.request.OrganizationMetadataRequestDto;
 import com.codzs.dto.organization.response.OrganizationMetadataResponseDto;
 import com.codzs.entity.organization.OrganizationMetadata;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
-import com.codzs.framework.validation.annotation.ValidUUID;
 import com.codzs.mapper.organization.OrganizationMetadataMapper;
 import com.codzs.service.organization.OrganizationMetadataService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -54,11 +52,10 @@ public class OrganizationMetadataController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<OrganizationMetadataResponseDto> getOrganizationMetadata(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @ValidUUID(message = "Invalid Organization ID format")
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -66,14 +63,17 @@ public class OrganizationMetadataController {
         
         log.info("Getting metadata for organization: {}", organizationId);
         
-        OrganizationMetadata metadata = organizationMetadataService.getOrganizationMetadata(
-            organizationId.toString()
-        );
-        
-        OrganizationMetadataResponseDto response = organizationMetadataMapper.toResponse(metadata);
-        
-        log.info("Successfully retrieved metadata for organization: {}", organizationId);
-        return ResponseEntity.ok(response);
+        return organizationMetadataService.getOrganizationMetadata(organizationId)
+                .map(metadata -> {
+                    OrganizationMetadataResponseDto response = organizationMetadataMapper.toResponse(metadata);
+                    
+                    log.info("Successfully retrieved metadata for organization: {}", organizationId);
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    log.warn("Organization metadata not found for organization: {}", organizationId);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @PutMapping
@@ -90,11 +90,10 @@ public class OrganizationMetadataController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> updateOrganizationMetadata(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @ValidUUID(message = "Invalid Organization ID format")
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @Parameter(description = "Metadata update request", required = true)
             @Valid 
@@ -110,7 +109,7 @@ public class OrganizationMetadataController {
         
         OrganizationMetadata metadataEntity = organizationMetadataMapper.toEntity(request);
         organizationMetadataService.updateOrganizationMetadata(
-            organizationId.toString(), metadataEntity
+            organizationId, metadataEntity
         );
         
         log.info("Successfully updated metadata for organization: {}", organizationId);
@@ -131,11 +130,10 @@ public class OrganizationMetadataController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> patchOrganizationMetadata(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @ValidUUID(message = "Invalid Organization ID format")
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @Parameter(description = "Partial metadata update request", required = true)
             @Valid 
@@ -148,8 +146,8 @@ public class OrganizationMetadataController {
         
         log.info("Partially updating metadata for organization: {}", organizationId);
         
-        organizationMetadataService.updateIndustry(organizationId.toString(), request.getIndustry());
-        organizationMetadataService.updateSize(organizationId.toString(), request.getSize());
+        organizationMetadataService.updateIndustry(organizationId, request.getIndustry());
+        organizationMetadataService.updateSize(organizationId, request.getSize());
         
         log.info("Successfully partially updated metadata for organization: {}", organizationId);
         return ResponseEntity.noContent().build();
@@ -168,11 +166,10 @@ public class OrganizationMetadataController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> resetOrganizationMetadata(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @ValidUUID(message = "Invalid Organization ID format")
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,

@@ -2,7 +2,10 @@ package com.codzs.dto.organization.response;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.constant.organization.OrganizationStatusEnum;
+import com.codzs.framework.dto.BaseDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,8 +24,11 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder({"id", "name", "abbr", "displayName", "organizationType", "billingEmail", 
+                   "parentOrganizationId", "status", 
+                   "lastModifiedDate", "lastModifiedBy", "createdDate", "createdBy"})
 @Schema(description = OrganizationSchemaConstants.ORG_SUMMARY_RESPONSE_DESCRIPTION)
-public class OrganizationSummaryResponseDto {
+public class OrganizationSummaryResponseDto extends BaseDto {
 
     @Schema(description = OrganizationSchemaConstants.ORG_ID_DESCRIPTION, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
     private String id;

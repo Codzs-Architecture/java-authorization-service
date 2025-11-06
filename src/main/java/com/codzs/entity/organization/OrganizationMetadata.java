@@ -1,11 +1,12 @@
 package com.codzs.entity.organization;
 
+import org.mapstruct.AfterMapping;
+
 import com.codzs.constant.organization.OrganizationIndustryEnum;
 import com.codzs.constant.organization.OrganizationSizeEnum;
 import com.codzs.framework.entity.EntityDefaultInitializer;
 import com.codzs.framework.helper.SpringContextHelper;
 
-import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +23,6 @@ import lombok.ToString;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @ToString
 public class OrganizationMetadata {
@@ -31,9 +31,12 @@ public class OrganizationMetadata {
 
     private String size;
 
-    // Initialize default values for default constructor
-    @PostConstruct
-    private void initDefaults() {
+    public OrganizationMetadata()   {
+        this.applyDefaults();
+    }
+
+    @AfterMapping
+    public void applyDefaults() {
         OrganizationIndustryEnum organizationIndustryEnum = SpringContextHelper.getBean(OrganizationIndustryEnum.class);
         OrganizationSizeEnum organizationSizeEnum = SpringContextHelper.getBean(OrganizationSizeEnum.class);
 

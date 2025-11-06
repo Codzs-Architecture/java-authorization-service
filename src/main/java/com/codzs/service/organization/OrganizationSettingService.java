@@ -1,38 +1,40 @@
 package com.codzs.service.organization;
 
 import com.codzs.entity.organization.Organization;
-import com.codzs.entity.organization.OrganizationSettings;
+import com.codzs.entity.organization.OrganizationSetting;
+
+import java.util.Optional;
 
 /**
- * Service interface for OrganizationSettings-related business operations.
- * Manages organization settings including language, timezone, currency, and country
+ * Service interface for OrganizationSetting-related business operations.
+ * Manages organization setting including language, timezone, currency, and country
  * with proper business validation and transaction management. Follows entity-first design pattern.
  * 
  * @author Codzs Team
  * @since 1.0
  */
-public interface OrganizationSettingsService {
+public interface OrganizationSettingService {
 
     // ========== API FLOW METHODS ==========
 
     /**
-     * Updates organization settings for an organization.
+     * Updates organization setting for an organization.
      * API: PUT /api/v1/organizations/{id}/settings
      *
      * @param organizationId the organization ID
-     * @param settings the organization settings entity
-     * @return updated organization with new settings
+     * @param setting the organization setting entity
+     * @return updated organization with new setting
      */
-    Organization updateOrganizationSettings(String organizationId, OrganizationSettings settings);
+    Organization updateOrganizationSetting(String organizationId, OrganizationSetting setting);
 
     /**
      * Gets organization settings for an organization.
      * API: GET /api/v1/organizations/{id}/settings
      *
      * @param organizationId the organization ID
-     * @return organization settings or null if not found
+     * @return Optional containing organization settings, or empty if not found
      */
-    OrganizationSettings getOrganizationSettings(String organizationId);
+    Optional<OrganizationSetting> getOrganizationSetting(String organizationId);
 
     /**
      * Updates specific setting value for an organization.
@@ -51,9 +53,9 @@ public interface OrganizationSettingsService {
      *
      * @param organizationId the organization ID
      * @param settingKey the setting key to retrieve
-     * @return setting value or null if not found
+     * @return Optional containing setting value, or empty if not found
      */
-    String getSettingValue(String organizationId, String settingKey);
+    Optional<String> getSettingValue(String organizationId, String settingKey);
 
     /**
      * Resets organization settings to default values.
@@ -62,7 +64,7 @@ public interface OrganizationSettingsService {
      * @param organizationId the organization ID
      * @return updated organization with default settings
      */
-    Organization resetToDefaultSettings(String organizationId);
+    Organization resetToDefaultSetting(String organizationId);
 
     // ========== UTILITY METHODS ==========
 
@@ -73,7 +75,7 @@ public interface OrganizationSettingsService {
      * @param settings the organization settings to validate
      * @return true if settings are valid, false otherwise
      */
-    boolean validateOrganizationSettings(String organizationId, OrganizationSettings settings);
+    boolean validateOrganizationSetting(String organizationId, OrganizationSetting setting);
 
     /**
      * Creates default settings for an organization.
@@ -82,7 +84,7 @@ public interface OrganizationSettingsService {
      * @param country the country code
      * @return default organization settings
      */
-    OrganizationSettings createDefaultSettings(String organizationType, String country);
+    OrganizationSetting createDefaultSetting(String organizationType, String country);
 
     /**
      * Checks if a setting key is valid and allowed.

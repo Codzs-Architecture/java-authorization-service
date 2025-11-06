@@ -1,13 +1,13 @@
-package com.codzs.controller;
+package com.codzs.controller.localization;
 
-import com.codzs.dto.localization.CodeDto;
+import com.codzs.framework.dto.localization.CodeInfoDto;
+import com.codzs.framework.mapper.localization.CodeInfoMapper;
 import com.codzs.framework.service.localization.LocalizationCodeService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,11 +24,16 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/api/v1/localization")
-@RequiredArgsConstructor
 @Tag(name = "Localization", description = "Localization code management APIs")
 public class LocalizationController {
 
     private final LocalizationCodeService localizationCodeService;
+    private final CodeInfoMapper codeInfoMapper;
+
+    public LocalizationController(LocalizationCodeService localizationCodeService, CodeInfoMapper codeInfoMapper) {
+        this.localizationCodeService = localizationCodeService;
+        this.codeInfoMapper = codeInfoMapper;
+    }
 
     @Operation(summary = "Get all country codes", 
                description = "Retrieves all valid ISO 3166-1 alpha-2 country codes")
@@ -36,8 +41,8 @@ public class LocalizationController {
         @ApiResponse(responseCode = "200", description = "Country codes retrieved successfully")
     })
     @GetMapping("/countries")
-    public ResponseEntity<List<CodeDto>> getCountryCodes() {
-        List<CodeDto> countryCodes = localizationCodeService.getAllCountryCodes();
+    public ResponseEntity<List<CodeInfoDto>> getCountryCodes() {
+        List<CodeInfoDto> countryCodes = codeInfoMapper.toDtoList(localizationCodeService.getAllCountryCodes());
         return ResponseEntity.ok(countryCodes);
     }
 
@@ -47,8 +52,8 @@ public class LocalizationController {
         @ApiResponse(responseCode = "200", description = "Currency codes retrieved successfully")
     })
     @GetMapping("/currencies")
-    public ResponseEntity<List<CodeDto>> getCurrencyCodes() {
-        List<CodeDto> currencyCodes = localizationCodeService.getAllCurrencyCodes();
+    public ResponseEntity<List<CodeInfoDto>> getCurrencyCodes() {
+        List<CodeInfoDto> currencyCodes = codeInfoMapper.toDtoList(localizationCodeService.getAllCurrencyCodes());
         return ResponseEntity.ok(currencyCodes);
     }
 
@@ -58,8 +63,8 @@ public class LocalizationController {
         @ApiResponse(responseCode = "200", description = "Timezone IDs retrieved successfully")
     })
     @GetMapping("/timezones")
-    public ResponseEntity<List<CodeDto>> getTimezones() {
-        List<CodeDto> timezones = localizationCodeService.getAllTimezones();
+    public ResponseEntity<List<CodeInfoDto>> getTimezones() {
+        List<CodeInfoDto> timezones = codeInfoMapper.toDtoList(localizationCodeService.getAllTimezones());
         return ResponseEntity.ok(timezones);
     }
 
@@ -69,8 +74,8 @@ public class LocalizationController {
         @ApiResponse(responseCode = "200", description = "Language codes retrieved successfully")
     })
     @GetMapping("/languages")
-    public ResponseEntity<List<CodeDto>> getLanguageCodes() {
-        List<CodeDto> languageCodes = localizationCodeService.getAllLanguageCodes();
+    public ResponseEntity<List<CodeInfoDto>> getLanguageCodes() {
+        List<CodeInfoDto> languageCodes = codeInfoMapper.toDtoList(localizationCodeService.getAllLanguageCodes());
         return ResponseEntity.ok(languageCodes);
     }
 }

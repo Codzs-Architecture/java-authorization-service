@@ -2,6 +2,7 @@ package com.codzs.framework.dto;
 
 import com.codzs.framework.constant.CommonConstants;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -27,27 +28,30 @@ import java.time.Instant;
 @ToString
 public abstract class BaseDto {
 
-    @Schema(description = "Entity creation timestamp", example = "2024-01-20T16:30:00Z")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
-    protected Instant createdDate;
+    @Schema(description = "Entity creation timestamp", example = "2024-01-20T16:30:00.000Z")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.ISO_INSTANT_PATTERN)
+    protected String createdDate;
 
     @Schema(description = "ID of user who created the entity", example = "550e8400-e29b-41d4-a716-446655440000")
     protected String createdBy;
 
-    @Schema(description = "Last update timestamp", example = "2024-01-20T16:30:00Z")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
-    protected Instant lastModifiedDate;
+    @Schema(description = "Last update timestamp", example = "2024-01-20T16:30:00.000Z")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.ISO_INSTANT_PATTERN)
+    protected String lastModifiedDate;
 
     @Schema(description = "ID of user who last updated the entity", example = "550e8400-e29b-41d4-a716-446655440000")
     protected String lastModifiedBy;
 
-    @Schema(description = "Soft deletion timestamp", example = "2024-01-20T16:30:00Z")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.UTC_TIMESTAMP_PATTERN)
-    protected Instant deletedDate;
+    @JsonIgnore
+    @Schema(description = "Soft deletion timestamp", example = "2024-01-20T16:30:00.000Z")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = CommonConstants.ISO_INSTANT_PATTERN)
+    protected String deletedDate;
 
+    @JsonIgnore
     @Schema(description = "ID of user who deleted the entity", example = "550e8400-e29b-41d4-a716-446655440000")
     protected String deletedBy;
 
+    @JsonIgnore
     @Schema(description = "Correlation ID for request tracking", example = "req_789")
     protected String correlationId;
 
@@ -56,6 +60,7 @@ public abstract class BaseDto {
      * 
      * @return true if the entity is deleted, false otherwise
      */
+    @JsonIgnore
     public boolean isDeleted() {
         return deletedDate != null;
     }

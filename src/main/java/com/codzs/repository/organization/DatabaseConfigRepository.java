@@ -71,4 +71,4 @@ public interface DatabaseConfigRepository extends MongoRepository<Organization, 
     @Query("{ '_id': ?0, 'database.schemas.schemaName': ?1 }")
     boolean existsBySchemaName(String organizationId, String schemaName);
 
-}
+} 

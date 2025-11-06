@@ -1,10 +1,12 @@
 package com.codzs.service.organization;
 
+import com.codzs.constant.organization.OrganizationProjectionEnum;
 import com.codzs.entity.organization.Organization;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service interface for Organization-related business operations.
@@ -41,19 +43,19 @@ public interface OrganizationService {
      * API: GET /api/v1/organizations/{id}
      *
      * @param organizationId the organization ID
-     * @return the organization entity or null if not found
+     * @return Optional containing the organization entity, or empty if not found
      */
-    Organization getOrganizationById(String organizationId);
+    Optional<Organization> getOrganizationById(String organizationId);
 
     /**
      * Retrieves organization by ID with optional field filtering.
-     * API: GET /api/v1/organizations/{id}?include=settings,domains,plan
+     * API: GET /api/v1/organizations/{id}?include=setting,domains,plan
      *
      * @param organizationId the organization ID
-     * @param include list of fields to include (settings, domains, plan)
-     * @return the organization entity with filtered fields
+     * @param include list of fields to include (setting, domains, plan)
+     * @return Optional containing the organization entity with filtered fields, or empty if not found
      */
-    Organization getOrganizationById(String organizationId, List<String> include);
+    Optional<Organization> getOrganizationById(String organizationId, List<OrganizationProjectionEnum> include);
 
     /**
      * Lists organizations with filters and pagination.
@@ -143,13 +145,13 @@ public interface OrganizationService {
 
     // ========== UTILITY METHODS FOR BUSINESS VALIDATION ==========
 
-    /**
-     * Finds organization by ID (used by validators).
-     *
-     * @param organizationId the organization ID
-     * @return organization entity or null if not found
-     */
-    Organization findById(String organizationId);
+    // /**
+    //  * Finds organization by ID (used by validators).
+    //  *
+    //  * @param organizationId the organization ID
+    //  * @return Optional containing organization entity, or empty if not found
+    //  */
+    // Optional<Organization> findById(String organizationId);
 
     /**
      * Checks if organization name already exists.

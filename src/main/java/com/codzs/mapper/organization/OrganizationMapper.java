@@ -5,7 +5,11 @@ import com.codzs.dto.organization.request.OrganizationUpdateRequestDto;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.dto.organization.response.OrganizationResponseDto;
 import com.codzs.dto.organization.response.OrganizationSummaryResponseDto;
+import com.codzs.entity.organization.DatabaseConfig;
 import com.codzs.entity.organization.Organization;
+import com.codzs.entity.organization.OrganizationMetadata;
+import com.codzs.entity.organization.OrganizationSetting;
+
 import org.mapstruct.*;
 import org.springframework.stereotype.Component;
 
@@ -109,4 +113,22 @@ public interface OrganizationMapper {
      */
     @IterableMapping(qualifiedByName = "toHierarchyResponse")
     List<OrganizationResponseDto> toHierarchyResponseList(List<Organization> organizations);
+
+    @AfterMapping
+    default void applyDefaults(@MappingTarget Organization organization) {
+        organization.applyDefaults();
+        
+        if (organization.getSetting() != null) {
+            OrganizationSetting setting = organization.getSetting();
+            setting.applyDefaults();
+        }
+        if (organization.getDatabase() != null) {
+            DatabaseConfig databaseConfig = organization.getDatabase();
+            databaseConfig.applyDefaults();
+        }
+        if (organization.getMetadata() != null) {
+            OrganizationMetadata organizationMetadata = organization.getMetadata();
+            organizationMetadata.applyDefaults();
+        }
+    }
 }

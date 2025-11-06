@@ -14,13 +14,13 @@ public interface DomainService<T> {
 
     // ========== UTILITY METHODS ==========
 
-    /**
-     * Checks if domain name is already registered globally.
-     *
-     * @param domainName the domain name to check
-     * @return true if domain is already registered
-     */
-    boolean isDomainAlreadyRegistered(String domainName);
+    // /**
+    //  * Checks if domain name is already registered globally.
+    //  *
+    //  * @param domainName the domain name to check
+    //  * @return true if domain is already registered
+    //  */
+    // boolean isDomainAlreadyRegistered(String domainName);
 
     /**
      * Validates domain name format.

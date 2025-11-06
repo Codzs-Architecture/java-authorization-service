@@ -1,10 +1,9 @@
-package com.codzs.repository.domain;
+package com.codzs.base.repository.domain;
 
 import com.codzs.entity.domain.Domain;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
-import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 
@@ -15,7 +14,7 @@ import java.time.Instant;
  * @author Codzs Team
  * @since 1.0
  */
-@Repository
+// @Repository
 public interface DomainRepository<T> extends MongoRepository<T, String> {
 
     // ========== DOMAIN OPERATIONS ==========
@@ -80,6 +79,6 @@ public interface DomainRepository<T> extends MongoRepository<T, String> {
      * Checks if a domain name already exists globally across all entities.
      * Used for validation during domain creation.
      */
-    @Query("{ 'deletedOn': null, 'domains.name': ?0 }")
+    @Query("{ 'deletedDate': null, 'domains.name': ?0 }")
     boolean existsByDomainsName(String domainName);
 }

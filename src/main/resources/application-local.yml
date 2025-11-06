@@ -8,7 +8,7 @@ spring:
       database: authorization
       username: ""
       password: ""
-# server:
+# server: 
 #   ssl:
 #     enabled: true
 #     key-store: classpath:local.codzs.com.p12

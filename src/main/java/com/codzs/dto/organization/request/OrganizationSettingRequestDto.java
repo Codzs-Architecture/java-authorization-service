@@ -1,7 +1,6 @@
 package com.codzs.dto.organization.request;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
-import com.codzs.framework.annotation.validation.ApplyDefaults;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.framework.validation.annotation.ValidCountryCode;
 import com.codzs.framework.validation.annotation.ValidCurrencyCode;
@@ -23,7 +22,6 @@ import lombok.ToString;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = OrganizationSchemaConstants.ORG_SETTINGS_DESCRIPTION)
-@ApplyDefaults
 @Getter
 @Setter
 @NoArgsConstructor
@@ -61,22 +59,5 @@ public class OrganizationSettingRequestDto {
         this.country = country;
     }
 
-    /**
-     * Applies default values for null fields
-     */
-    public void applyDefaults() {
-        if (this.language == null) {
-            this.language = CommonConstants.DEFAULT_LANGUAGE;
-        }
-        if (this.timezone == null) {
-            this.timezone = CommonConstants.DEFAULT_TIMEZONE;
-        }
-        if (this.currency == null) {
-            this.currency = CommonConstants.DEFAULT_CURRENCY;
-        }
-        if (this.country == null) {
-            this.country = CommonConstants.DEFAULT_COUNTRY;
-        }
-    }
 
 }

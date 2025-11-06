@@ -28,29 +28,27 @@ import java.util.List;
 public class OrganizationPlanBusinessValidator {
     
     private final PlanService planService;
-    private final OrganizationPlanService organizationPlanService;
 
     @Autowired
     public OrganizationPlanBusinessValidator(
         PlanService planService, 
-        OrganizationPlanService organizationPlanService, 
         PlanTypeEnum planTypeEnum
     ) {
         this.planService = planService;
-        this.organizationPlanService = organizationPlanService;
     }
 
     // ========== ENTRY POINT METHODS FOR ORGANIZATION APIs ==========
 
     /**
-     * Validates plan association for organization.
+     * Basic plan association validation without usage data (for cross-validator calls).
+     * This method only validates plan existence and basic compatibility rules.
      * API: POST /api/v1/organizations/{id}/plans
      *
      * @param organization the organization
      * @param organizationPlan the organization plan entity
      * @param errors list to collect validation errors
      */
-    public void validatePlanAssociationForOrganization(Organization organization, OrganizationPlan organizationPlan, 
+    public void validatePlanAssociationForOrganization(Organization organization, OrganizationPlan organizationPlan,
                                                       List<ValidationException.ValidationError> errors) {
         Plan plan = validatePlanExistsAndAvailable(organizationPlan.getPlanId(), errors);
         if (plan == null) {
@@ -58,8 +56,38 @@ public class OrganizationPlanBusinessValidator {
         }
 
         validatePlanCompatibilityWithOrganization(organization, plan, errors);
-        validatePlanTransitionRules(organization, plan, organizationPlan, errors);
-        validatePlanBusinessConstraints(organization, plan, organizationPlan, errors);
+        // Note: Detailed validation with usage data should be done by the service layer
+    }
+
+    /**
+     * Complete plan association validation with usage data (for service layer calls).
+     * API: POST /api/v1/organizations/{id}/plans
+     *
+     * @param organization the organization
+     * @param organizationPlan the organization plan entity
+     * @param currentActivePlan the current active plan (if any)
+     * @param currentUserCount current user count for the organization
+     * @param currentTenantCount current tenant count for the organization
+     * @param currentStorageUsage current storage usage for the organization
+     * @param hasValidPaymentMethod whether organization has valid payment method
+     * @param parentActivePlan parent organization's active plan (if applicable)
+     * @param errors list to collect validation errors
+     */
+    public void validatePlanAssociationForOrganizationWithUsageData(Organization organization, OrganizationPlan organizationPlan,
+                                                      OrganizationPlan currentActivePlan, int currentUserCount,
+                                                      int currentTenantCount, long currentStorageUsage,
+                                                      boolean hasValidPaymentMethod, OrganizationPlan parentActivePlan,
+                                                      List<ValidationException.ValidationError> errors) {
+        Plan plan = validatePlanExistsAndAvailable(organizationPlan.getPlanId(), errors);
+        if (plan == null) {
+            return;
+        }
+
+        validatePlanCompatibilityWithOrganization(organization, plan, errors);
+        validatePlanTransitionRules(organization, plan, organizationPlan, currentActivePlan, errors);
+        validatePlanBusinessConstraints(organization, plan, organizationPlan, currentUserCount, 
+                                      currentTenantCount, currentStorageUsage, hasValidPaymentMethod, 
+                                      parentActivePlan, errors);
     }
 
     // ========== CORE VALIDATION METHODS ==========
@@ -94,28 +122,27 @@ public class OrganizationPlanBusinessValidator {
                 "Plan is not compatible with organization type: " + organization.getOrganizationType()));
         }
 
-        if (organization.getSettings() != null && organization.getSettings().getCountry() != null) {
-            if (!planService.isPlanAvailableInRegion(plan.getId(), organization.getSettings().getCountry())) {
+        if (organization.getSetting() != null && organization.getSetting().getCountry() != null) {
+            if (!planService.isPlanAvailableInRegion(plan.getId(), organization.getSetting().getCountry())) {
                 errors.add(new ValidationException.ValidationError("planId", 
                     "Plan is not available in organization's region"));
             }
         }
     }
 
-    private void validatePlanTransitionRules(Organization organization, Plan plan, OrganizationPlan organizationPlan, 
-                                           List<ValidationException.ValidationError> errors) {
-        OrganizationPlan currentPlan = organizationPlanService.getCurrentActivePlan(organization.getId());
+    private void validatePlanTransitionRules(Organization organization, Plan plan, OrganizationPlan organizationPlan,
+                                           OrganizationPlan currentActivePlan, List<ValidationException.ValidationError> errors) {
         
-        if (currentPlan != null) {
-            Plan currentPlanEntity = planService.findById(currentPlan.getPlanId());
+        if (currentActivePlan != null) {
+            Plan currentPlanEntity = planService.findById(currentActivePlan.getPlanId());
             
-            if (currentPlan.getPlanId().equals(plan.getId())) {
+            if (currentActivePlan.getPlanId().equals(plan.getId())) {
                 errors.add(new ValidationException.ValidationError("planId", 
                     "Organization is already on this plan"));
                 return;
             }
 
-            validatePlanTransitionTiming(currentPlan, organizationPlan, errors);
+            validatePlanTransitionTiming(currentActivePlan, organizationPlan, errors);
             validatePlanTransitionPath(currentPlanEntity, plan, errors);
         }
     }
@@ -139,39 +166,39 @@ public class OrganizationPlanBusinessValidator {
         }
     }
 
-    private void validatePlanBusinessConstraints(Organization organization, Plan plan, OrganizationPlan organizationPlan, 
+    private void validatePlanBusinessConstraints(Organization organization, Plan plan, OrganizationPlan organizationPlan,
+                                               int currentUserCount, int currentTenantCount, long currentStorageUsage,
+                                               boolean hasValidPaymentMethod, OrganizationPlan parentActivePlan,
                                                List<ValidationException.ValidationError> errors) {
-        validatePlanFeaturesAgainstUsage(organization, plan, errors);
-        validatePlanBillingConstraints(organization, plan, organizationPlan, errors);
-        validatePlanCapacityConstraints(organization, plan, errors);
+        validatePlanFeaturesAgainstUsage(organization, plan, currentUserCount, currentTenantCount, currentStorageUsage, errors);
+        validatePlanBillingConstraints(organization, plan, organizationPlan, hasValidPaymentMethod, errors);
+        validatePlanCapacityConstraints(organization, plan, parentActivePlan, errors);
     }
 
-    private void validatePlanFeaturesAgainstUsage(Organization organization, Plan plan, 
+    private void validatePlanFeaturesAgainstUsage(Organization organization, Plan plan,
+                                                 int currentUserCount, int currentTenantCount, long currentStorageUsage,
                                                  List<ValidationException.ValidationError> errors) {
-        int currentUserCount = organizationPlanService.getCurrentUserCount(organization.getId());
 
         if (plan.getMaxUsers() != null && currentUserCount > plan.getMaxUsers()) {
             errors.add(new ValidationException.ValidationError("planId", 
                 "Plan user limit (" + plan.getMaxUsers() + ") is less than current user count (" + currentUserCount + ")"));
         }
 
-        int currentTenantCount = organizationPlanService.getCurrentTenantCount(organization.getId());
         if (plan.getMaxTenants() != null && currentTenantCount > plan.getMaxTenants()) {
             errors.add(new ValidationException.ValidationError("planId", 
                 "Plan tenant limit (" + plan.getMaxTenants() + ") is less than current tenant count (" + currentTenantCount + ")"));
         }
 
-        long currentStorageUsage = organizationPlanService.getCurrentStorageUsage(organization.getId());
         if (plan.getStorageLimit() != null && currentStorageUsage > plan.getStorageLimit()) {
             errors.add(new ValidationException.ValidationError("planId", 
                 "Plan storage limit is less than current usage"));
         }
     }
 
-    private void validatePlanBillingConstraints(Organization organization, Plan plan, OrganizationPlan organizationPlan, 
-                                              List<ValidationException.ValidationError> errors) {
+    private void validatePlanBillingConstraints(Organization organization, Plan plan, OrganizationPlan organizationPlan,
+                                              boolean hasValidPaymentMethod, List<ValidationException.ValidationError> errors) {
         if (plan.getPrice() != null && plan.getPrice() > 0) {
-            if (!organizationPlanService.hasValidPaymentMethod(organization.getId())) {
+            if (!hasValidPaymentMethod) {
                 errors.add(new ValidationException.ValidationError("planId", 
                     "Valid payment method required for paid plans"));
             }
@@ -186,23 +213,22 @@ public class OrganizationPlanBusinessValidator {
         }
     }
 
-    private void validatePlanCapacityConstraints(Organization organization, Plan plan, 
-                                               List<ValidationException.ValidationError> errors) {
+    private void validatePlanCapacityConstraints(Organization organization, Plan plan,
+                                               OrganizationPlan parentActivePlan, List<ValidationException.ValidationError> errors) {
         if (!planService.hasPlanCapacity(plan.getId())) {
             errors.add(new ValidationException.ValidationError("planId", 
                 "Plan has reached maximum capacity"));
         }
 
         if (StringUtils.hasText(organization.getParentOrganizationId())) {
-            validateParentOrganizationPlanConstraints(organization, plan, errors);
+            validateParentOrganizationPlanConstraints(organization, plan, parentActivePlan, errors);
         }
     }
 
-    private void validateParentOrganizationPlanConstraints(Organization organization, Plan plan, 
-                                                          List<ValidationException.ValidationError> errors) {
-        OrganizationPlan parentPlan = organizationPlanService.getCurrentActivePlan(organization.getParentOrganizationId());
-        if (parentPlan != null) {
-            Plan parentPlanEntity = planService.findById(parentPlan.getPlanId());
+    private void validateParentOrganizationPlanConstraints(Organization organization, Plan plan,
+                                                          OrganizationPlan parentActivePlan, List<ValidationException.ValidationError> errors) {
+        if (parentActivePlan != null) {
+            Plan parentPlanEntity = planService.findById(parentActivePlan.getPlanId());
             
             if (!isPlanHierarchyValid(parentPlanEntity, plan)) {
                 errors.add(new ValidationException.ValidationError("planId", 

@@ -11,6 +11,11 @@ import lombok.ToString;
 
 import java.util.List;
 
+import org.mapstruct.AfterMapping;
+import org.springframework.core.env.Environment;
+
+import com.codzs.framework.helper.SpringContextHelper;
+
 /**
  * Database configuration sub-entity representing database connection
  * information for organizations.
@@ -21,7 +26,6 @@ import java.util.List;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 @AllArgsConstructor
 @ToString
 public class DatabaseConfig {
@@ -36,4 +40,19 @@ public class DatabaseConfig {
     @Valid
     private List<DatabaseSchema> schemas = List.of();
 
+    public DatabaseConfig() {
+        this.applyDefaults();
+    }
+
+    @AfterMapping
+    public void applyDefaults() {
+        if (this.connectionString == null || this.connectionString.trim().isEmpty()) {
+            try {
+                Environment environment = SpringContextHelper.getBean(Environment.class);
+                this.connectionString = environment.getProperty("spring.data.mongodb.uri");
+            } catch (Exception e) {
+                // Fallback if Spring context is not available
+            }
+        }
+    }
 }

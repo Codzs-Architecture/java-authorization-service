@@ -5,6 +5,7 @@ import com.codzs.entity.organization.Organization;
 import com.codzs.service.domain.DomainService;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service interface for Domain-related business operations within organizations.
@@ -86,9 +87,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      *
      * @param organizationId the organization ID
      * @param domainId the domain ID
-     * @return the domain entity or null if not found
+     * @return Optional containing the domain entity, or empty if not found
      */
-    Domain getDomainInEntity(String organizationId, String domainId);
+    Optional<Domain> getDomainInEntity(String organizationId, String domainId);
 
     /**
      * Regenerates verification token for a domain.
@@ -109,6 +110,14 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      * @return verification instructions as string
      */
     String getDomainVerificationInstructions(String organizationId, String domainId);
+
+    /**
+     * Checks if domain name is already registered globally.
+     *
+     * @param domainName the domain name to check
+     * @return true if domain is already registered
+     */
+    boolean isDomainAlreadyRegistered(String domainName);
 
     // ========== ORGANIZATION DOMAIN VALIDATION METHODS ==========
 
@@ -138,9 +147,9 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      * Gets primary domain for an organization.
      *
      * @param organizationId the organization ID
-     * @return the primary domain entity or null if none
+     * @return Optional containing the primary domain entity, or empty if none
      */
-    Domain getPrimaryDomainForEntity(String organizationId);
+    Optional<Domain> getPrimaryDomainForEntity(String organizationId);
 
     /**
      * Checks if organization has verified domains.

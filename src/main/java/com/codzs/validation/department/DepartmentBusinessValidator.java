@@ -187,17 +187,17 @@ public class DepartmentBusinessValidator {
         // Organization ID required validation is handled by @NotBlank annotation in Department entity
         
         // Use service layer to fetch organization and validate it exists and is active
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            errors.add(new ValidationException.ValidationError("organizationId", 
-                "Organization not found with ID: " + organizationId));
-            return;
-        }
-        
-        if (!OrganizationStatusEnum.ACTIVE.equals(organization.getStatus())) {
-            errors.add(new ValidationException.ValidationError("organizationId", 
-                "Cannot create department under inactive organization"));
-        }
+        organizationService.getOrganizationById(organizationId)
+                .ifPresentOrElse(
+                    organization -> {
+                        if (!OrganizationStatusEnum.ACTIVE.equals(organization.getStatus())) {
+                            errors.add(new ValidationException.ValidationError("organizationId", 
+                                "Cannot create department under inactive organization"));
+                        }
+                    },
+                    () -> errors.add(new ValidationException.ValidationError("organizationId", 
+                        "Organization not found with ID: " + organizationId))
+                );
     }
 
     private void validateNoCircularReference(Department department, List<ValidationException.ValidationError> errors) {

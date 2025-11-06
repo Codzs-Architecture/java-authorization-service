@@ -1,8 +1,9 @@
 package com.codzs.service.organization;
 
+import com.codzs.constant.organization.OrganizationProjectionEnum;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.exception.util.ExceptionUtils;
+import com.codzs.entity.organization.OrganizationPlan;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.validation.organization.OrganizationBusinessValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +19,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -31,7 +33,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-public class OrganizationServiceImpl implements OrganizationService {
+public class OrganizationServiceImpl extends BaseOrganizationServiceImpl implements OrganizationService {
 
     private final OrganizationRepository organizationRepository;
     private final OrganizationBusinessValidator organizationBusinessValidator;
@@ -41,6 +43,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     public OrganizationServiceImpl(OrganizationRepository organizationRepository,
                                  OrganizationBusinessValidator organizationBusinessValidator,
                                  ObjectMapper objectMapper) {
+        super(organizationRepository, objectMapper);
         this.organizationRepository = organizationRepository;
         this.organizationBusinessValidator = organizationBusinessValidator;
         this.objectMapper = objectMapper;
@@ -53,8 +56,14 @@ public class OrganizationServiceImpl implements OrganizationService {
     public Organization createOrganization(Organization organization) {
         log.debug("Creating organization with name: {}", organization.getName());
         
+        boolean wouldCreateCircularReference = this.wouldCreateCircularReference(organization.getParentOrganizationId(), organization.getId());
+        int depth = this.calculateOrganizationHierarchyDepth(organization.getParentOrganizationId());
+        boolean isNameAlreadyExists = this.isNameAlreadyExists(organization.getName(), null);
+        boolean isAbbrAlreadyExists = this.isAbbrAlreadyExists(organization.getAbbr(), null);
+        Optional<Organization> parentOrganization = getOrgById(organization.getParentOrganizationId());
+
         // Business validation as first step
-        organizationBusinessValidator.validateOrganizationCreationFlow(organization);
+        organizationBusinessValidator.validateOrganizationCreationFlow(organization, wouldCreateCircularReference, depth, isNameAlreadyExists, isAbbrAlreadyExists, parentOrganization);
         
         // Business logic for creation
         applyCreationBusinessLogic(organization);
@@ -73,8 +82,15 @@ public class OrganizationServiceImpl implements OrganizationService {
     public Organization updateOrganization(Organization organization) {
         log.debug("Updating organization ID: {}", organization.getId());
         
+        boolean wouldCreateCircularReference = this.wouldCreateCircularReference(organization.getParentOrganizationId(), organization.getId());
+        int depth = this.calculateOrganizationHierarchyDepth(organization.getParentOrganizationId());
+        boolean hasActiveSubscriptions = this.hasActiveSubscriptions(organization.getId());
+        boolean isNameAlreadyExists = this.isNameAlreadyExists(organization.getName(), organization.getId());
+        boolean isAbbrAlreadyExists = this.isAbbrAlreadyExists(organization.getAbbr(), organization.getId());
+        Optional<Organization> parentOrganization = getOrgById(organization.getParentOrganizationId());
+
         // Business validation as first step
-        organizationBusinessValidator.validateOrganizationUpdateFlow(organization);
+        organizationBusinessValidator.validateOrganizationUpdateFlow(organization, wouldCreateCircularReference, depth, hasActiveSubscriptions, isNameAlreadyExists, isAbbrAlreadyExists, parentOrganization);
         
         // Get existing organization to compare changes
         Organization existingOrg = getOrganizationAndValidate(organization.getId());
@@ -86,31 +102,6 @@ public class OrganizationServiceImpl implements OrganizationService {
         
         // Return updated organization
         return getOrganizationAndValidate(organization.getId());
-    }
- 
-    @Override
-    public Organization getOrganizationById(String organizationId) {
-        log.debug("Getting organization by ID: {}", organizationId);
-        
-        return organizationRepository.findByIdAndDeletedOnIsNull(organizationId)
-                .orElseThrow(() -> ExceptionUtils.organizationNotFound(organizationId));
-    }
-
-    @Override
-    public Organization getOrganizationById(String organizationId, List<String> include) {
-        log.debug("Getting organization by ID: {} with include filters: {}", organizationId, include);
-        
-        // Get the full organization first
-        Organization organization = organizationRepository.findByIdAndDeletedOnIsNull(organizationId)
-                .orElseThrow(() -> ExceptionUtils.organizationNotFound(organizationId));
-        
-        // If no include filter specified, return full organization
-        if (include == null || include.isEmpty()) {
-            return organization;
-        }
-        
-        // Apply filtering based on include parameters
-        return applyIncludeFiltering(organization, include);
     }
 
     @Override
@@ -144,16 +135,21 @@ public class OrganizationServiceImpl implements OrganizationService {
     public Organization activateOrganization(String organizationId) {
         log.debug("Activating organization ID: {}", organizationId);
         
+        Organization organization = getOrganizationAndValidate(organizationId);
+
+        Optional<Organization> parentOrganization = this.getOrgById(organization.getParentOrganizationId());
         // Business validation as first step
-        organizationBusinessValidator.validateOrganizationActivationFlow(organizationId);
+        Boolean skipFutherStep = organizationBusinessValidator.validateOrganizationActivationFlow(organization, parentOrganization);
         
-        // Use MongoDB operation to update status directly
-        Instant now = Instant.now();
-        String user = "system"; // TODO: Get actual user from security context
-        organizationRepository.updateOrganizationStatus(organizationId, OrganizationStatusEnum.ACTIVE, now, user);
-        
-        log.info("Activated organization with ID: {}", organizationId);
-        
+        if (!skipFutherStep) {
+            // Use MongoDB operation to update status directly
+            Instant now = Instant.now();
+            String user = getCurrentUser();
+            organizationRepository.updateOrganizationStatus(organizationId, OrganizationStatusEnum.ACTIVE, now, user);
+            
+            log.info("Activated organization with ID: {}", organizationId);
+        }
+
         // Return updated organization
         return getOrganizationAndValidate(organizationId);
     }
@@ -162,24 +158,33 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Transactional
     public Organization deactivateOrganization(String organizationId) {
         log.debug("Deactivating organization ID: {}", organizationId);
-        
+                
+        Organization organization = getOrganizationAndValidate(organizationId);
+
+        boolean hasActiveChildOrganizations = this.hasActiveChildOrganizations(organization.getId());
+
+        boolean hasActiveTenants = this.hasActiveTenants(organization.getId());
+
+
         // Business validation as first step
-        organizationBusinessValidator.validateOrganizationDeactivationFlow(organizationId);
+        Boolean skipFutherStep = organizationBusinessValidator.validateOrganizationDeactivationFlow(organization, hasActiveChildOrganizations, hasActiveTenants);
         
-        // Use MongoDB operation to update status directly
-        Instant now = Instant.now();
-        String user = "system"; // TODO: Get actual user from security context
-        organizationRepository.updateOrganizationStatus(organizationId, OrganizationStatusEnum.SUSPENDED, now, user);
-        
-        log.info("Deactivated organization with ID: {}", organizationId);
-        
+        if (!skipFutherStep) {
+            // Use MongoDB operation to update status directly
+            Instant now = Instant.now();
+            String user = getCurrentUser();
+            organizationRepository.updateOrganizationStatus(organizationId, OrganizationStatusEnum.SUSPENDED, now, user);
+            
+            log.info("Deactivated organization with ID: {}", organizationId);
+        }
+
         // Return updated organization
         return getOrganizationAndValidate(organizationId);
     }
 
     @Override
     @Transactional
-    public Organization associateOrganizationPlan(String organizationId, com.codzs.entity.organization.OrganizationPlan organizationPlan) {
+    public Organization associateOrganizationPlan(String organizationId, OrganizationPlan organizationPlan) {
         log.debug("Associating plan to organization ID: {}", organizationId);
         
         // Get organization and validate it exists
@@ -238,31 +243,36 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     @Transactional
     public Organization deleteOrganization(String organizationId) {
-        log.debug("Soft deleting organization ID: {} by user: {}", organizationId, deletedBy);
+        log.debug("Soft deleting organization ID: {}", organizationId);
         
         // Get organization and validate it exists
         Organization organization = getOrganizationAndValidate(organizationId);
         
-        // Business validation for deletion
-        validateOrganizationDeletion(organization);
+        boolean hasActiveChildOrganizations = this.hasActiveChildOrganizations(organization.getId());
+        boolean hasActiveTenants = this.hasActiveTenants(organization.getId());
+
+            // Business validation for deletion
+        Boolean skipFurtherStep = organizationBusinessValidator.validateOrganizationDeletionFlow(organization, hasActiveChildOrganizations, hasActiveTenants);
         
-        // Use MongoDB operation to update status and deletion fields directly
-        Instant now = Instant.now();
-        organizationRepository.updateOrganizationStatus(organizationId, OrganizationStatusEnum.DELETED, now, deletedBy);
-        
-        log.info("Soft deleted organization with ID: {}", organizationId);
+        if (skipFurtherStep) {
+            // Use MongoDB operation to update status and deletion fields directly
+            Instant now = Instant.now();
+            String user = getCurrentUser();
+            organizationRepository.updateOrganizationStatus(organizationId, OrganizationStatusEnum.DELETED, now, user);
+            
+            log.info("Soft deleted organization with ID: {}", organizationId);
+        }
         
         // Return updated organization
-        return getOrganizationAndValidate(organizationId);
+        return getOrgById(organizationId).get();
     }
 
     // ========== UTILITY METHODS FOR BUSINESS VALIDATION ==========
 
-    @Override
-    public Organization findById(String organizationId) {
-        return organizationRepository.findByIdAndDeletedOnIsNull(organizationId)
-                .orElseThrow(() -> ExceptionUtils.organizationNotFound(organizationId));
-    }
+    // @Override
+    // public Optional<Organization> findById(String organizationId) {
+    //     return organizationRepository.findByIdAndDeletedDateIsNull(organizationId);
+    // }
 
     @Override
     public boolean isNameAlreadyExists(String name, String excludeId) {
@@ -272,12 +282,12 @@ public class OrganizationServiceImpl implements OrganizationService {
         
         if (StringUtils.hasText(excludeId)) {
             // For updates - check if name exists excluding current organization
-            return organizationRepository.findByNameAndDeletedOnIsNull(name)
+            return organizationRepository.findByNameAndDeletedDateIsNull(name)
                     .map(org -> !org.getId().equals(excludeId))
                     .orElse(false);
         } else {
             // For creation - check if name exists at all
-            return organizationRepository.existsByNameAndDeletedOnIsNull(name);
+            return organizationRepository.existsByNameAndDeletedDateIsNull(name);
         }
     }
 
@@ -289,12 +299,12 @@ public class OrganizationServiceImpl implements OrganizationService {
         
         if (StringUtils.hasText(excludeId)) {
             // For updates - check if abbreviation exists excluding current organization
-            return organizationRepository.findByAbbrAndDeletedOnIsNull(abbr)
+            return organizationRepository.findByAbbrAndDeletedDateIsNull(abbr)
                     .map(org -> !org.getId().equals(excludeId))
                     .orElse(false);
         } else {
             // For creation - check if abbreviation exists at all
-            return organizationRepository.existsByAbbrAndDeletedOnIsNull(abbr);
+            return organizationRepository.existsByAbbrAndDeletedDateIsNull(abbr);
         }
     }
 
@@ -311,10 +321,11 @@ public class OrganizationServiceImpl implements OrganizationService {
                 return true; // Circular reference detected
             }
             
-            Organization current = findById(currentId);
-            if (current == null) {
+            Optional<Organization> currentOpt = getOrgById(currentId);
+            if (currentOpt.isEmpty()) {
                 break;
             }
+            Organization current = currentOpt.get();
             
             currentId = current.getParentOrganizationId();
         }
@@ -332,10 +343,11 @@ public class OrganizationServiceImpl implements OrganizationService {
         String currentId = organizationId;
         
         while (StringUtils.hasText(currentId)) {
-            Organization current = findById(currentId);
-            if (current == null) {
+            Optional<Organization> currentOpt = getOrgById(currentId);
+            if (currentOpt.isEmpty()) {
                 break;
             }
+            Organization current = currentOpt.get();
             
             depth++;
             currentId = current.getParentOrganizationId();
@@ -358,7 +370,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         }
         
         List<Organization> children = organizationRepository
-                .findByParentOrganizationIdAndDeletedOnIsNull(organizationId);
+                .findByParentOrganizationIdAndDeletedDateIsNull(organizationId);
         
         return children.stream()
                 .anyMatch(child -> child.getStatus() == OrganizationStatusEnum.ACTIVE);
@@ -375,30 +387,21 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     // ========== PRIVATE HELPER METHODS ==========
 
-    private Organization getOrganizationAndValidate(String organizationId) {
-        return findById(organizationId);
-    }
-
     private void applyCreationBusinessLogic(Organization organization) {
         // Set creation defaults
         organization.setStatus(OrganizationStatusEnum.PENDING);
         
+        if (!StringUtils.hasText(organization.getDisplayName())) {
+            organization.setDisplayName(organization.getName());
+        }
+
         log.debug("Applied creation business logic for organization: {}", organization.getName());
     }
 
 
-
-
-    private void validateOrganizationDeletion(Organization organization) {
-        // Business validation for deletion
-        organizationBusinessValidator.validateOrganizationDeletionFlow(organization);
-        
-        log.debug("Validated organization deletion for organization: {}", organization.getName());
-    }
-
     private void updateChangedFields(Organization newOrg, Organization existingOrg) {
         Instant now = Instant.now();
-        String user = "system"; // TODO: Get actual user from security context
+        String user = getCurrentUser();
         
         // Update each field only if it has changed
         if (hasFieldChanged(newOrg.getName(), existingOrg.getName())) {
@@ -468,55 +471,18 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Applies field filtering to organization based on include parameters.
-     * Starts with complete organization and removes fields not in include list.
-     */
-    private Organization applyIncludeFiltering(Organization organization, List<String> include) {
-        log.debug("Applying include filtering for fields: {}", include);
+    // ========== ORGANIZATION RETRIEVAL METHODS ==========
+
+    @Override
+    public Optional<Organization> getOrganizationById(String organizationId) {
+        log.debug("Getting organization by ID: {}", organizationId);
         
-        try {
-            // Create a deep copy of the organization using Jackson ObjectMapper
-            Organization filteredOrg = objectMapper.readValue(
-                objectMapper.writeValueAsString(organization), 
-                Organization.class
-            );
-            
-            // Convert include list to lowercase for case-insensitive comparison
-            List<String> includeFields = include.stream()
-                    .map(field -> field.toLowerCase().trim())
-                    .collect(Collectors.toList());
-            
-            // Remove fields that are NOT in the include list
-            if (!includeFields.contains("setting")) {
-                filteredOrg.setSettings(null);
-                log.debug("Excluding settings field");
-            }
-            
-            if (!includeFields.contains("domains")) {
-                filteredOrg.setDomains(null);
-                log.debug("Excluding domains field");
-            }
-            
-            if (!includeFields.contains("metadata")) {
-                filteredOrg.setMetadata(null);
-                log.debug("Excluding metadata field");
-            }
-            
-            if (!includeFields.contains("database")) {
-                filteredOrg.setDatabase(null);
-                log.debug("Excluding database field");
-            }
-            
-            // Note: Basic organization fields (id, name, status, etc.) are always included
-            
-            log.debug("Applied filtering - excluded fields not in: {}", includeFields);
-            return filteredOrg;
-            
-        } catch (Exception e) {
-            log.error("Failed to create deep copy of organization during filtering", e);
-            throw new RuntimeException("Failed to apply include filtering", e);
-        }
+        return getOrgById(organizationId);
     }
 
+    @Override
+    public Optional<Organization> getOrganizationById(String organizationId, List<OrganizationProjectionEnum> include) {
+        log.debug("Getting organization by ID: {} with include filters: {}", organizationId, include);
+        return super.getOrgById(organizationId, include);
+    }
 }

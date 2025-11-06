@@ -7,7 +7,6 @@ import com.codzs.framework.entity.BaseEntity;
 import com.codzs.framework.entity.EntityDefaultInitializer;
 import com.codzs.framework.helper.SpringContextHelper;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -15,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.mapstruct.AfterMapping;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
@@ -64,7 +64,6 @@ import java.util.List;
 })
 @Getter
 @Setter
-@NoArgsConstructor
 @ToString(callSuper = true)
 public class Organization extends BaseEntity {
 
@@ -91,7 +90,7 @@ public class Organization extends BaseEntity {
 
     @NotNull(message = "Organization status is required")
     @Indexed
-    private OrganizationStatusEnum status = OrganizationStatusEnum.ACTIVE;
+    private OrganizationStatusEnum status;
 
     @NotBlank(message = "Organization type is required")
     private String organizationType;
@@ -137,11 +136,16 @@ public class Organization extends BaseEntity {
         this.database = database;
         this.ownerUserIds = ownerUserIds;
         this.status = OrganizationStatusEnum.getDefault();
+        this.applyDefaults();
+    }
+
+    public Organization() {
+        this.applyDefaults();
     }
 
     // Initialize default values for default constructor
-    @PostConstruct
-    private void initDefaults() {
+    @AfterMapping
+    public void applyDefaults() {
         OrganizationTypeEnum organizationTypeEnum = SpringContextHelper.getBean(OrganizationTypeEnum.class);
 
         this.status = EntityDefaultInitializer.setDefaultIfNull(this.status, OrganizationStatusEnum.getDefault());

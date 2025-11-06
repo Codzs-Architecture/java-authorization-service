@@ -1,6 +1,5 @@
 package com.codzs.entity.domain;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -14,6 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 import java.util.UUID;
+
+import org.mapstruct.AfterMapping;
 
 import com.codzs.constant.domain.DomainConstants;
 import com.codzs.constant.domain.DomainVerificationMethodEnum;
@@ -105,7 +106,7 @@ public class Domain {
     }
 
     // Initialize default values for default constructor
-    @PostConstruct
+    @AfterMapping
     private void initDefaults() {
         DomainVerificationMethodEnum domainVerificationMethodEnum = SpringContextHelper.getBean(DomainVerificationMethodEnum.class);
 

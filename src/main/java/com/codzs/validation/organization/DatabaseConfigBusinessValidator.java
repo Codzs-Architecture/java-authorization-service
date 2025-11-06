@@ -1,10 +1,8 @@
 package com.codzs.validation.organization;
 
-import com.codzs.entity.organization.DatabaseConfig;
 import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
-import com.codzs.service.organization.DatabaseConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -18,15 +16,12 @@ import java.util.List;
  * 
  * @author Codzs Team
  * @since 1.0
- */
+ */ 
 @Component
 public class DatabaseConfigBusinessValidator {
 
-    private final DatabaseConfigService databaseConfigService;
-
     @Autowired
-    public DatabaseConfigBusinessValidator(DatabaseConfigService databaseConfigService) {
-        this.databaseConfigService = databaseConfigService;
+    public DatabaseConfigBusinessValidator() {
     }
 
     // ========== ENTRY POINT METHODS FOR ORGANIZATION APIs ==========
@@ -48,9 +43,9 @@ public class DatabaseConfigBusinessValidator {
      * Validates database schema addition to existing organization.
      * Entry point for: POST /api/v1/organizations/{id}/database-schemas
      */
-    public void validateDatabaseSchemaAddition(Organization organization, DatabaseSchema schema) {
+    public void validateDatabaseSchemaAddition(DatabaseSchema schema, boolean isSchemaNameExists) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateDatabaseSchemaAdditionFlow(organization, schema, errors);
+        validateSchemaNameUniqueness(schema.getSchemaName(), isSchemaNameExists, errors);
         
         if (!errors.isEmpty()) {
             throw new ValidationException("Database schema addition validation failed", errors);
@@ -61,9 +56,9 @@ public class DatabaseConfigBusinessValidator {
      * Validates database schema update request.
      * Entry point for: PUT /api/v1/organizations/{id}/database-schemas/{schemaId}
      */
-    public void validateDatabaseSchemaUpdate(Organization organization, DatabaseSchema schema) {
+    public void validateDatabaseSchemaUpdate(DatabaseSchema schema, boolean isSchemaNameExists) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateDatabaseSchemaUpdateFlow(organization, schema, errors);
+        validateSchemaNameUniqueness(schema.getSchemaName(), isSchemaNameExists, errors);
         
         if (!errors.isEmpty()) {
             throw new ValidationException("Database schema update validation failed", errors);
@@ -93,20 +88,10 @@ public class DatabaseConfigBusinessValidator {
         validateCertificateFormat(certificate, errors);
     }
 
-    private void validateDatabaseSchemaAdditionFlow(Organization organization, DatabaseSchema schema, 
-                                                   List<ValidationException.ValidationError> errors) {
-        validateSchemaNameUniqueness(organization.getId(), schema.getSchemaName(), null, errors);
-    }
-
-    private void validateDatabaseSchemaUpdateFlow(Organization organization, DatabaseSchema schema, 
-                                                 List<ValidationException.ValidationError> errors) {
-        validateSchemaNameUniqueness(organization.getId(), schema.getSchemaName(), schema.getId(), errors);
-    }
-
     private void validateDatabaseSchemaRemovalFlow(Organization organization, DatabaseSchema schema, 
                                                   List<ValidationException.ValidationError> errors) {
         // Validate that at least one schema will remain after removal
-        List<DatabaseSchema> schemas = databaseConfigService.getDatabaseSchemas(organization.getId());
+        List<DatabaseSchema> schemas = organization.getDatabase().getSchemas();
         if (schemas.size() <= 1) {
             errors.add(new ValidationException.ValidationError("schemaId", 
                 "Cannot remove last database schema - at least one schema is required"));
@@ -148,10 +133,9 @@ public class DatabaseConfigBusinessValidator {
         }
     }
 
-    private void validateSchemaNameUniqueness(String organizationId, String schemaName, String excludeSchemaId,
+    private void validateSchemaNameUniqueness(String schemaName, boolean isSchemaNameExists,
                                              List<ValidationException.ValidationError> errors) {
-        if (StringUtils.hasText(schemaName) && 
-            databaseConfigService.isSchemaNameExists(organizationId, schemaName, excludeSchemaId)) {
+        if (StringUtils.hasText(schemaName) && isSchemaNameExists) {
             errors.add(new ValidationException.ValidationError("schemaName", 
                 "Database schema name already exists: " + schemaName));
         }

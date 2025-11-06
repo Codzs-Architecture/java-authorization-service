@@ -3,9 +3,12 @@ package com.codzs.service.organization;
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationPlan;
 import com.codzs.exception.validation.ValidationException;
+import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationPlanRepository;
+import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.service.plan.PlanService;
 import com.codzs.validation.organization.OrganizationPlanBusinessValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,20 +34,20 @@ import java.util.Optional;
 @Service
 @Slf4j
 @Transactional(readOnly = true)
-public class OrganizationPlanServiceImpl implements OrganizationPlanService {
+public class OrganizationPlanServiceImpl extends BaseOrganizationServiceImpl implements OrganizationPlanService {
 
     private final OrganizationPlanRepository organizationPlanRepository;
-    private final OrganizationService organizationService;
     private final PlanService planService;
     private final OrganizationPlanBusinessValidator organizationPlanBusinessValidator;
 
     @Autowired
     public OrganizationPlanServiceImpl(OrganizationPlanRepository organizationPlanRepository,
-                                     OrganizationService organizationService,
                                      PlanService planService,
-                                     OrganizationPlanBusinessValidator organizationPlanBusinessValidator) {
+                                     OrganizationPlanBusinessValidator organizationPlanBusinessValidator,
+                                     OrganizationRepository organizationRepository, 
+                                     ObjectMapper objectMapper) {
+        super(organizationRepository, objectMapper);
         this.organizationPlanRepository = organizationPlanRepository;
-        this.organizationService = organizationService;
         this.planService = planService;
         this.organizationPlanBusinessValidator = organizationPlanBusinessValidator;
     }
@@ -59,8 +62,33 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
         // Set organization ID from the organization entity
         organizationPlan.setOrganizationId(organization.getId());
         
+        // Fetch all required data for validation
+        OrganizationPlan currentActivePlan = getCurrentActivePlan(organization.getId());
+        int currentUserCount = getCurrentUserCount(organization.getId());
+        int currentTenantCount = getCurrentTenantCount(organization.getId());
+        long currentStorageUsage = getCurrentStorageUsage(organization.getId());
+        boolean hasValidPaymentMethod = hasValidPaymentMethod(organization.getId());
+        OrganizationPlan parentActivePlan = StringUtils.hasText(organization.getParentOrganizationId()) 
+            ? getCurrentActivePlan(organization.getParentOrganizationId()) : null;
+
         // Business validation as first step
-        organizationPlanBusinessValidator.validatePlanAssociationForOrganization(organization, organizationPlan, new ArrayList<>());
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        organizationPlanBusinessValidator.validatePlanAssociationForOrganizationWithUsageData(
+            organization, 
+            organizationPlan, 
+            currentActivePlan,
+            currentUserCount,
+            currentTenantCount,
+            currentStorageUsage,
+            hasValidPaymentMethod,
+            parentActivePlan,
+            errors
+        );
+
+        // Handle validation errors
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Plan association validation failed", errors);
+        }
         
         // Deactivate any existing active plans if this is an immediate activation
         if (organizationPlan.getIsActive() && isImmediateActivation(organizationPlan)) {
@@ -121,7 +149,7 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
     public Page<OrganizationPlan> getOrganizationPlanHistory(String organizationId, Pageable pageable) {
         log.debug("Getting plan history for organization ID: {}", organizationId);
         
-        return organizationPlanRepository.findByOrganizationIdAndDeletedOnIsNullOrderByCreatedDateDesc(
+        return organizationPlanRepository.findByOrganizationIdAndDeletedDateIsNullOrderByCreatedDateDesc(
                 organizationId, pageable);
     }
 
@@ -198,7 +226,6 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
         return deactivatedPlan;
     }
 
-    @Override
     @Transactional
     public OrganizationPlan changeOrganizationPlan(Organization organization, OrganizationPlan newOrganizationPlan) {
         log.debug("Changing plan for organization ID: {} to plan ID: {}", 
@@ -207,8 +234,33 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
         // Set organization ID
         newOrganizationPlan.setOrganizationId(organization.getId());
         
+        // Fetch all required data for validation
+        OrganizationPlan currentActivePlan = getCurrentActivePlan(organization.getId());
+        int currentUserCount = getCurrentUserCount(organization.getId());
+        int currentTenantCount = getCurrentTenantCount(organization.getId());
+        long currentStorageUsage = getCurrentStorageUsage(organization.getId());
+        boolean hasValidPaymentMethod = hasValidPaymentMethod(organization.getId());
+        OrganizationPlan parentActivePlan = StringUtils.hasText(organization.getParentOrganizationId()) 
+            ? getCurrentActivePlan(organization.getParentOrganizationId()) : null;
+
         // Business validation for plan change
-        organizationPlanBusinessValidator.validatePlanAssociationForOrganization(organization, newOrganizationPlan, new ArrayList<>());
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        organizationPlanBusinessValidator.validatePlanAssociationForOrganizationWithUsageData(
+            organization, 
+            newOrganizationPlan, 
+            currentActivePlan,
+            currentUserCount,
+            currentTenantCount,
+            currentStorageUsage,
+            hasValidPaymentMethod,
+            parentActivePlan,
+            errors
+        );
+
+        // Handle validation errors
+        if (!errors.isEmpty()) {
+            throw new ValidationException("Plan change validation failed", errors);
+        }
         
         // Deactivate existing active plans
         deactivateExistingActivePlans(organization.getId(), newOrganizationPlan.getCreatedBy());
@@ -229,6 +281,20 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
                 organization.getId(), newOrganizationPlan.getPlanId(), savedPlan.getId());
         
         return savedPlan;
+    }
+
+    @Override
+    @Transactional
+    public OrganizationPlan changeOrganizationPlan(String organizationId, OrganizationPlan newOrganizationPlan) {
+        log.debug("Changing plan for organization ID: {} to plan ID: {}", 
+                organizationId, newOrganizationPlan.getPlanId());
+        
+        // Get organization entity
+        Organization organization = getOrgById(organizationId)
+                .orElseThrow(() -> ExceptionUtils.organizationNotFound(organizationId));
+        
+        // Delegate to the existing method
+        return changeOrganizationPlan(organization, newOrganizationPlan);
     }
 
     @Override
@@ -273,7 +339,7 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
                     expiredPlan.getId(), expiredPlan.getOrganizationId());
             
             // Deactivate expired plan
-            expiredPlan.deactivate("system");
+            expiredPlan.deactivate(getCurrentUser());
             
             // Apply expiration business logic
             applyPlanExpirationBusinessLogic(expiredPlan);
@@ -291,7 +357,7 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
     @Override
     public OrganizationPlan findById(String planAssociationId) {
         return organizationPlanRepository.findById(planAssociationId)
-                .filter(plan -> plan.getDeletedOn() == null)
+                .filter(plan -> plan.getDeletedDate() == null)
                 .orElse(null);
     }
 
@@ -306,7 +372,7 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
         OrganizationPlan plan = planOpt.get();
         
         // Verify the plan belongs to the organization and is not deleted
-        if (plan.getDeletedOn() != null || !organizationId.equals(plan.getOrganizationId())) {
+        if (plan.getDeletedDate() != null || !organizationId.equals(plan.getOrganizationId())) {
             return null;
         }
         
@@ -315,7 +381,7 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
 
     @Override
     public boolean hasActivePlan(String organizationId, String planId) {
-        return organizationPlanRepository.existsByOrganizationIdAndPlanIdAndIsActiveTrueAndDeletedOnIsNull(
+        return organizationPlanRepository.existsByOrganizationIdAndPlanIdAndIsActiveTrueAndDeletedDateIsNull(
                 organizationId, planId);
     }
 
@@ -368,7 +434,7 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
 
     @Override
     public List<OrganizationPlan> getAllOrganizationPlans(String organizationId) {
-        return organizationPlanRepository.findByOrganizationIdAndDeletedOnIsNull(organizationId);
+        return organizationPlanRepository.findByOrganizationIdAndDeletedDateIsNull(organizationId);
     }
 
     @Override
@@ -378,7 +444,7 @@ public class OrganizationPlanServiceImpl implements OrganizationPlanService {
 
     @Override
     public OrganizationPlan getLatestPlan(String organizationId) {
-        return organizationPlanRepository.findTopByOrganizationIdAndDeletedOnIsNullOrderByCreatedDateDesc(organizationId)
+        return organizationPlanRepository.findTopByOrganizationIdAndDeletedDateIsNullOrderByCreatedDateDesc(organizationId)
                 .orElse(null);
     }
 

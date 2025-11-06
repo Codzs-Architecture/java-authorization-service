@@ -1,6 +1,7 @@
 package com.codzs.controller.organization;
 
-import com.codzs.constant.organization.OrganizationSwaggerConstants;
+import com.codzs.constant.organization.OrganizationProjectionEnum;
+import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.dto.organization.request.OrganizationCreateRequestDto;
 import com.codzs.dto.organization.request.OrganizationUpdateRequestDto;
 import com.codzs.dto.organization.response.OrganizationResponseDto;
@@ -9,7 +10,7 @@ import com.codzs.entity.organization.Organization;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
 import com.codzs.framework.constant.PaginationConstant;
-import com.codzs.framework.validation.annotation.ValidUUID;
+import com.codzs.framework.validation.annotation.ValidObjectId;
 import com.codzs.mapper.organization.OrganizationMapper;
 import com.codzs.service.organization.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,7 +35,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -101,14 +101,13 @@ public class OrganizationController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<OrganizationResponseDto> getOrganization(
-            @Parameter(description = "Organization ID to retrieve", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID to retrieve", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @PathVariable("organizationId")
+            String organizationId,
             
             @Parameter(description = "Additional data to include", example = "setting,domain,database,metadata")
             @RequestParam(value = "include", required = false) 
-            List<String> include,
+            List<OrganizationProjectionEnum> include,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -117,11 +116,17 @@ public class OrganizationController {
         
         log.info("Retrieving organization with ID: {}, include: {}", organizationId, include);
         
-        Organization organization = organizationService.getOrganizationById(organizationId.toString(), include);
-        OrganizationResponseDto response = organizationMapper.toResponse(organization);
-        
-        log.info("Successfully retrieved organization: {}", organizationId);
-        return ResponseEntity.ok(response);
+        return organizationService.getOrganizationById(organizationId, include)
+                .map(organization -> {
+                    OrganizationResponseDto response = organizationMapper.toResponse(organization);
+                    
+                    log.info("Successfully retrieved organization: {}", organizationId);
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    log.warn("Organization not found: {}", organizationId);
+                    return ResponseEntity.notFound().build();
+                });
     }
 
     @PutMapping("/{organizationId}")
@@ -138,10 +143,10 @@ public class OrganizationController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> updateOrganization(
-            @Parameter(description = "Organization ID to update", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID") 
-            @PathVariable 
-            UUID organizationId,
+            @Parameter(description = "Organization ID to update", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @ValidObjectId(allowNull = false) 
+            @PathVariable("organizationId")
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -177,10 +182,9 @@ public class OrganizationController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> deleteOrganization(
-            @Parameter(description = "Organization ID to delete", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
+            @Parameter(description = "Organization ID to delete", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -189,7 +193,7 @@ public class OrganizationController {
         
         log.info("Deleting organization with ID: {}", organizationId);
         
-        organizationService.deleteOrganization(organizationId.toString());
+        organizationService.deleteOrganization(organizationId);
         
         log.info("Successfully deleted organization: {}", organizationId);
         return ResponseEntity.noContent().build();
@@ -265,10 +269,10 @@ public class OrganizationController {
             Sort.by(Sort.Direction.fromString(sortOrder), sortBy));
         
         // Convert single values to lists for service method
-        List<String> statuses = status != null ? List.of(status) : null;
-        List<String> organizationTypes = organizationType != null ? List.of(organizationType) : null;
-        List<String> industries = industry != null ? List.of(industry) : null;
-        List<String> sizes = size != null ? List.of(size) : null;
+        List<String> statuses = status != null ? List.of(status) : List.of();
+        List<String> organizationTypes = organizationType != null ? List.of(organizationType) : List.of();
+        List<String> industries = industry != null ? List.of(industry) : List.of();
+        List<String> sizes = size != null ? List.of(size) : List.of();
         
         Page<Organization> organizationsPage = organizationService.listOrganizations(
             statuses, organizationTypes, industries, sizes, search, pageable
@@ -299,11 +303,11 @@ public class OrganizationController {
     })
     public ResponseEntity<List<OrganizationSummaryResponseDto>> getOrganizationsForAutocomplete(
             @Parameter(description = "Search query to filter organizations", example = "acme")
-            @RequestParam(value = "q", required = false) 
+            @RequestParam(value = "query", required = false) 
             String query,
             
             @Parameter(description = "Filter by status (default: ACTIVE)", example = "ACTIVE,PENDING")
-            @RequestParam(value = "status", required = false, defaultValue = "ACTIVE") 
+            @RequestParam(value = "status", required = false, defaultValue = "PENDING") 
             List<String> status,
             
             @Parameter(description = "Maximum number of results", example = "10")
@@ -348,10 +352,9 @@ public class OrganizationController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> activateOrganization(
-            @Parameter(description = "Organization ID to activate", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
+            @Parameter(description = "Organization ID to activate", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -360,7 +363,7 @@ public class OrganizationController {
         
         log.info("Activating organization with ID: {}", organizationId);
         
-        organizationService.activateOrganization(organizationId.toString());
+        organizationService.activateOrganization(organizationId);
         
         log.info("Successfully activated organization: {}", organizationId);
         return ResponseEntity.noContent().build();
@@ -380,10 +383,9 @@ public class OrganizationController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<Void> deactivateOrganization(
-            @Parameter(description = "Organization ID to deactivate", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidUUID(allowNull = false, fieldName = "Organization ID")
+            @Parameter(description = "Organization ID to deactivate", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @PathVariable 
-            UUID organizationId,
+            String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
@@ -392,7 +394,7 @@ public class OrganizationController {
         
         log.info("Deactivating organization with ID: {}", organizationId);
         
-        organizationService.deactivateOrganization(organizationId.toString());
+        organizationService.deactivateOrganization(organizationId);
         
         log.info("Successfully deactivated organization: {}", organizationId);
         return ResponseEntity.noContent().build();
