@@ -5,7 +5,7 @@ import com.codzs.constant.plan.PlanTypeEnum;
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationPlan;
 import com.codzs.entity.plan.Plan;
-import com.codzs.exception.validation.ValidationException;
+import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.service.organization.OrganizationPlanService;
 import com.codzs.service.plan.PlanService;
 

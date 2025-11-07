@@ -3,9 +3,9 @@ package com.codzs.entity.organization;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.constant.organization.OrganizationTypeEnum;
 import com.codzs.entity.domain.Domain;
+import com.codzs.framework.context.spring.SpringContextHelper;
 import com.codzs.framework.entity.BaseEntity;
-import com.codzs.framework.entity.EntityDefaultInitializer;
-import com.codzs.framework.helper.SpringContextHelper;
+import com.codzs.framework.util.StringUtil;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -23,6 +23,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -116,11 +117,11 @@ public class Organization extends BaseEntity {
 
     @Valid
     @Schema(description = "Organization domains")
-    private List<Domain> domains = List.of();
+    private List<Domain> domains = new ArrayList<>();
 
     @NotEmpty(message = "At least one owner user ID is required")
     @Indexed
-    private List<String> ownerUserIds = List.of();
+    private List<String> ownerUserIds = new ArrayList<>();
 
     @Indexed
     private String parentOrganizationId;
@@ -148,8 +149,8 @@ public class Organization extends BaseEntity {
     public void applyDefaults() {
         OrganizationTypeEnum organizationTypeEnum = SpringContextHelper.getBean(OrganizationTypeEnum.class);
 
-        this.status = EntityDefaultInitializer.setDefaultIfNull(this.status, OrganizationStatusEnum.getDefault());
-        this.organizationType = EntityDefaultInitializer.setDefaultIfNull(this.organizationType, organizationTypeEnum.getDefaultValue());
+        this.status = StringUtil.setDefaultIfNull(this.status, OrganizationStatusEnum.getDefault());
+        this.organizationType = StringUtil.setDefaultIfNull(this.organizationType, organizationTypeEnum.getDefaultValue());
         if (this.displayName == null && this.name != null) {
             this.displayName = this.name;
         }

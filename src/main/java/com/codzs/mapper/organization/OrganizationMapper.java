@@ -3,6 +3,7 @@ package com.codzs.mapper.organization;
 import com.codzs.dto.organization.request.OrganizationCreateRequestDto;
 import com.codzs.dto.organization.request.OrganizationUpdateRequestDto;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.mapper.BaseMapper;
 import com.codzs.dto.organization.response.OrganizationResponseDto;
 import com.codzs.dto.organization.response.OrganizationSummaryResponseDto;
 import com.codzs.entity.organization.DatabaseConfig;
@@ -29,7 +30,7 @@ import java.util.List;
     nullValueCheckStrategy = NullValueCheckStrategy.ALWAYS
 )
 @Component
-public interface OrganizationMapper {
+public interface OrganizationMapper extends BaseMapper {
 
     // ========================= CREATE MAPPINGS =========================
     
@@ -39,6 +40,10 @@ public interface OrganizationMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(source = "expiresDate", target = "expiresDate", dateFormat = CommonConstants.UTC_TIMESTAMP_PATTERN)
+    @Mapping(target = "createdDate", expression = "java(generateCurrentDateTime())")
+    @Mapping(target = "createdBy", expression = "java(getCurrentUserId())")
+    @Mapping(target = "lastModifiedDate", expression = "java(generateCurrentDateTime())")
+    @Mapping(target = "lastModifiedBy", expression = "java(getCurrentUserId())")
     Organization toEntity(OrganizationCreateRequestDto requestDto);
 
     /**
@@ -47,6 +52,8 @@ public interface OrganizationMapper {
      */
     @Mapping(target = "id", ignore = true)
     @Mapping(source = "expiresDate", target = "expiresDate", dateFormat = CommonConstants.UTC_TIMESTAMP_PATTERN)
+    @Mapping(target = "lastModifiedDate", expression = "java(generateCurrentDateTime())")
+    @Mapping(target = "lastModifiedBy", expression = "java(getCurrentUserId())")
     Organization toUpdateEntity(OrganizationUpdateRequestDto requestDto);
 
     // ========================= UPDATE MAPPINGS =========================
@@ -58,6 +65,8 @@ public interface OrganizationMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(source = "expiresDate", target = "expiresDate", dateFormat = CommonConstants.UTC_TIMESTAMP_PATTERN)
+    @Mapping(target = "lastModifiedDate", expression = "java(generateCurrentDateTime())")
+    @Mapping(target = "lastModifiedBy", expression = "java(getCurrentUserId())")
     void updateEntity(@MappingTarget Organization organization, 
                      OrganizationUpdateRequestDto requestDto);
 

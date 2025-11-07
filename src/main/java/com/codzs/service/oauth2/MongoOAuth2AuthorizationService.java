@@ -17,6 +17,8 @@ package com.codzs.service.oauth2;
 
 import com.codzs.entity.oauth2.OAuth2Authorization;
 import com.codzs.repository.oauth2.OAuth2AuthorizationRepository;
+import com.codzs.util.oauth2.OAuth2Util;
+
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
@@ -47,7 +49,6 @@ import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2A
 
 import java.util.List;
 import com.fasterxml.jackson.databind.Module;
-import com.codzs.util.OAuth2Util;
 
 /**
  * MongoDB implementation of OAuth2AuthorizationService.

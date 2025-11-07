@@ -13,7 +13,7 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.ImportRuntimeHints;
 import org.thymeleaf.expression.Lists;
 
-import com.codzs.model.ScopeWithDescription;
+import com.codzs.temp.model.ScopeWithDescription;
 
 import io.mongock.runner.springboot.EnableMongock;
 

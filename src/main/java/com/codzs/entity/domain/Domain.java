@@ -18,10 +18,10 @@ import org.mapstruct.AfterMapping;
 
 import com.codzs.constant.domain.DomainConstants;
 import com.codzs.constant.domain.DomainVerificationMethodEnum;
+import com.codzs.framework.context.spring.SpringContextHelper;
 import com.codzs.framework.entity.BaseEntity;
-import com.codzs.framework.entity.EntityDefaultInitializer;
-import com.codzs.framework.helper.SpringContextHelper;
-import com.codzs.util.DomainUtil;
+import com.codzs.framework.util.StringUtil;
+import com.codzs.util.domain.DomainUtil;
 
 /**
  * Embedded Domain sub-object within Organization and Partner entities.
@@ -164,8 +164,8 @@ public class Domain extends BaseEntity {
         if (this.id == null) {
             this.id = UUID.randomUUID().toString();
         }
-        this.isVerified = EntityDefaultInitializer.setDefaultIfNull(this.isVerified, DomainConstants.DEFAULT_IS_VERIFIED);
-        this.isPrimary = EntityDefaultInitializer.setDefaultIfNull(this.isPrimary, DomainConstants.DEFAULT_IS_PRIMARY);
-        this.verificationMethod = EntityDefaultInitializer.setDefaultIfNull(this.verificationMethod, domainVerificationMethodEnum.getDefaultValue());
+        this.isVerified = StringUtil.setDefaultIfNull(this.isVerified, DomainConstants.DEFAULT_IS_VERIFIED);
+        this.isPrimary = StringUtil.setDefaultIfNull(this.isPrimary, DomainConstants.DEFAULT_IS_PRIMARY);
+        this.verificationMethod = StringUtil.setDefaultIfNull(this.verificationMethod, domainVerificationMethodEnum.getDefaultValue());
     }
 }

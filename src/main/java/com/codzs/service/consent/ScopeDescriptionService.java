@@ -20,7 +20,7 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import com.codzs.model.ScopeWithDescription;
+import com.codzs.temp.model.ScopeWithDescription;
 
 /**
  * Service class for handling OAuth2 scope descriptions.

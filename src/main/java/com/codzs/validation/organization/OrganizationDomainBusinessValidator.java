@@ -4,8 +4,7 @@ import com.codzs.constant.domain.DomainSchemaConstants;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.domain.Domain;
 import com.codzs.entity.organization.Organization;
-import com.codzs.exception.validation.ValidationException;
-// import com.codzs.validation.domain.DomainBusinessValidator;
+import com.codzs.exception.type.validation.ValidationException;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

@@ -3,7 +3,7 @@ package com.codzs.service.organization;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.domain.Domain;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.config.audit.AuditorAwareImpl;
+import com.codzs.framework.aware.audit.AuditorAwareImpl;
 import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationDomainRepository;
 import com.codzs.repository.organization.OrganizationRepository;
@@ -79,20 +79,6 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         }
         if (domain.getIsVerified() == null) {
             domain.setIsVerified(false);
-        }
-        if (domain.getCreatedDate() == null) {
-            domain.setCreatedDate(Instant.now());
-        }
-        if (domain.getLastModifiedDate() == null) {
-            domain.setLastModifiedDate(Instant.now());
-        }
-
-        String user = getCurrentUser();
-        if (domain.getCreatedBy() == null) {
-            domain.setCreatedBy(user);
-        }
-        if (domain.getLastModifiedBy() == null) {
-            domain.setLastModifiedBy(user);
         }
         
         // Use MongoDB array operation to add domain directly

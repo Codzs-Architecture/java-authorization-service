@@ -1,7 +1,8 @@
 package com.codzs.validation.oauth2;
 
-import com.codzs.exception.validation.ValidationException;
 import com.codzs.constant.OAuth2Constant;
+import com.codzs.exception.type.validation.ValidationException;
+
 import org.springframework.util.StringUtils;
 
 import java.net.URI;

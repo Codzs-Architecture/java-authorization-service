@@ -56,7 +56,7 @@ public final class CommonConstants {
      * Default currency setting.
      */
     public static final String DEFAULT_CURRENCY = "USD";
-    
+     
     /**
      * Default country setting.
      */

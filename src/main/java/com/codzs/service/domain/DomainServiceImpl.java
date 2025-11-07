@@ -4,7 +4,7 @@ import com.codzs.constant.domain.DomainSchemaConstants;
 import com.codzs.constant.domain.DomainVerificationMethodEnum;
 // OrganizationConstants removed - generic service doesn't have entity-specific constants
 import com.codzs.entity.domain.Domain;
-import com.codzs.framework.helper.SpringContextHelper;
+import com.codzs.framework.context.spring.SpringContextHelper;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

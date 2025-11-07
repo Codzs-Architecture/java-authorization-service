@@ -2,7 +2,7 @@ package com.codzs.validation.organization;
 
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.organization.Organization;
-import com.codzs.exception.validation.ValidationException;
+import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.framework.service.localization.LocalizationCodeService;
 
 import org.springframework.stereotype.Component;

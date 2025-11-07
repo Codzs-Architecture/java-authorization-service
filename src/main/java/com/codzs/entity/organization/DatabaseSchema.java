@@ -3,8 +3,8 @@ package com.codzs.entity.organization;
 import org.springframework.data.annotation.Id;
 
 import com.codzs.framework.entity.BaseEntity;
-import com.codzs.util.DomainUtil;
-import com.codzs.util.OrganizationDatabaseConfigUtil;
+import com.codzs.util.domain.DomainUtil;
+import com.codzs.util.organization.OrganizationDatabaseConfigUtil;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;

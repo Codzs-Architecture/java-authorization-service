@@ -1,13 +1,17 @@
 package com.codzs.mapper.organization;
 
+import com.codzs.framework.aware.audit.AuditorAwareImpl;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.context.spring.SpringContextHelper;
 import com.codzs.framework.mapper.BaseMapper;
 import com.codzs.dto.domain.request.DomainRequestDto;
 import com.codzs.dto.domain.response.DomainResponseDto;
 import com.codzs.entity.domain.Domain;
+
 import org.mapstruct.*;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -37,7 +41,10 @@ public interface OrganizationDomainMapper extends BaseMapper {
     @Mapping(target = "isVerified", ignore = true)
     @Mapping(target = "verificationToken", ignore = true)
     @Mapping(target = "verifiedDate", ignore = true)
-    // @Mapping(source = "createdDate", target = "createdDate", dateFormat = CommonConstants.UTC_TIMESTAMP_PATTERN)
+    @Mapping(target = "createdDate", expression = "java(generateCurrentDateTime())")
+    @Mapping(target = "createdBy", expression = "java(getCurrentUserId())")
+    @Mapping(target = "lastModifiedDate", expression = "java(generateCurrentDateTime())")
+    @Mapping(target = "lastModifiedBy", expression = "java(getCurrentUserId())")
     Domain toEntity(DomainRequestDto requestDto);
 
     // ========================= UPDATE MAPPINGS =========================
@@ -50,6 +57,8 @@ public interface OrganizationDomainMapper extends BaseMapper {
     @Mapping(target = "isVerified", ignore = true) 
     @Mapping(target = "verificationToken", ignore = true)
     @Mapping(target = "verifiedDate", ignore = true)
+    @Mapping(target = "lastModifiedDate", expression = "java(generateCurrentDateTime())")
+    @Mapping(target = "lastModifiedBy", expression = "java(getCurrentUserId())")
     void updateEntity(@MappingTarget Domain domain, DomainRequestDto requestDto);
 
     // ========================= RESPONSE MAPPINGS =========================

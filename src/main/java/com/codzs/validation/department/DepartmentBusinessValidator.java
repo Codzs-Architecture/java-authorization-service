@@ -3,7 +3,7 @@ package com.codzs.validation.department;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.entity.department.Department;
 import com.codzs.entity.organization.Organization;
-import com.codzs.exception.validation.ValidationException;
+import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.service.organization.OrganizationService;
 import lombok.extern.slf4j.Slf4j;

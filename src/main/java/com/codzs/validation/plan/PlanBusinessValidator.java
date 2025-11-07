@@ -2,7 +2,7 @@ package com.codzs.validation.plan;
 
 import com.codzs.constant.plan.PlanConstants;
 import com.codzs.entity.plan.Plan;
-import com.codzs.exception.validation.ValidationException;
+import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.repository.plan.PlanRepository;
 import com.codzs.service.subscription.SubscriptionService;
 import lombok.extern.slf4j.Slf4j;
@@ -191,7 +191,7 @@ public class PlanBusinessValidator {
                                           List<ValidationException.ValidationError> errors) {
         // Validate that we don't exceed maximum number of active plans
         if (plan.getIsActive() != null && plan.getIsActive()) {
-            List<Plan> activePlans = planRepository.findByIsActiveTrueAndDeletedOnIsNull();
+            List<Plan> activePlans = planRepository.findByIsActiveTrueAndDeletedDateIsNull();
             if (activePlans.size() >= PlanConstants.MAX_ACTIVE_PLANS) {
                 errors.add(new ValidationException.ValidationError("isActive", 
                     "Maximum number of active plans (" + PlanConstants.MAX_ACTIVE_PLANS + ") reached"));
@@ -285,7 +285,7 @@ public class PlanBusinessValidator {
         }
 
         // Check capacity limits
-        List<Plan> activePlans = planRepository.findByIsActiveTrueAndDeletedOnIsNull();
+        List<Plan> activePlans = planRepository.findByIsActiveTrueAndDeletedDateIsNull();
         if (activePlans.size() >= PlanConstants.MAX_ACTIVE_PLANS) {
             errors.add(new ValidationException.ValidationError("isActive", 
                 "Maximum number of active plans (" + PlanConstants.MAX_ACTIVE_PLANS + ") reached"));
@@ -379,7 +379,7 @@ public class PlanBusinessValidator {
                                    List<ValidationException.ValidationError> errors) {
         // Plan ID required validation should be handled by request DTO annotations
         
-        Plan plan = planRepository.findByIdAndDeletedOnIsNull(planId).orElse(null);
+        Plan plan = planRepository.findByIdAndDeletedDateIsNull(planId).orElse(null);
         if (plan == null) {
             errors.add(new ValidationException.ValidationError("planId", "Plan not found"));
             return null;
@@ -446,13 +446,13 @@ public class PlanBusinessValidator {
         
         if (StringUtils.hasText(excludeId)) {
             // For updates - check if name exists excluding current plan
-            return planRepository.findByNameAndDeletedOnIsNull(name)
+            return planRepository.findByNameAndDeletedDateIsNull(name)
                     .map(plan -> !plan.getId().equals(excludeId))
                     .orElse(false);
         }
         
         // For creation - check if name exists at all
-        return planRepository.existsByNameAndDeletedOnIsNull(name);
+        return planRepository.existsByNameAndDeletedDateIsNull(name);
     }
 
     private boolean hasActiveSubscriptions(String planId) {

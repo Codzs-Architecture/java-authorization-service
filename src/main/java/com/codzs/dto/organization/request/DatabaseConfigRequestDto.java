@@ -1,8 +1,6 @@
 package com.codzs.dto.organization.request;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
-import com.codzs.framework.annotation.validation.ApplyDefaults;
-import com.codzs.framework.helper.SpringContextHelper;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +9,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.core.env.Environment;
 
 /**
  * DTO for database configuration in organization requests.
@@ -22,7 +19,6 @@ import org.springframework.core.env.Environment;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = OrganizationSchemaConstants.DATABASE_CONFIG_DESCRIPTION)
-@ApplyDefaults
 @Getter
 @Setter
 @NoArgsConstructor

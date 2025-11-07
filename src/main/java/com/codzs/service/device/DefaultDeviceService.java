@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import com.codzs.validation.ValidationService;
+import com.codzs.service.oauth2.ValidationService;
 
 /**
  * Default implementation of {@link DeviceService}.

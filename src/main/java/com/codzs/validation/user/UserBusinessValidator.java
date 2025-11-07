@@ -1,9 +1,8 @@
 package com.codzs.validation.user;
 
 import com.codzs.entity.user.User;
+import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.constant.organization.OrganizationStatusEnum;
-import com.codzs.entity.organization.Organization;
-import com.codzs.exception.validation.ValidationException;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.service.organization.OrganizationService;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +74,33 @@ public class UserBusinessValidator {
     }
 
     /**
+     * Validates user activation flow and returns skip flag.
+     * Returns true if activation should be skipped (idempotent), false otherwise.
+     */
+    public Boolean validateUserActivationFlow(User user) {
+        log.debug("Validating user activation for user: {}", user.getEmail());
+        
+        // Skip further processing if user is already active (idempotent operation)
+        if (CommonConstants.ACTIVE.equals(user.getStatus())) {
+            log.debug("User is already active, skipping further processing");
+            return CommonConstants.SKIP_FURTHER_STEP;
+        }
+        
+        // Validate organization is active using service layer
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        validateOrganizationForUser(user.getOrganizationId(), errors);
+        
+        if (!errors.isEmpty()) {
+            throw new ValidationException("User activation validation failed", errors);
+        }
+        
+        // TODO: Validate tenant is active when tenant service is available
+        
+        log.debug("Completed user activation validation for user: {}", user.getEmail());
+        return !CommonConstants.SKIP_FURTHER_STEP;
+    }
+
+    /**
      * Validates user deactivation for service layer.
      * Entry point for: PUT /api/v1/users/{id}/deactivate
      */
@@ -88,6 +114,26 @@ public class UserBusinessValidator {
     }
 
     /**
+     * Validates user deactivation flow and returns skip flag.
+     * Returns true if deactivation should be skipped (idempotent), false otherwise.
+     */
+    public Boolean validateUserDeactivationFlow(User user) {
+        log.debug("Validating user deactivation for user: {}", user.getEmail());
+        
+        // Skip further processing if user is already inactive (idempotent operation)
+        if (!CommonConstants.ACTIVE.equals(user.getStatus())) {
+            log.debug("User is already inactive, skipping further processing");
+            return CommonConstants.SKIP_FURTHER_STEP;
+        }
+        
+        // TODO: Check for active sessions when session service is available
+        // TODO: Check for administrative role dependencies when role service is available
+        
+        log.debug("Completed user deactivation validation for user: {}", user.getEmail());
+        return !CommonConstants.SKIP_FURTHER_STEP;
+    }
+
+    /**
      * Validates user deletion for service layer.
      * Entry point for: DELETE /api/v1/users/{id}
      */
@@ -98,6 +144,37 @@ public class UserBusinessValidator {
         if (!errors.isEmpty()) {
             throw new ValidationException("User deletion validation failed", errors);
         }
+    }
+
+    /**
+     * Validates user deletion flow and returns skip flag.
+     * Returns true if deletion should be skipped (already deleted), false otherwise.
+     */
+    public Boolean validateUserDeletionFlow(User user) {
+        log.debug("Validating user deletion for user: {}", user.getEmail());
+        
+        // Skip further processing if user is already deleted (idempotent operation)
+        if ("DELETED".equals(user.getStatus())) {
+            log.debug("User is already deleted, skipping further processing");
+            return CommonConstants.SKIP_FURTHER_STEP;
+        }
+        
+        // Check if user can be deleted (must be inactive)
+        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        if (CommonConstants.ACTIVE.equals(user.getStatus())) {
+            errors.add(new ValidationException.ValidationError("status", 
+                "Cannot delete active user. Deactivate first."));
+        }
+        
+        if (!errors.isEmpty()) {
+            throw new ValidationException("User deletion validation failed", errors);
+        }
+        
+        // TODO: Check for data ownership/audit trail requirements
+        // TODO: Check for role/permission dependencies when role service is available
+        
+        log.debug("Completed user deletion validation for user: {}", user.getEmail());
+        return !CommonConstants.SKIP_FURTHER_STEP;
     }
 
     // ========== CORE VALIDATION METHODS ==========
@@ -186,17 +263,17 @@ public class UserBusinessValidator {
         // Organization ID required validation is handled by @NotBlank annotation in User entity
         
         // Use service layer to fetch organization and validate it exists and is active
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            errors.add(new ValidationException.ValidationError("organizationId", 
-                "Organization not found with ID: " + organizationId));
-            return;
-        }
-        
-        if (!OrganizationStatusEnum.ACTIVE.equals(organization.getStatus())) {
-            errors.add(new ValidationException.ValidationError("organizationId", 
-                "Cannot create user under inactive organization"));
-        }
+        organizationService.getOrganizationById(organizationId)
+                .ifPresentOrElse(
+                    organization -> {
+                        if (!OrganizationStatusEnum.ACTIVE.equals(organization.getStatus())) {
+                            errors.add(new ValidationException.ValidationError("organizationId", 
+                                "Cannot create user under inactive organization"));
+                        }
+                    },
+                    () -> errors.add(new ValidationException.ValidationError("organizationId", 
+                        "Organization not found with ID: " + organizationId))
+                );
     }
 
     private void validateEmailDomainForOrganization(String email, String organizationId, 
@@ -212,20 +289,18 @@ public class UserBusinessValidator {
         }
         
         // Use service layer to fetch organization and check if email domain is registered
-        Organization organization = organizationService.findById(organizationId);
-        if (organization == null) {
-            return; // Organization validation will handle this
-        }
-        
-        // Check if email domain matches any registered organization domains
-        boolean domainMatches = organization.getDomains() != null && 
-            organization.getDomains().stream()
-                .anyMatch(domain -> domain.getName().equalsIgnoreCase(emailDomain) && domain.getIsVerified());
-        
-        if (!domainMatches) {
-            errors.add(new ValidationException.ValidationError("email", 
-                "Email domain '" + emailDomain + "' is not registered or verified for this organization"));
-        }
+        organizationService.getOrganizationById(organizationId)
+                .ifPresent(organization -> {
+                    // Check if email domain matches any registered organization domains
+                    boolean domainMatches = organization.getDomains() != null && 
+                        organization.getDomains().stream()
+                            .anyMatch(domain -> domain.getName().equalsIgnoreCase(emailDomain) && domain.getIsVerified());
+                    
+                    if (!domainMatches) {
+                        errors.add(new ValidationException.ValidationError("email", 
+                            "Email domain '" + emailDomain + "' is not registered or verified for this organization"));
+                    }
+                });
     }
 
 

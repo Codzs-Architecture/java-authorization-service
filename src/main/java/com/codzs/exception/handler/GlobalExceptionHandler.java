@@ -1,29 +1,46 @@
 package com.codzs.exception.handler;
 
-import com.codzs.exception.AuthorizationServiceException;
-import com.codzs.exception.authentication.AuthenticationException;
-import com.codzs.exception.device.DeviceFlowException;
-import com.codzs.exception.oauth2.InvalidClientException;
-import com.codzs.exception.oauth2.OAuth2Exception;
-import com.codzs.exception.validation.ValidationException;
+import com.codzs.context.oauth2.AuthenticationContextDetails;
+import com.codzs.context.oauth2.DeviceContextDetails;
+import com.codzs.exception.type.oauth2.AuthenticationException;
+import com.codzs.exception.bean.ErrorResponse;
+import com.codzs.exception.bean.FieldError;
+import com.codzs.exception.bean.oauth2.OAuth2ErrorDetails;
+import com.codzs.exception.type.device.DeviceFlowException;
+import com.codzs.exception.type.oauth2.AuthorizationServiceException;
+import com.codzs.exception.type.oauth2.InvalidClientException;
+import com.codzs.exception.type.oauth2.OAuth2Exception;
+import com.codzs.exception.type.validation.ValidationException;
+import com.codzs.framework.constant.HeaderConstant;
+import com.codzs.framework.exception.type.BusinessException;
+import com.codzs.framework.exception.bean.StandardErrorResponse;
+import com.codzs.framework.exception.bean.ValidationError;
+import com.codzs.framework.exception.context.MultiTenantErrorContext;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
-// import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-// import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Global exception handler for the OAuth2 Authorization Service.
@@ -244,6 +261,225 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles framework business exceptions with standardized response format.
+     * 
+     * @param ex the business exception
+     * @param request the HTTP servlet request
+     * @return ResponseEntity with standardized error details
+     */
+    @ExceptionHandler(BusinessException.class)
+    @ResponseBody
+    public ResponseEntity<StandardErrorResponse> handleBusinessException(BusinessException ex, HttpServletRequest request) {
+        String errorId = generateErrorId();
+        logException(errorId, ex, "Business exception occurred", false);
+
+        StandardErrorResponse errorResponse = StandardErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(ex.getHttpStatus().value())
+            .error(ex.getHttpStatus().getReasonPhrase())
+            .message(ex.getMessage())
+            .errorCode(ex.getErrorCode())
+            .path(request.getRequestURI())
+            .method(request.getMethod())
+            .multiTenantContext(extractMultiTenantContext(request))
+            .build();
+
+        return ResponseEntity.status(ex.getHttpStatus()).body(errorResponse);
+    }
+
+    /**
+     * Handles Spring validation exceptions with standardized format.
+     * 
+     * @param ex the method argument not valid exception
+     * @param request the HTTP servlet request
+     * @return ResponseEntity with validation error details
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseBody
+    public ResponseEntity<StandardErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String errorId = generateErrorId();
+        logException(errorId, ex, "Validation exception occurred", false);
+
+        List<ValidationError> validationErrors = ex.getBindingResult().getFieldErrors().stream()
+            .map(fieldError -> ValidationError.builder()
+                .field(fieldError.getField())
+                .rejectedValue(fieldError.getRejectedValue())
+                .message(fieldError.getDefaultMessage())
+                .constraint(fieldError.getCode())
+                .build())
+            .collect(Collectors.toList());
+
+        StandardErrorResponse errorResponse = StandardErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message("Validation failed")
+            .errorCode("VALIDATION_ERROR")
+            .path(request.getRequestURI())
+            .method(request.getMethod())
+            .multiTenantContext(extractMultiTenantContext(request))
+            .validationErrors(validationErrors)
+            .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * Handles constraint violation exceptions with standardized format.
+     * 
+     * @param ex the constraint violation exception
+     * @param request the HTTP servlet request
+     * @return ResponseEntity with validation error details
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseBody
+    public ResponseEntity<StandardErrorResponse> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
+        String errorId = generateErrorId();
+        logException(errorId, ex, "Constraint violation occurred", false);
+
+        List<ValidationError> validationErrors = ex.getConstraintViolations().stream()
+            .map(violation -> ValidationError.builder()
+                .field(getFieldName(violation))
+                .rejectedValue(violation.getInvalidValue())
+                .message(violation.getMessage())
+                .constraint(violation.getConstraintDescriptor().getAnnotation().annotationType().getSimpleName())
+                .build())
+            .collect(Collectors.toList());
+
+        StandardErrorResponse errorResponse = StandardErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message("Constraint validation failed")
+            .errorCode("CONSTRAINT_VIOLATION")
+            .path(request.getRequestURI())
+            .method(request.getMethod())
+            .multiTenantContext(extractMultiTenantContext(request))
+            .validationErrors(validationErrors)
+            .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * Handles missing request parameter exceptions with standardized format.
+     * 
+     * @param ex the missing servlet request parameter exception
+     * @param request the HTTP servlet request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseBody
+    public ResponseEntity<StandardErrorResponse> handleMissingParameter(MissingServletRequestParameterException ex, HttpServletRequest request) {
+        String errorId = generateErrorId();
+        logException(errorId, ex, "Missing request parameter", false);
+
+        StandardErrorResponse errorResponse = StandardErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(String.format("Required parameter '%s' is missing", ex.getParameterName()))
+            .errorCode("MISSING_PARAMETER")
+            .path(request.getRequestURI())
+            .method(request.getMethod())
+            .multiTenantContext(extractMultiTenantContext(request))
+            .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * Handles missing request header exceptions with standardized format.
+     * 
+     * @param ex the missing request header exception
+     * @param request the HTTP servlet request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    @ResponseBody
+    public ResponseEntity<StandardErrorResponse> handleMissingHeader(MissingRequestHeaderException ex, HttpServletRequest request) {
+        String errorId = generateErrorId();
+        logException(errorId, ex, "Missing request header", false);
+
+        StandardErrorResponse errorResponse = StandardErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(String.format("Required header '%s' is missing", ex.getHeaderName()))
+            .errorCode("MISSING_HEADER")
+            .path(request.getRequestURI())
+            .method(request.getMethod())
+            .multiTenantContext(extractMultiTenantContext(request))
+            .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * Handles method argument type mismatch exceptions with standardized format.
+     * 
+     * @param ex the method argument type mismatch exception
+     * @param request the HTTP servlet request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseBody
+    public ResponseEntity<StandardErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String errorId = generateErrorId();
+        logException(errorId, ex, "Type mismatch exception occurred", false);
+
+        String expectedType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
+        
+        StandardErrorResponse errorResponse = StandardErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message(String.format("Invalid value '%s' for parameter '%s'. Expected type: %s", 
+                    ex.getValue(), ex.getName(), expectedType))
+            .errorCode("TYPE_MISMATCH")
+            .path(request.getRequestURI())
+            .method(request.getMethod())
+            .multiTenantContext(extractMultiTenantContext(request))
+            .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
+     * Handles HTTP message not readable exceptions with standardized format.
+     * 
+     * @param ex the HTTP message not readable exception
+     * @param request the HTTP servlet request
+     * @return ResponseEntity with error details
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseBody
+    public ResponseEntity<StandardErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String errorId = generateErrorId();
+        logException(errorId, ex, "HTTP message not readable", false);
+
+        StandardErrorResponse errorResponse = StandardErrorResponse.builder()
+            .errorId(errorId)
+            .timestamp(LocalDateTime.now())
+            .status(HttpStatus.BAD_REQUEST.value())
+            .error(HttpStatus.BAD_REQUEST.getReasonPhrase())
+            .message("Invalid request body format")
+            .errorCode("INVALID_REQUEST_BODY")
+            .path(request.getRequestURI())
+            .method(request.getMethod())
+            .multiTenantContext(extractMultiTenantContext(request))
+            .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    /**
      * Handles all other exceptions.
      * 
      * @param ex the exception
@@ -299,6 +535,33 @@ public class GlobalExceptionHandler {
             .error(error)
             .message(message)
             .path(getPath(request));
+    }
+
+    /**
+     * Extracts multi-tenant context from HTTP request headers.
+     * 
+     * @param request the HTTP servlet request
+     * @return multi-tenant error context
+     */
+    private MultiTenantErrorContext extractMultiTenantContext(HttpServletRequest request) {
+        return MultiTenantErrorContext.builder()
+            .organizationId(request.getHeader(HeaderConstant.HEADER_ORGANIZATION_ID))
+            .tenantId(request.getHeader(HeaderConstant.HEADER_TENANT_ID))
+            .correlationId(request.getHeader(HeaderConstant.HEADER_CORRELATION_ID))
+            .build();
+    }
+
+    /**
+     * Extracts field name from constraint violation.
+     * 
+     * @param violation the constraint violation
+     * @return the field name
+     */
+    private String getFieldName(ConstraintViolation<?> violation) {
+        String propertyPath = violation.getPropertyPath().toString();
+        return propertyPath.contains(".") ? 
+               propertyPath.substring(propertyPath.lastIndexOf('.') + 1) : 
+               propertyPath;
     }
 
     /**

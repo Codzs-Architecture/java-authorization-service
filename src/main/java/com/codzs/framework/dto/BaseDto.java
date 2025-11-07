@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.time.Instant;
-
 /**
  * Base DTO class containing common audit fields for all response DTOs.
  * This class provides standard audit trail information that is included

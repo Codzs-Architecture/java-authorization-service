@@ -9,6 +9,8 @@ import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationPlan;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.validation.organization.OrganizationBusinessValidator;
+import com.codzs.service.user.UserService;
+import com.codzs.entity.security.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -44,19 +46,22 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
     private final ObjectMapper objectMapper;
     private final DatabaseSchemaService databaseSchemaService;
     private final OrganizationDomainService organizationDomainService;
+    private final UserService userService;
 
     @Autowired
     public OrganizationServiceImpl(OrganizationRepository organizationRepository,
                                  OrganizationBusinessValidator organizationBusinessValidator,
                                  ObjectMapper objectMapper,
                                  DatabaseSchemaService databaseSchemaService,
-                                 OrganizationDomainService organizationDomainService) {
+                                 OrganizationDomainService organizationDomainService,
+                                 UserService userService) {
         super(organizationRepository, objectMapper);
         this.organizationRepository = organizationRepository;
         this.organizationBusinessValidator = organizationBusinessValidator;
         this.objectMapper = objectMapper;
         this.databaseSchemaService = databaseSchemaService;
         this.organizationDomainService = organizationDomainService;
+        this.userService = userService;
     }
 
     // ========== API FLOW METHODS ==========
@@ -74,6 +79,9 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
 
         // Business validation as first step
         organizationBusinessValidator.validateOrganizationCreationFlow(organization, wouldCreateCircularReference, depth, isNameAlreadyExists, isAbbrAlreadyExists, parentOrganization);
+        
+        // Find or create user from billing email and add to ownerUserIds
+        processOwnerUserFromBillingEmail(organization);
         
         // Business logic for creation
         applyCreationBusinessLogic(organization);
@@ -450,7 +458,22 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
         
         // Set as verified and primary by default
         domain.markAsVerified();
-        domain.setAsPrimary();
+        domain.setAsPrimary(); 
+
+        if (domain.getCreatedDate() == null) {
+            domain.setCreatedDate(Instant.now());
+        }
+        if (domain.getLastModifiedDate() == null) {
+            domain.setLastModifiedDate(Instant.now());
+        }
+
+        String user = getCurrentUser();
+        if (domain.getCreatedBy() == null) {
+            domain.setCreatedBy(user);
+        }
+        if (domain.getLastModifiedBy() == null) {
+            domain.setLastModifiedBy(user);
+        }
         
         return domain;
     }
@@ -614,6 +637,52 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
         return !newValue.equals(existingValue);
     }
 
+    /**
+     * Processes the billing email to find or create a user and adds the user ID to ownerUserIds.
+     * This ensures the organization has at least one owner user based on the billing email.
+     */
+    private void processOwnerUserFromBillingEmail(Organization organization) {
+        if (organization.getBillingEmail() == null || organization.getBillingEmail().trim().isEmpty()) {
+            log.warn("No billing email provided for organization: {}", organization.getName());
+            return;
+        }
+
+        try {
+            String billingEmail = organization.getBillingEmail().trim();
+            log.debug("Processing owner user from billing email: {} for organization: {}", 
+                     billingEmail, organization.getName());
+
+            // Find or create user by billing email
+            User ownerUser = userService.findOrCreateUserByEmail(billingEmail);
+            
+            // Initialize ownerUserIds list if null or ensure it's mutable
+            List<String> ownerUserIds = organization.getOwnerUserIds();
+            if (ownerUserIds == null) {
+                ownerUserIds = new ArrayList<>();
+                organization.setOwnerUserIds(ownerUserIds);
+            } else if (!(ownerUserIds instanceof ArrayList)) {
+                // Convert to mutable list if it's immutable (e.g., from List.of())
+                ownerUserIds = new ArrayList<>(ownerUserIds);
+                organization.setOwnerUserIds(ownerUserIds);
+            }
+
+            // Add user ID to ownerUserIds if not already present
+            if (!ownerUserIds.contains(ownerUser.getId())) {
+                ownerUserIds.add(ownerUser.getId());
+                log.info("Added user ID {} (email: {}) to ownerUserIds for organization: {}", 
+                        ownerUser.getId(), billingEmail, organization.getName());
+            } else {
+                log.debug("User ID {} already exists in ownerUserIds for organization: {}", 
+                         ownerUser.getId(), organization.getName());
+            }
+
+        } catch (Exception e) {
+            log.error("Failed to process owner user from billing email for organization: {}", 
+                     organization.getName(), e);
+            // Don't throw exception here to avoid breaking organization creation
+            // The organization can still be created and user can be added manually later
+        }
+    }
 
     private List<OrganizationStatusEnum> convertToStatusEnums(List<String> statuses) {
         if (statuses == null || statuses.isEmpty()) {

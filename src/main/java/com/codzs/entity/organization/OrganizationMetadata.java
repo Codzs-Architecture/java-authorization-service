@@ -4,8 +4,8 @@ import org.mapstruct.AfterMapping;
 
 import com.codzs.constant.organization.OrganizationIndustryEnum;
 import com.codzs.constant.organization.OrganizationSizeEnum;
-import com.codzs.framework.entity.EntityDefaultInitializer;
-import com.codzs.framework.helper.SpringContextHelper;
+import com.codzs.framework.context.spring.SpringContextHelper;
+import com.codzs.framework.util.StringUtil;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,7 +40,7 @@ public class OrganizationMetadata {
         OrganizationIndustryEnum organizationIndustryEnum = SpringContextHelper.getBean(OrganizationIndustryEnum.class);
         OrganizationSizeEnum organizationSizeEnum = SpringContextHelper.getBean(OrganizationSizeEnum.class);
 
-        this.industry = EntityDefaultInitializer.setDefaultIfNull(this.industry, organizationIndustryEnum.getDefaultValue());
-        this.size = EntityDefaultInitializer.setDefaultIfNull(this.size, organizationSizeEnum.getDefaultValue());
+        this.industry = StringUtil.setDefaultIfNull(this.industry, organizationIndustryEnum.getDefaultValue());
+        this.size = StringUtil.setDefaultIfNull(this.size, organizationSizeEnum.getDefaultValue());
     }
 }

@@ -3,12 +3,12 @@ package com.codzs.service.organization;
 import com.codzs.entity.organization.DatabaseConfig;
 import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
+import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.repository.organization.DatabaseConfigRepository;
 import com.codzs.repository.organization.OrganizationRepository;
-import com.codzs.util.DatabaseSchemaUtil;
+import com.codzs.util.organization.DatabaseSchemaUtil;
 import com.codzs.validation.organization.DatabaseSchemaBusinessValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.codzs.exception.validation.ValidationException;
 
 import lombok.extern.slf4j.Slf4j;
 

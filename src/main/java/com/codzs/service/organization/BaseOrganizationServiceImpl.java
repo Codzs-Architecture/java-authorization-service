@@ -2,7 +2,7 @@ package com.codzs.service.organization;
 
 import com.codzs.constant.organization.OrganizationProjectionEnum;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.config.audit.AuditorAwareImpl;
+import com.codzs.framework.aware.audit.AuditorAwareImpl;
 import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;

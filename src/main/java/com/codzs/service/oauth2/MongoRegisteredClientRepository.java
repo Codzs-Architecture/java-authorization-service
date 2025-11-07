@@ -17,6 +17,8 @@ package com.codzs.service.oauth2;
 
 import com.codzs.entity.oauth2.OAuth2RegisteredClient;
 import com.codzs.repository.oauth2.OAuth2RegisteredClientRepository;
+import com.codzs.util.oauth2.OAuth2Util;
+
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
@@ -34,7 +36,6 @@ import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2A
 
 import java.util.List;
 import com.fasterxml.jackson.databind.Module;
-import com.codzs.util.OAuth2Util;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -142,8 +143,8 @@ public class MongoRegisteredClientRepository implements RegisteredClientReposito
         );
         
         // Serialize settings to JSON (same as JDBC approach)
-        entity.setClientSettings(writeMap(registeredClient.getClientSettings().getSettings()));
-        entity.setTokenSettings(writeMap(registeredClient.getTokenSettings().getSettings()));
+        entity.setClientSetting(writeMap(registeredClient.getClientSettings().getSettings()));
+        entity.setTokenSetting(writeMap(registeredClient.getTokenSettings().getSettings()));
         
         return entity;
     }
@@ -198,11 +199,11 @@ public class MongoRegisteredClientRepository implements RegisteredClientReposito
         }
         
         // Deserialize client settings
-        Map<String, Object> clientSettingsMap = readMap(entity.getClientSettings());
+        Map<String, Object> clientSettingsMap = readMap(entity.getClientSetting());
         builder.clientSettings(ClientSettings.withSettings(clientSettingsMap).build());
         
         // Deserialize token settings
-        Map<String, Object> tokenSettingsMap = readMap(entity.getTokenSettings());
+        Map<String, Object> tokenSettingsMap = readMap(entity.getTokenSetting());
         builder.tokenSettings(TokenSettings.withSettings(tokenSettingsMap).build());
         
         return builder.build();

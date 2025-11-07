@@ -13,7 +13,7 @@ import java.util.List;
 import org.mapstruct.AfterMapping;
 import org.springframework.core.env.Environment;
 
-import com.codzs.framework.helper.SpringContextHelper;
+import com.codzs.framework.context.spring.SpringContextHelper;
 
 /**
  * Database configuration sub-entity representing database connection

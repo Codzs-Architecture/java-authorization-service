@@ -3,7 +3,7 @@ package com.codzs.entity.organization;
 import org.mapstruct.AfterMapping;
 
 import com.codzs.framework.constant.CommonConstants;
-import com.codzs.framework.entity.EntityDefaultInitializer;
+import com.codzs.framework.util.StringUtil;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.Size;
@@ -46,9 +46,9 @@ public class OrganizationSetting {
     // Initialize default values before persisting to database
     @AfterMapping
     public void applyDefaults() {
-        this.language = EntityDefaultInitializer.setDefaultIfNull(this.language, CommonConstants.DEFAULT_LANGUAGE);
-        this.timezone = EntityDefaultInitializer.setDefaultIfNull(this.timezone, CommonConstants.DEFAULT_TIMEZONE);
-        this.currency = EntityDefaultInitializer.setDefaultIfNull(this.currency, CommonConstants.DEFAULT_CURRENCY);
-        this.country = EntityDefaultInitializer.setDefaultIfNull(this.country, CommonConstants.DEFAULT_COUNTRY);
+        this.language = StringUtil.setDefaultIfNull(this.language, CommonConstants.DEFAULT_LANGUAGE);
+        this.timezone = StringUtil.setDefaultIfNull(this.timezone, CommonConstants.DEFAULT_TIMEZONE);
+        this.currency = StringUtil.setDefaultIfNull(this.currency, CommonConstants.DEFAULT_CURRENCY);
+        this.country = StringUtil.setDefaultIfNull(this.country, CommonConstants.DEFAULT_COUNTRY);
     }
 }
