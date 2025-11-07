@@ -13,7 +13,7 @@ import java.lang.annotation.*;
  *     // ... fields
  *     
  *     public void applyDefaults() {
- *         if (this.language == null) this.language = "en-US";
+ *         if (this.language == null) this.language = "en";
  *         // ... other defaults
  *     }
  * }

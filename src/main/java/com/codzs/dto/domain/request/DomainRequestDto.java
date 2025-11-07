@@ -1,4 +1,4 @@
-package com.codzs.dto.organization.request;
+package com.codzs.dto.domain.request;
 
 import com.codzs.constant.domain.DomainConstants;
 import com.codzs.constant.domain.DomainSchemaConstants;
@@ -39,21 +39,10 @@ public class DomainRequestDto {
     @Schema(description = DomainSchemaConstants.DOMAIN_NAME_DESCRIPTION, example = DomainSchemaConstants.EXAMPLE_DOMAIN_NAME, required = true)
     private String name;
 
-    @Schema(description = DomainSchemaConstants.DOMAIN_IS_VERIFIED_DESCRIPTION, 
-            example = DomainSchemaConstants.EXAMPLE_IS_VERIFIED, 
-            defaultValue = DomainSchemaConstants.EXAMPLE_IS_VERIFIED)
-    private Boolean isVerified;
-
     @Schema(description = DomainSchemaConstants.DOMAIN_IS_PRIMARY_DESCRIPTION, 
             example = DomainSchemaConstants.EXAMPLE_IS_PRIMARY, 
             defaultValue = DomainSchemaConstants.EXAMPLE_IS_PRIMARY)
     private Boolean isPrimary;
-
-    @Size(max = DomainSchemaConstants.VERIFICATION_TOKEN_MAX_LENGTH, 
-          message = DomainSchemaConstants.VERIFICATION_TOKEN_SIZE_MESSAGE)
-    @Schema(description = DomainSchemaConstants.VERIFICATION_TOKEN_DESCRIPTION, 
-            example = DomainSchemaConstants.EXAMPLE_VERIFICATION_TOKEN)
-    private String verificationToken;
 
     @NotBlank(message = DomainSchemaConstants.VERIFICATION_METHOD_REQUIRED_MESSAGE)
     @ValidDynamicEnum(enumClass = DomainVerificationMethodEnum.class, message = DomainSchemaConstants.VERIFICATION_METHOD_INVALID_MESSAGE)
@@ -66,7 +55,6 @@ public class DomainRequestDto {
     public DomainRequestDto(String name, String verificationMethod) {
         this.name = name;
         this.verificationMethod = verificationMethod;
-        this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
         this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
     }
 }

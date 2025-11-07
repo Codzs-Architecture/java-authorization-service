@@ -3,6 +3,7 @@ package com.codzs.service.organization;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.domain.Domain;
 import com.codzs.entity.organization.Organization;
+import com.codzs.framework.config.audit.AuditorAwareImpl;
 import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationDomainRepository;
 import com.codzs.repository.organization.OrganizationRepository;
@@ -11,6 +12,8 @@ import com.codzs.validation.organization.OrganizationDomainBusinessValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +23,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Service implementation for Domain-related business operations within organizations.
@@ -38,7 +40,8 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
     private final BaseOrganizationServiceImpl baseOrganizationService;
     private final OrganizationDomainBusinessValidator organizationDomainBusinessValidator;
     private final OrganizationDomainRepository organizationDomainRepository;
-    
+    private final AuditorAwareImpl auditorAware;
+
     @Autowired
     public OrganizationDomainServiceImpl(OrganizationDomainRepository organizationDomainRepository,
                            OrganizationRepository organizationRepository, 
@@ -47,6 +50,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         this.organizationDomainRepository = organizationDomainRepository;
         this.baseOrganizationService = new BaseOrganizationServiceImpl(organizationRepository, objectMapper);
         this.organizationDomainBusinessValidator = new OrganizationDomainBusinessValidator();
+        this.auditorAware = new AuditorAwareImpl();
     }
 
     // ========== API FLOW METHODS ==========
@@ -60,16 +64,36 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         Organization organization = baseOrganizationService.getOrganizationAndValidate(organizationId);
         
         // Get domain data for validation
-        boolean isDomainAlreadyRegistered = isDomainAlreadyRegistered(domain.getName());
+        boolean isDomainAlreadyRegistered = isDomainAlreadyRegistered(organization, domain);
         
         // Business validation for domain addition
         organizationDomainBusinessValidator.validateDomainAddition(organization, domain, OrganizationConstants.MAX_DOMAINS_PER_ORGANIZATION, isDomainAlreadyRegistered);
         
         // Ensure domain has ID if not provided
         if (domain.getId() == null) {
-            domain.setId(UUID.randomUUID().toString());
+            domain.setId(ObjectId.get().toString());
         }
         domain.setVerificationToken(generateVerificationToken(domain.getId(), domain.getVerificationMethod()));
+        if (domain.getIsPrimary() == null) {
+            domain.setIsPrimary(false);
+        }
+        if (domain.getIsVerified() == null) {
+            domain.setIsVerified(false);
+        }
+        if (domain.getCreatedDate() == null) {
+            domain.setCreatedDate(Instant.now());
+        }
+        if (domain.getLastModifiedDate() == null) {
+            domain.setLastModifiedDate(Instant.now());
+        }
+
+        String user = getCurrentUser();
+        if (domain.getCreatedBy() == null) {
+            domain.setCreatedBy(user);
+        }
+        if (domain.getLastModifiedBy() == null) {
+            domain.setLastModifiedBy(user);
+        }
         
         // Use MongoDB array operation to add domain directly
         organizationDomainRepository.addDomainToEntity(organizationId, domain);
@@ -96,7 +120,7 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
         
         // Get domain data for validation
         boolean isDomainAlreadyRegistered = !existingDomain.getName().equals(domain.getName()) && 
-            isDomainAlreadyRegistered(domain.getName());
+            isDomainAlreadyRegistered(organization, domain);
         
         // Business validation for domain update
         organizationDomainBusinessValidator.validateDomainUpdate(existingDomain, domain, isDomainAlreadyRegistered);
@@ -155,12 +179,8 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
             throw ExceptionUtils.domainNotFound(domainId);
         }
         
-        // Get domain verification data for validation
-        boolean isValidVerificationToken = validateVerificationToken(domain, verificationToken, verificationMethod);
-        boolean isVerificationExpired = isVerificationExpired(domain);
-        
         // Business validation for domain verification
-        organizationDomainBusinessValidator.validateDomainVerificationRequest(domain, verificationMethod, verificationToken, isValidVerificationToken, isVerificationExpired);
+        organizationDomainBusinessValidator.validateDomainVerificationRequest(domain, verificationMethod, verificationToken);
         
         // Use MongoDB array operation to update verification status
         organizationDomainRepository.updateDomainVerificationStatus(organizationId, domainId, Instant.now());
@@ -255,33 +275,6 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
     // ========== UTILITY METHODS ==========
 
     @Override
-    public boolean validateVerificationToken(Domain domain, String providedToken, String verificationMethod) {
-        if (!StringUtils.hasText(providedToken) || !StringUtils.hasText(domain.getVerificationToken())) {
-            return false;
-        }
-        
-        // Check token match
-        if (!domain.getVerificationToken().equals(providedToken)) {
-            return false;
-        }
-        
-        // Check verification method match
-        if (!domain.getVerificationMethod().equals(verificationMethod)) {
-            return false;
-        }
-        
-        // Check token expiry
-        if (domain.getCreatedDate() != null) {
-            Instant expiryTime = domain.getCreatedDate().plus(java.time.Duration.ofHours(24));
-            if (Instant.now().isAfter(expiryTime)) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-
-    @Override
     public Optional<Domain> getPrimaryDomainForEntity(String organizationId) {
         List<Domain> domains = getDomainsForEntity(organizationId);
         
@@ -325,15 +318,20 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
     }
 
     @Override
-    public boolean isDomainAlreadyRegistered(String domainName) {
-        if (!StringUtils.hasText(domainName)) {
+    public boolean isDomainAlreadyRegistered(Organization organization, Domain domain) {
+        if (!StringUtils.hasText(domain.getName())) {
             return false;
         }
         
-        return organizationDomainRepository.existsByDomainsName(domainName.toLowerCase().trim());
+        // Check globally across all organizations, excluding the current organization
+        if (domain.getId() == null) {
+            long count = organizationDomainRepository.countByDomainNameGlobally(domain.getName().trim());
+            return count > 0;
+        } else {
+            long count = organizationDomainRepository.countByDomainNameGlobally(organization.getId(), domain.getId(), domain.getName().trim());
+            return count > 0;
+        }
     }
-
-    // ========== PRIVATE HELPER METHODS ==========
 
     private Domain findDomainInOrganization(Organization organization, String domainId) {
         if (organization.getDomains() == null) {
@@ -344,5 +342,9 @@ public class OrganizationDomainServiceImpl extends DomainServiceImpl<Organizatio
                 .filter(domain -> domainId.equals(domain.getId()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    protected String getCurrentUser() {
+        return auditorAware.getCurrentUserId();
     }
 }

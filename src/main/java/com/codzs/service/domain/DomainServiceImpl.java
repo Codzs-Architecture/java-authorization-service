@@ -52,33 +52,6 @@ public class DomainServiceImpl<T> implements DomainService<T> {
                normalized.length() <= DomainSchemaConstants.DOMAIN_NAME_MAX_LENGTH;
     }
 
-    @Override
-    public boolean validateVerificationToken(Domain domain, String providedToken, String verificationMethod) {
-        if (!StringUtils.hasText(providedToken) || !StringUtils.hasText(domain.getVerificationToken())) {
-            return false;
-        }
-        
-        // Check token match
-        if (!domain.getVerificationToken().equals(providedToken)) {
-            return false;
-        }
-        
-        // Check verification method match
-        if (!domain.getVerificationMethod().equals(verificationMethod)) {
-            return false;
-        }
-        
-        // Check token expiry
-        if (domain.getCreatedDate() != null) {
-            Instant expiryTime = domain.getCreatedDate().plus(java.time.Duration.ofHours(24));
-            if (Instant.now().isAfter(expiryTime)) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-
     // ========== PRIVATE HELPER METHODS ==========
 
     protected String generateVerificationInstructions(Domain domain) {
@@ -175,21 +148,6 @@ public class DomainServiceImpl<T> implements DomainService<T> {
             case "FILE" -> getFileInstructions(domainName, token);
             default -> "Invalid verification method";
         };
-    }
-
-    @Override
-    public boolean isVerificationExpired(Domain domain) {
-        if (domain.getCreatedDate() == null) {
-            return false;
-        }
-        
-        Instant expiryTime = domain.getCreatedDate().plus(Duration.ofHours(
-            DomainSchemaConstants.DOMAIN_VERIFICATION_EXPIRY_HOURS));
-        
-        boolean expired = Instant.now().isAfter(expiryTime);
-        log.debug("Domain verification expired check for domain {}: {}", domain.getName(), expired);
-        
-        return expired;
     }
 
     @Override

@@ -54,7 +54,7 @@ public interface DatabaseConfigRepository extends MongoRepository<Organization, 
     @Query("{ '_id': ?0 }")
     void removeDatabaseSchema(String organizationId, String schemaId);
     
-    /**
+    /** 
      * Updates an entire database schema in one operation.
      * Uses MongoDB positional operator ($) to update the specific schema in the array.
      */

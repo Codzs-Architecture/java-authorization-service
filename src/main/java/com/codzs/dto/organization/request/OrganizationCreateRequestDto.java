@@ -2,6 +2,7 @@ package com.codzs.dto.organization.request;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.constant.organization.OrganizationTypeEnum;
+import com.codzs.dto.domain.request.DomainRequestDto;
 import com.codzs.entity.organization.Organization;
 import com.codzs.framework.validation.annotation.ValidDynamicEnum;
 import com.codzs.framework.validation.annotation.ValidEntityId;

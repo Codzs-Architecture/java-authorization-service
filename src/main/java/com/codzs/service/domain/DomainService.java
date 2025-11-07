@@ -39,16 +39,6 @@ public interface DomainService<T> {
      */
     String generateVerificationToken(String domainName, String verificationMethod);
 
-    /**
-     * Validates domain verification token.
-     *
-     * @param domain the domain entity
-     * @param providedToken the provided verification token
-     * @param verificationMethod the verification method
-     * @return true if token is valid
-     */
-    boolean validateVerificationToken(Domain domain, String providedToken, String verificationMethod);
-
     // ========== DOMAIN VERIFICATION METHODS ==========
 
     /**
@@ -82,15 +72,6 @@ public interface DomainService<T> {
      * @return verification instructions
      */
     String getVerificationInstructions(String domainName, String verificationMethod, String token);
-
-    /**
-     * Checks if domain verification has expired.
-     * Used by validation layer to validate verification timing.
-     *
-     * @param domain the domain entity
-     * @return true if verification window has expired
-     */
-    boolean isVerificationExpired(Domain domain);
 
     /**
      * Validates verification method against domain constraints.

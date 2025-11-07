@@ -18,6 +18,7 @@ import org.mapstruct.AfterMapping;
 
 import com.codzs.constant.domain.DomainConstants;
 import com.codzs.constant.domain.DomainVerificationMethodEnum;
+import com.codzs.framework.entity.BaseEntity;
 import com.codzs.framework.entity.EntityDefaultInitializer;
 import com.codzs.framework.helper.SpringContextHelper;
 import com.codzs.util.DomainUtil;
@@ -38,7 +39,7 @@ import com.codzs.util.DomainUtil;
 @NoArgsConstructor
 @ToString
 @Schema(description = "Domain configuration embedded within Organization or Partner")
-public class Domain {
+public class Domain extends BaseEntity {
 
     @Schema(description = "Unique domain identifier", example = "550e8400-e29b-41d4-a716-446655440000")
     private String id;
@@ -61,8 +62,6 @@ public class Domain {
     @NotBlank(message = "Verification method is required")
     private String verificationMethod;
 
-    private Instant createdDate;
-
     private Instant verifiedDate;
 
     // Constructor for new domain creation
@@ -72,7 +71,7 @@ public class Domain {
         this.verificationMethod = verificationMethod;
         this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
         this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
-        // this.createdDate = Instant.now();
+        this.createdDate = Instant.now();
     }
 
     // Constructor with ID for existing domain
@@ -82,7 +81,59 @@ public class Domain {
         this.verificationMethod = verificationMethod;
         this.isVerified = DomainConstants.DEFAULT_IS_VERIFIED;
         this.isPrimary = DomainConstants.DEFAULT_IS_PRIMARY;
-        // this.createdDate = Instant.now();
+    }
+
+    // Comprehensive constructor with null checking for all fields
+    public Domain(String id, String name, Boolean isVerified, Boolean isPrimary, 
+                  String verificationToken, String verificationMethod, Instant verifiedDate,
+                  Instant createdDate, String createdBy, Instant lastModifiedDate, 
+                  String lastModifiedBy, Instant deletedDate, String deletedBy, String correlationId) {
+        
+        // Domain-specific fields with null checks
+        if (id != null) {
+            this.id = id;
+        }
+        if (name != null) {
+            this.name = name;
+        }
+        if (isVerified != null) {
+            this.isVerified = isVerified;
+        }
+        if (isPrimary != null) {
+            this.isPrimary = isPrimary;
+        }
+        if (verificationToken != null) {
+            this.verificationToken = verificationToken;
+        }
+        if (verificationMethod != null) {
+            this.verificationMethod = verificationMethod;
+        }
+        if (verifiedDate != null) {
+            this.verifiedDate = verifiedDate;
+        }
+        
+        // BaseEntity inherited fields with null checks
+        if (createdDate != null) {
+            this.createdDate = createdDate;
+        }
+        if (createdBy != null) {
+            this.createdBy = createdBy;
+        }
+        if (lastModifiedDate != null) {
+            this.lastModifiedDate = lastModifiedDate;
+        }
+        if (lastModifiedBy != null) {
+            this.lastModifiedBy = lastModifiedBy;
+        }
+        if (deletedDate != null) {
+            this.deletedDate = deletedDate;
+        }
+        if (deletedBy != null) {
+            this.deletedBy = deletedBy;
+        }
+        if (correlationId != null) {
+            this.correlationId = correlationId;
+        }
     }
 
     public void setName(String name) {
@@ -116,8 +167,5 @@ public class Domain {
         this.isVerified = EntityDefaultInitializer.setDefaultIfNull(this.isVerified, DomainConstants.DEFAULT_IS_VERIFIED);
         this.isPrimary = EntityDefaultInitializer.setDefaultIfNull(this.isPrimary, DomainConstants.DEFAULT_IS_PRIMARY);
         this.verificationMethod = EntityDefaultInitializer.setDefaultIfNull(this.verificationMethod, domainVerificationMethodEnum.getDefaultValue());
-        // if (this.createdDate == null) {
-        //     this.createdDate = Instant.now();
-        // }
     }
 }

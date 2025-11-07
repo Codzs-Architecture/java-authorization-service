@@ -1,18 +1,13 @@
 package com.codzs.mapper.organization;
 
 import com.codzs.dto.organization.request.DatabaseConfigRequestDto;
-import com.codzs.dto.organization.request.DatabaseSchemaRequestDto;
 import com.codzs.dto.organization.response.DatabaseConfigResponseDto;
-import com.codzs.dto.organization.response.DatabaseSchemaResponseDto;
 import com.codzs.entity.organization.DatabaseConfig;
-import com.codzs.entity.organization.DatabaseSchema;
 import org.mapstruct.*;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 /**
- * MapStruct mapper for DatabaseConfig and DatabaseSchema entities and DTOs.
+ * MapStruct mapper for DatabaseConfig entities and DTOs.
  * Handles mapping between database configuration entities, request DTOs, and response DTOs
  * with proper data transformations.
  * 
@@ -43,36 +38,4 @@ public interface DatabaseConfigMapper {
      * Maps DatabaseConfig entity to DatabaseConfigResponseDto.
      */
     DatabaseConfigResponseDto toResponse(DatabaseConfig databaseConfig);
-
-    // ========================= DATABASE SCHEMA MAPPINGS =========================
-    
-    /**
-     * Maps DatabaseSchemaRequestDto to DatabaseSchema entity.
-     * Sets default values and validates service type.
-     * Audit fields are automatically populated by Spring Data MongoDB auditing.
-     */
-    @Mapping(target = "id", ignore = true)
-    DatabaseSchema toSchemaEntity(DatabaseSchemaRequestDto requestDto);
-
-    /**
-     * Post-mapping method to set non-audit fields for schema creation.
-     */
-
-    /**
-     * Updates existing DatabaseSchema entity with request data.
-     * Audit fields are automatically updated by Spring Data MongoDB auditing.
-     */
-    @Mapping(target = "id", ignore = true)
-    void updateSchemaEntity(@MappingTarget DatabaseSchema schema, 
-                           DatabaseSchemaRequestDto requestDto);
-
-    /**
-     * Maps DatabaseSchema entity to DatabaseSchemaResponseDto.
-     */
-    DatabaseSchemaResponseDto toSchemaResponse(DatabaseSchema schema);
-
-    /**
-     * Maps list of DatabaseSchema entities to list of response DTOs.
-     */
-    List<DatabaseSchemaResponseDto> toSchemaResponseList(List<DatabaseSchema> schemas);
 }

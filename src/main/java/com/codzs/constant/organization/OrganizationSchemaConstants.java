@@ -135,9 +135,9 @@ public class OrganizationSchemaConstants extends CommonSchemaConstants {
     public static final String EXAMPLE_SERVICE_TYPE = "auth";
     
     /**
-     * Example schema name for documentation.
+     * Example service name for documentation.
      */
-    public static final String EXAMPLE_SCHEMA_NAME = "codzs_auth_dev";
+    public static final String EXAMPLE_SCHEMA_NAME = "auth";
     
     /**
      * Example schema description for documentation.
@@ -198,17 +198,17 @@ public class OrganizationSchemaConstants extends CommonSchemaConstants {
     public static final String ORG_ABBR_PATTERN = "^[A-Z0-9]+$";
     
     /**
-     * Regular expression pattern for database schema names.
-     * Format: codzs_<org_abbr>_<service>_<env>
+     * Regular expression pattern for service names (used to auto-construct schema names).
+     * Only alphanumeric characters and underscores allowed, must start with a letter.
      */
-    public static final String SCHEMA_NAME_PATTERN = "^codzs_[a-zA-Z0-9_]+_[a-zA-Z0-9_]+_[a-zA-Z0-9_]+$";
+    public static final String SCHEMA_NAME_PATTERN = "^[a-zA-Z][a-zA-Z0-9_]*$";
 
     // ========================= PATTERN MESSAGES =========================
     
     /**
-     * Error message for invalid schema name pattern.
+     * Error message for invalid service name pattern.
      */
-    public static final String SCHEMA_NAME_PATTERN_MESSAGE = "Schema name must follow pattern: codzs_<org_abbr>_<service>_<env>";
+    public static final String SCHEMA_NAME_PATTERN_MESSAGE = "Service name must start with a letter and contain only alphanumeric characters and underscores";
 
     // ========================= SCHEMA DESCRIPTIONS =========================
     
@@ -240,7 +240,7 @@ public class OrganizationSchemaConstants extends CommonSchemaConstants {
     /**
      * Description for schema name field.
      */
-    public static final String SCHEMA_NAME_DESCRIPTION = "Database schema name";
+    public static final String SCHEMA_NAME_DESCRIPTION = "Service name (schema name will be auto-constructed as codzs_<org_abbr>_<service>_<env>)";
     
     /**
      * Description for schema description field.

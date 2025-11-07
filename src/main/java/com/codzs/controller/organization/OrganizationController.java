@@ -129,7 +129,7 @@ public class OrganizationController {
                 });
     }
 
-    @PutMapping("/{organizationId}")
+    @PatchMapping("/{organizationId}")
     @CommonHeaders
     @Operation(
         summary = "Update organization",

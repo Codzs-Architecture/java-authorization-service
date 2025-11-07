@@ -1,14 +1,12 @@
 package com.codzs.controller.organization;
 
 import com.codzs.constant.domain.DomainSchemaConstants;
-import com.codzs.constant.domain.DomainVerificationMethodEnum;
 import com.codzs.constant.organization.OrganizationSchemaConstants;
-import com.codzs.dto.organization.request.DomainRequestDto;
-import com.codzs.dto.organization.response.DomainResponseDto;
+import com.codzs.dto.domain.request.DomainRequestDto;
+import com.codzs.dto.domain.response.DomainResponseDto;
 import com.codzs.entity.domain.Domain;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
-import com.codzs.framework.validation.annotation.ValidUUID;
 import com.codzs.mapper.organization.OrganizationDomainMapper;
 import com.codzs.service.organization.OrganizationDomainService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,7 +25,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -39,7 +36,6 @@ public class OrganizationDomainController {
 
     private final OrganizationDomainService organizationDomainService;
     private final OrganizationDomainMapper organizationDomainMapper;
-    private final DomainVerificationMethodEnum domainVerificationMethodEnum;
 
     @PostMapping
     @CommonHeaders
@@ -61,7 +57,7 @@ public class OrganizationDomainController {
     })
     public ResponseEntity<List<DomainResponseDto>> addDomainToOrganization(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
             
             @Parameter(description = "Domain addition request", required = true)
@@ -108,7 +104,7 @@ public class OrganizationDomainController {
     })
     public ResponseEntity<List<DomainResponseDto>> listOrganizationDomains(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
             
             @Parameter(description = "Filter by verification status", example = "true")
@@ -175,11 +171,11 @@ public class OrganizationDomainController {
     })
     public ResponseEntity<DomainResponseDto> getDomainDetails(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
             
             @Parameter(description = "Domain ID", required = true, example = DomainSchemaConstants.EXAMPLE_DOMAIN_ID)
-            @PathVariable 
+            @PathVariable("domainId")
             String domainId,
             
             @Parameter(description = "Organization context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
@@ -206,54 +202,57 @@ public class OrganizationDomainController {
                 });
     }
 
-    // @PutMapping("/{domainId}/verify")
-    // @Operation(
-    //     summary = "Verify domain ownership",
-    //     description = "Initiates or performs domain ownership verification based on the verification method"
-    // )
-    // @ApiResponses(value = {
-    //     @ApiResponse(
-    //         responseCode = "200",
-    //         description = "Domain verification completed or initiated successfully",
-    //         content = @Content(mediaType = "application/json", schema = @Schema(implementation = DomainResponseDto.class))
-    //     ),
-    //     @ApiResponse(responseCode = "400", description = "Domain verification failed"),
-    //     @ApiResponse(responseCode = "404", description = "Organization or domain not found"),
-    //     @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-    //     @ApiResponse(responseCode = "409", description = "Domain already verified or invalid verification state"),
-    //     @ApiResponse(responseCode = "500", description = "Internal server error")
-    // })
-    // public ResponseEntity<DomainResponseDto> verifyDomainOwnership(
-    //         @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-    //         @ValidUUID(allowNull = false, fieldName = "Organization ID")
-    //         @PathVariable 
-    //         UUID organizationId,
+    @PatchMapping("/{domainId}/verify")
+    @Operation(
+        summary = "Verify domain ownership",
+        description = "Initiates or performs domain ownership verification based on the verification method"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Domain verification completed or initiated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DomainResponseDto.class))
+        ),
+        @ApiResponse(responseCode = "400", description = "Domain verification failed"),
+        @ApiResponse(responseCode = "404", description = "Organization or domain not found"),
+        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
+        @ApiResponse(responseCode = "409", description = "Domain already verified or invalid verification state"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<DomainResponseDto> verifyDomainOwnership(
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @PathVariable("organizationId")
+            String organizationId,
             
-    //         @Parameter(description = "Domain ID to verify", required = true, example = DomainSchemaConstants.EXAMPLE_DOMAIN_ID)
-    //         @PathVariable 
-    //         UUID domainId,
+            @Parameter(description = "Domain ID to verify", required = true, example = DomainSchemaConstants.EXAMPLE_DOMAIN_ID)
+            @PathVariable("domainId")
+            String domainId,
             
-    //         @Parameter(description = "Organization context for multi-tenant support", example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-    //         @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
+            @Parameter(description = "Organization context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             
-    //         @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSwaggerConstants.EXAMPLE_TENANT_ID)
-    //         @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
+            @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_TENANT_ID)
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
             
-    //         @Parameter(description = "Correlation ID for request tracing", example = OrganizationSwaggerConstants.EXAMPLE_CORRELATION_ID)
-    //         @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @Parameter(description = "Correlation ID for request tracing", example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID)
+            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+    {
         
-    //     log.info("Verifying domain ownership for organization: {}, domain: {}", organizationId, domainId);
+        log.info("Verifying domain ownership for organization: {}, domain: {}", organizationId, domainId);
         
-    //     Domain verifiedDomain = organizationDomainService.verifyDomainOwnership(
-    //         organizationId, domainId, headerOrganizationId, tenantId, correlationId
-    //     );
+        Domain domain = organizationDomainService.getDomainInEntity(organizationId, domainId).get();
+
+        organizationDomainService.verifyDomainOwnership(
+            domainId, domain.getVerificationMethod(), ""
+        );
         
-    //     DomainResponseDto response = organizationDomainMapper.toResponse(verifiedDomain);
+        Domain verifiedDomain = organizationDomainService.getDomainInEntity(organizationId, domainId).get();
+        DomainResponseDto response = organizationDomainMapper.toResponse(verifiedDomain);
         
-    //     log.info("Successfully verified domain: {} for organization: {}, isVerified: {}", 
-    //         domainId, organizationId, verifiedDomain.getIsVerified());
-    //     return ResponseEntity.ok(response);
-    // }
+        log.info("Successfully verified domain: {} for organization: {}, isVerified: {}", 
+            domainId, organizationId, verifiedDomain.getIsVerified());
+        return ResponseEntity.ok(response);
+    }
 
     @DeleteMapping("/{domainId}")
     @CommonHeaders
@@ -274,11 +273,11 @@ public class OrganizationDomainController {
     })
     public ResponseEntity<List<DomainResponseDto>> removeDomainFromOrganization(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
             
             @Parameter(description = "Domain ID to remove", required = true, example = DomainSchemaConstants.EXAMPLE_DOMAIN_ID)
-            @PathVariable 
+            @PathVariable("domainId")
             String domainId,
             
             @Parameter(description = "Organization context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
@@ -305,7 +304,7 @@ public class OrganizationDomainController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{domainId}/primary")
+    @PatchMapping("/{domainId}/primary")
     @CommonHeaders
     @Operation(
         summary = "Set domain as primary",
@@ -325,11 +324,11 @@ public class OrganizationDomainController {
     })
     public ResponseEntity<List<DomainResponseDto>> setPrimaryDomain(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
             
             @Parameter(description = "Domain ID to set as primary", required = true, example = DomainSchemaConstants.EXAMPLE_DOMAIN_ID)
-            @PathVariable 
+            @PathVariable("domainId")
             String domainId,
             
             @Parameter(description = "Organization context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
@@ -371,11 +370,11 @@ public class OrganizationDomainController {
     })
     public ResponseEntity<Void> resendDomainVerificationInstructions(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
             
             @Parameter(description = "Domain ID", required = true, example = DomainSchemaConstants.EXAMPLE_DOMAIN_ID)
-            @PathVariable 
+            @PathVariable("domainId")
             String domainId,
             
             @Parameter(description = "Organization context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)

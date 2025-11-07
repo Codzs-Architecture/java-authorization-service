@@ -45,7 +45,7 @@ public final class CommonConstants {
     /**
      * Default language setting.
      */
-    public static final String DEFAULT_LANGUAGE = "en-US";
+    public static final String DEFAULT_LANGUAGE = "en";
     
     /**
      * Default timezone setting.

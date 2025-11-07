@@ -70,4 +70,58 @@ public final class OrganizationConstants {
      * Cache TTL for organization plans data (2 hours).
      */
     public static final long CACHE_TTL_ORGANIZATION_PLANS = 7200;
+
+    // ========== Database Configuration Constants ==========
+    
+    /**
+     * MongoDB connection string prefix.
+     */
+    public static final String MONGODB_PREFIX = "mongodb://";
+    
+    /**
+     * MongoDB SRV connection string prefix.
+     */
+    public static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
+    
+    /**
+     * Localhost hostname (not allowed in production).
+     */
+    public static final String LOCALHOST = "localhost";
+    
+    /**
+     * Local loopback IP address (not allowed in production).
+     */
+    public static final String LOCALHOST_IP = "127.0.0.1";
+    
+    /**
+     * PEM certificate begin marker.
+     */
+    public static final String CERTIFICATE_BEGIN_MARKER = "-----BEGIN CERTIFICATE-----";
+    
+    /**
+     * PEM certificate end marker.
+     */
+    public static final String CERTIFICATE_END_MARKER = "-----END CERTIFICATE-----";
+
+    // ========== Domain Validation Constants ==========
+    
+    /**
+     * Reserved IP address (not allowed for domains).
+     */
+    public static final String RESERVED_IP_ADDRESS = "0.0.0.0";
+    
+    /**
+     * Platform domain (reserved).
+     */
+    public static final String PLATFORM_DOMAIN = "codzs.com";
+    
+    /**
+     * API subdomain prefix (reserved).
+     */
+    public static final String API_SUBDOMAIN_PREFIX = "api.";
+    
+    /**
+     * Admin subdomain prefix (reserved).
+     */
+    public static final String ADMIN_SUBDOMAIN_PREFIX = "admin.";
 }

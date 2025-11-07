@@ -1,13 +1,18 @@
 package com.codzs.validation.organization;
 
+import com.codzs.constant.domain.DomainSchemaConstants;
+import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.domain.Domain;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
 // import com.codzs.validation.domain.DomainBusinessValidator;
 
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 
 /**
@@ -65,6 +70,14 @@ public class OrganizationDomainBusinessValidator {
     public void validateDomainUpdate(Domain existingDomain, Domain updatedDomain, boolean isDomainAlreadyRegistered) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
         
+        // Block direct updates to default domain pattern ({abbr}.codzs.com)
+        if (isDefaultDomainPattern(existingDomain.getName()) || isDefaultDomainPattern(updatedDomain.getName())) {
+            if (!existingDomain.getName().equals(updatedDomain.getName())) {
+                errors.add(new ValidationException.ValidationError("name", 
+                    "Cannot directly update default domain pattern ({abbr}.codzs.com). Please update organization abbreviation instead."));
+            }
+        }
+        
         // Check if domain name is being changed to an existing one
         if (!existingDomain.getName().equals(updatedDomain.getName())) {
             validateDomainGlobalUniqueness(updatedDomain.getName(), "", isDomainAlreadyRegistered, errors);
@@ -81,8 +94,12 @@ public class OrganizationDomainBusinessValidator {
      * Validates domain verification request.
      * Entry point for: PUT /api/v1/organizations/{id}/domains/{domainId}/verify
      */
-    public void validateDomainVerificationRequest(Domain domain, String verificationMethod, String verificationToken, boolean isValidVerificationToken, boolean isVerificationExpired) {
+    public void validateDomainVerificationRequest(Domain domain, String verificationMethod, String verificationToken) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
+        
+        // Get domain verification data for validation
+        boolean isValidVerificationToken = validateVerificationToken(domain, verificationToken, verificationMethod);
+        boolean isVerificationExpired = isVerificationExpired(domain);
         
         validateDomainVerificationRules(domain, verificationMethod, isVerificationExpired, errors);
         
@@ -94,6 +111,20 @@ public class OrganizationDomainBusinessValidator {
         if (!errors.isEmpty()) {
             throw new ValidationException("Domain verification validation failed", errors);
         }
+    }
+
+    public boolean isVerificationExpired(Domain domain) {
+        if (domain.getCreatedDate() == null) {
+            return false;
+        }
+        
+        Instant expiryTime = domain.getCreatedDate().plus(Duration.ofHours(
+            DomainSchemaConstants.DOMAIN_VERIFICATION_EXPIRY_HOURS));
+        
+        boolean expired = Instant.now().isAfter(expiryTime);
+        // log.debug("Domain verification expired check for domain {}: {}", domain.getName(), expired);
+        
+        return expired;
     }
 
     /**
@@ -193,10 +224,13 @@ public class OrganizationDomainBusinessValidator {
                                        List<ValidationException.ValidationError> errors) {
         String lowerDomain = domainName.toLowerCase();
         
-        if (lowerDomain.contains("localhost") || lowerDomain.contains("127.0.0.1") || 
-            lowerDomain.contains("0.0.0.0") || lowerDomain.endsWith(".local") ||
-            lowerDomain.contains("codzs.com") || lowerDomain.startsWith("api.") || 
-            lowerDomain.startsWith("admin.")) {
+        if (lowerDomain.contains(OrganizationConstants.LOCALHOST) || 
+            lowerDomain.contains(OrganizationConstants.LOCALHOST_IP) || 
+            lowerDomain.contains(OrganizationConstants.RESERVED_IP_ADDRESS) || 
+            lowerDomain.endsWith(".local") ||
+            // lowerDomain.contains(OrganizationConstants.PLATFORM_DOMAIN) || 
+            lowerDomain.startsWith(OrganizationConstants.API_SUBDOMAIN_PREFIX) || 
+            lowerDomain.startsWith(OrganizationConstants.ADMIN_SUBDOMAIN_PREFIX)) {
             errors.add(new ValidationException.ValidationError(
                 org.springframework.util.StringUtils.hasText(fieldPrefix) ? fieldPrefix + ".name" : "name", 
                 "Cannot use reserved or platform domain names"));
@@ -248,4 +282,40 @@ public class OrganizationDomainBusinessValidator {
             });
     }
 
+    /**
+     * Checks if a domain name follows the pattern {abbr}.codzs.com
+     */
+    private boolean isDefaultDomainPattern(String domainName) {
+        if (domainName == null || domainName.trim().isEmpty()) {
+            return false;
+        }
+        return domainName.toLowerCase().endsWith(".codzs.com") && 
+               domainName.toLowerCase().matches("^[a-z0-9]+\\.codzs\\.com$");
+    }
+
+    public boolean validateVerificationToken(Domain domain, String providedToken, String verificationMethod) {
+        if (!StringUtils.hasText(providedToken) || !StringUtils.hasText(domain.getVerificationToken())) {
+            return false;
+        }
+        
+        // Check token match
+        if (!domain.getVerificationToken().equals(providedToken)) {
+            return false;
+        }
+        
+        // Check verification method match
+        if (!domain.getVerificationMethod().equals(verificationMethod)) {
+            return false;
+        }
+        
+        // Check token expiry
+        if (domain.getCreatedDate() != null) {
+            Instant expiryTime = domain.getCreatedDate().plus(java.time.Duration.ofHours(24));
+            if (Instant.now().isAfter(expiryTime)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
 }

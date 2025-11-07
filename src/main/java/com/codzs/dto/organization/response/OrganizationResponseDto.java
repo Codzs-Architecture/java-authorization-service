@@ -2,6 +2,7 @@ package com.codzs.dto.organization.response;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.constant.organization.OrganizationStatusEnum;
+import com.codzs.dto.domain.response.DomainResponseDto;
 import com.codzs.framework.constant.CommonConstants;
 import com.codzs.framework.dto.BaseDto;
 import com.fasterxml.jackson.annotation.JsonFormat;

@@ -1,11 +1,10 @@
 package com.codzs.service.organization;
 
-import java.util.List;
 import java.util.Optional;
 
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationMetadata;
-
+ 
 /**
  * Service interface for OrganizationMetadata-related business operations.
  * Manages organization metadata including industry and size
@@ -45,7 +44,7 @@ public interface OrganizationMetadataService {
      * @param industry the new industry value
      * @return updated organization with new industry
      */
-    Organization updateIndustry(String organizationId, String industry);
+    void updateIndustry(Organization organization, String industry);
 
     /**
      * Updates organization size.
@@ -55,46 +54,5 @@ public interface OrganizationMetadataService {
      * @param size the new size value
      * @return updated organization with new size
      */
-    Organization updateSize(String organizationId, String size);
-
-    // ========== UTILITY METHODS ==========
-
-    /**
-     * Validates organization metadata.
-     *
-     * @param organizationId the organization ID
-     * @param metadata the organization metadata to validate
-     * @return true if metadata is valid, false otherwise
-     */
-    boolean validateOrganizationMetadata(String organizationId, OrganizationMetadata metadata);
-
-    /**
-     * Checks if an industry is valid.
-     *
-     * @param industry the industry to validate
-     * @return true if industry is valid, false otherwise
-     */
-    boolean isValidIndustry(String industry);
-
-    /**
-     * Checks if an organization size is valid.
-     *
-     * @param size the size to validate
-     * @return true if size is valid, false otherwise
-     */
-    boolean isValidSize(String size);
-
-    /**
-     * Gets available industries.
-     *
-     * @return array of available industries
-     */
-    List<String> getAvailableIndustries();
-
-    /**
-     * Gets available organization sizes.
-     *
-     * @return array of available sizes
-     */
-    List<String> getAvailableSizes();
+    void updateSize(Organization organization, String size);
 }

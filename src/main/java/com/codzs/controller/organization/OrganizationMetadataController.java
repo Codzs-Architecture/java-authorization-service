@@ -54,7 +54,7 @@ public class OrganizationMetadataController {
     public ResponseEntity<OrganizationMetadataResponseDto> getOrganizationMetadata(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
@@ -76,7 +76,7 @@ public class OrganizationMetadataController {
                 });
     }
 
-    @PutMapping
+    @PatchMapping
     @CommonHeaders
     @Operation(
         summary = "Update organization metadata",
@@ -92,9 +92,9 @@ public class OrganizationMetadataController {
     public ResponseEntity<Void> updateOrganizationMetadata(
             @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
             @NotNull(message = "Organization ID is required") 
-            @PathVariable 
+            @PathVariable("organizationId")
             String organizationId,
-            
+             
             @Parameter(description = "Metadata update request", required = true)
             @Valid 
             @RequestBody 
@@ -113,74 +113,6 @@ public class OrganizationMetadataController {
         );
         
         log.info("Successfully updated metadata for organization: {}", organizationId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PatchMapping
-    @CommonHeaders
-    @Operation(
-        summary = "Partially update organization metadata",
-        description = "Updates specific metadata fields for the specified organization (partial update)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Metadata updated successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid metadata values"),
-        @ApiResponse(responseCode = "404", description = "Organization not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<Void> patchOrganizationMetadata(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @NotNull(message = "Organization ID is required") 
-            @PathVariable 
-            String organizationId,
-            
-            @Parameter(description = "Partial metadata update request", required = true)
-            @Valid 
-            @RequestBody 
-            OrganizationMetadataRequestDto request,
-            
-            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        
-        log.info("Partially updating metadata for organization: {}", organizationId);
-        
-        organizationMetadataService.updateIndustry(organizationId, request.getIndustry());
-        organizationMetadataService.updateSize(organizationId, request.getSize());
-        
-        log.info("Successfully partially updated metadata for organization: {}", organizationId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @DeleteMapping
-    @CommonHeaders
-    @Operation(
-        summary = "Reset organization metadata",
-        description = "Resets organization metadata to default values"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Metadata reset successfully"),
-        @ApiResponse(responseCode = "404", description = "Organization not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<Void> resetOrganizationMetadata(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @NotNull(message = "Organization ID is required") 
-            @PathVariable 
-            String organizationId,
-            
-            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        
-        log.info("Resetting metadata for organization: {}", organizationId);
-        
-        organizationMetadataService.updateIndustry(organizationId.toString(), null);
-        organizationMetadataService.updateSize(organizationId.toString(), null);
-        
-        log.info("Successfully reset metadata for organization: {}", organizationId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,6 +1,8 @@
 package com.codzs.base.repository.domain;
 
 import com.codzs.entity.domain.Domain;
+
+import org.springframework.data.mongodb.repository.CountQuery;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.mongodb.repository.Update;
@@ -12,10 +14,10 @@ import java.time.Instant;
  * Provides methods for managing domains as embedded objects within <entity>s.
  * 
  * @author Codzs Team
- * @since 1.0
+ * @since 1.0 
  */
 // @Repository
-public interface DomainRepository<T> extends MongoRepository<T, String> {
+public abstract interface DomainRepository<T> extends MongoRepository<T, String> {
 
     // ========== DOMAIN OPERATIONS ==========
 
@@ -55,7 +57,7 @@ public interface DomainRepository<T> extends MongoRepository<T, String> {
      * Unsets primary status for all domains in an entity.
      * Used before setting a new primary domain.
      */
-    @Update("{ '$set': { 'domains.$[elem].isPrimary': false } }")
+    @Update("{ '$set': { 'domains.$[].isPrimary': false } }")
     @Query("{ '_id': ?0 }")
     void unsetAllPrimaryDomains(String entityId);
 
@@ -63,7 +65,7 @@ public interface DomainRepository<T> extends MongoRepository<T, String> {
      * Sets a domain as primary within an entity.
      */
     @Update("{ '$set': { 'domains.$.isPrimary': true } }")
-    @Query("{ '_id': ?0, 'domains.id': ?1 }")
+    @Query("{ '_id': ?0, 'domains._id': ?1 }")
     void setPrimaryDomain(String entityId, String domainId);
 
     /**
@@ -73,12 +75,17 @@ public interface DomainRepository<T> extends MongoRepository<T, String> {
     @Query("{ '_id': ?0, 'domains.id': ?1 }")
     void updateDomainVerificationToken(String entityId, String domainId, String newToken);
 
-    // ========== QUERY OPERATIONS ==========
+    /**
+     * Checks if a domain name exists globally across all entities, excluding a specific entity.
+     * Uses existence check to return true/false properly.
+     */
+    @CountQuery("{ '_id': { '$ne': ?0 }, 'domains._id': { '$ne': ?1 }, 'domains.name': ?2 }")
+    long countByDomainNameGlobally(String excludeEntityId, String domainId, String domainName);
 
     /**
-     * Checks if a domain name already exists globally across all entities.
-     * Used for validation during domain creation.
+     * Checks if a domain name exists globally across all entities.
+     * Uses existence check to return true/false properly.
      */
-    @Query("{ 'deletedDate': null, 'domains.name': ?0 }")
-    boolean existsByDomainsName(String domainName);
+    @CountQuery("{ 'domains.name': ?0 }")
+    long countByDomainNameGlobally(String domainName);
 }

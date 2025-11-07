@@ -1,13 +1,17 @@
 package com.codzs.service.organization;
 
+import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.constant.organization.OrganizationProjectionEnum;
 import com.codzs.constant.organization.OrganizationStatusEnum;
+import com.codzs.entity.domain.Domain;
+import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationPlan;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.validation.organization.OrganizationBusinessValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired; 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,15 +42,21 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
     private final OrganizationRepository organizationRepository;
     private final OrganizationBusinessValidator organizationBusinessValidator;
     private final ObjectMapper objectMapper;
+    private final DatabaseSchemaService databaseSchemaService;
+    private final OrganizationDomainService organizationDomainService;
 
     @Autowired
     public OrganizationServiceImpl(OrganizationRepository organizationRepository,
                                  OrganizationBusinessValidator organizationBusinessValidator,
-                                 ObjectMapper objectMapper) {
+                                 ObjectMapper objectMapper,
+                                 DatabaseSchemaService databaseSchemaService,
+                                 OrganizationDomainService organizationDomainService) {
         super(organizationRepository, objectMapper);
         this.organizationRepository = organizationRepository;
         this.organizationBusinessValidator = organizationBusinessValidator;
         this.objectMapper = objectMapper;
+        this.databaseSchemaService = databaseSchemaService;
+        this.organizationDomainService = organizationDomainService;
     }
 
     // ========== API FLOW METHODS ==========
@@ -71,10 +81,29 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
         // Save organization
         Organization savedOrganization = organizationRepository.save(organization);
         
+        // Add default domain after organization is created
+        try {
+            createDefaultDomain(savedOrganization);
+        } catch (Exception e) {
+            log.error("Failed to create default domain for organization ID: {}", 
+                     savedOrganization.getId(), e);
+            // Continue as organization is already created, domain can be added manually later
+        }
+        
+        // Add default AUTH schema after organization is created
+        try {
+            createDefaultAuthSchema(savedOrganization);
+        } catch (Exception e) {
+            log.error("Failed to create default AUTH schema for organization ID: {}", 
+                     savedOrganization.getId(), e);
+            // Continue as organization is already created, schema can be added manually later
+        }
+        
         log.info("Created organization with ID: {} and name: {}", 
                 savedOrganization.getId(), savedOrganization.getName());
         
-        return savedOrganization;
+        // Return updated organization
+        return getOrganizationAndValidate(organization.getId());
     }
 
     @Override
@@ -398,6 +427,140 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
         log.debug("Applied creation business logic for organization: {}", organization.getName());
     }
 
+    /**
+     * Creates default domain for newly created organization.
+     * The domain format is: <abbr>.codzs.com
+     */
+    private void createDefaultDomain(Organization organization) {
+        log.debug("Creating default domain for organization ID: {}", organization.getId());
+        
+        Domain defaultDomain = createDefaultDomainObject(organization);
+        organizationDomainService.addDomainToOrganization(organization.getId(), defaultDomain);
+        
+        log.info("Successfully created default domain {} for organization ID: {}", 
+                defaultDomain.getName(), organization.getId());
+    }
+
+    /**
+     * Creates default domain object with verified and primary status.
+     */
+    private Domain createDefaultDomainObject(Organization organization) {
+        String domainName = organization.getAbbr().toLowerCase() + "." + OrganizationConstants.PLATFORM_DOMAIN;
+        Domain domain = new Domain(domainName, "DNS");
+        
+        // Set as verified and primary by default
+        domain.markAsVerified();
+        domain.setAsPrimary();
+        
+        return domain;
+    }
+
+    /**
+     * Creates default AUTH schema for newly created organization.
+     * This schema is required for authentication services.
+     */
+    private void createDefaultAuthSchema(Organization organization) {
+        log.debug("Creating default AUTH schema for organization ID: {}", organization.getId());
+        
+        // Only create AUTH schema if database configuration exists
+        if (organization.getDatabase() == null) {
+            log.debug("Skipping AUTH schema creation - no database configuration for organization ID: {}", 
+                     organization.getId());
+            return;
+        }
+        
+        DatabaseSchema authSchema = createAuthSchemaObject(organization);
+        databaseSchemaService.addDatabaseSchema(organization.getId(), authSchema);
+        
+        log.info("Successfully created default AUTH schema for organization ID: {}", organization.getId());
+    }
+
+    /**
+     * Creates AUTH schema object with default values.
+     */
+    private DatabaseSchema createAuthSchemaObject(Organization organization) {
+        DatabaseSchema schema = new DatabaseSchema();
+        schema.setId(ObjectId.get().toString());
+        schema.setForService("AUTH");
+        schema.setSchemaName("auth"); // This will be auto-constructed to codzs_<org_abbr>_auth_<env>
+        schema.setDescription("Default authentication schema for " + organization.getName());
+        
+        return schema;
+    }
+
+    // ========== ABBR-DOMAIN SYNC UTILITY METHODS ==========
+
+    /**
+     * Checks if a domain name follows the pattern {abbr}.codzs.com
+     */
+    private boolean isDefaultDomainPattern(String domainName) {
+        if (domainName == null || domainName.trim().isEmpty()) {
+            return false;
+        }
+        return domainName.toLowerCase().endsWith("." + OrganizationConstants.PLATFORM_DOMAIN) && 
+               domainName.toLowerCase().matches("^[a-z0-9]+\\.codzs\\.com$");
+    }
+
+
+    /**
+     * Constructs default domain name from abbr
+     */
+    private String constructDefaultDomainName(String abbr) {
+        if (abbr == null || abbr.trim().isEmpty()) {
+            return null;
+        }
+        return abbr.toLowerCase() + "." + OrganizationConstants.PLATFORM_DOMAIN;
+    }
+
+    /**
+     * Finds the default domain ({abbr}.codzs.com) for an organization
+     */
+    private Domain findDefaultDomain(String organizationId) {
+        List<Domain> domains = organizationDomainService.getDomainsForEntity(organizationId);
+        return domains.stream()
+                .filter(domain -> isDefaultDomainPattern(domain.getName()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Updates organization abbr and synchronizes the corresponding default domain
+     */
+    private void updateAbbrWithDomainSync(String organizationId, String newAbbr, String oldAbbr, Instant now, String user) {
+        log.debug("Updating abbr from {} to {} for organization ID: {} with domain sync", oldAbbr, newAbbr, organizationId);
+        
+        try {
+            // Find the existing default domain
+            Domain existingDefaultDomain = findDefaultDomain(organizationId);
+            
+            // Update organization abbr first
+            organizationRepository.updateOrganizationAbbr(organizationId, newAbbr, now, user);
+            
+            // If default domain exists, update it to match new abbr
+            if (existingDefaultDomain != null) {
+                String newDomainName = constructDefaultDomainName(newAbbr);
+                Domain updatedDomain = new Domain(existingDefaultDomain.getId(), newDomainName, existingDefaultDomain.getVerificationMethod());
+                
+                // Preserve existing domain properties
+                updatedDomain.setIsVerified(existingDefaultDomain.getIsVerified());
+                updatedDomain.setIsPrimary(existingDefaultDomain.getIsPrimary());
+                updatedDomain.setVerifiedDate(existingDefaultDomain.getVerifiedDate());
+                updatedDomain.setVerificationToken(existingDefaultDomain.getVerificationToken());
+                
+                organizationDomainService.updateDomainInOrganization(organizationId, updatedDomain);
+                
+                log.info("Successfully synchronized abbr and default domain for organization ID: {} from {}.codzs.com to {}.codzs.com", 
+                        organizationId, oldAbbr.toLowerCase(), newAbbr.toLowerCase());
+            } else {
+                log.debug("No default domain found for organization ID: {}, only abbr was updated", organizationId);
+            }
+            
+        } catch (Exception e) {
+            log.error("Failed to sync abbr and domain for organization ID: {}", organizationId, e);
+            throw e; // Re-throw to ensure transaction rollback
+        }
+    }
+
 
     private void updateChangedFields(Organization newOrg, Organization existingOrg) {
         Instant now = Instant.now();
@@ -409,7 +572,7 @@ public class OrganizationServiceImpl extends BaseOrganizationServiceImpl impleme
         }
         
         if (hasFieldChanged(newOrg.getAbbr(), existingOrg.getAbbr())) {
-            organizationRepository.updateOrganizationAbbr(newOrg.getId(), newOrg.getAbbr(), now, user);
+            updateAbbrWithDomainSync(newOrg.getId(), newOrg.getAbbr(), existingOrg.getAbbr(), now, user);
         }
         
         if (hasFieldChanged(newOrg.getDisplayName(), existingOrg.getDisplayName())) {

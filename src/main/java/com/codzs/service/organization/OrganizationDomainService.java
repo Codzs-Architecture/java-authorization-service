@@ -117,7 +117,7 @@ public interface OrganizationDomainService extends DomainService<Organization> {
      * @param domainName the domain name to check
      * @return true if domain is already registered
      */
-    boolean isDomainAlreadyRegistered(String domainName);
+    boolean isDomainAlreadyRegistered(Organization organization, Domain domain);
 
     // ========== ORGANIZATION DOMAIN VALIDATION METHODS ==========
 

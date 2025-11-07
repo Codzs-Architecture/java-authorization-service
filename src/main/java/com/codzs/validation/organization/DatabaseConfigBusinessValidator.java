@@ -1,6 +1,6 @@
 package com.codzs.validation.organization;
 
-import com.codzs.entity.organization.DatabaseSchema;
+import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.organization.Organization;
 import com.codzs.exception.validation.ValidationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.List;
 
 /**
  * Business validator for DatabaseConfig operations within organizations.
- * Focuses on database configuration business rules, schema validation, and connectivity constraints.
+ * Focuses on database configuration business rules and connectivity constraints.
  * 
  * @author Codzs Team
  * @since 1.0
@@ -39,45 +39,6 @@ public class DatabaseConfigBusinessValidator {
         }
     }
 
-    /**
-     * Validates database schema addition to existing organization.
-     * Entry point for: POST /api/v1/organizations/{id}/database-schemas
-     */
-    public void validateDatabaseSchemaAddition(DatabaseSchema schema, boolean isSchemaNameExists) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateSchemaNameUniqueness(schema.getSchemaName(), isSchemaNameExists, errors);
-        
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Database schema addition validation failed", errors);
-        }
-    }
-
-    /**
-     * Validates database schema update request.
-     * Entry point for: PUT /api/v1/organizations/{id}/database-schemas/{schemaId}
-     */
-    public void validateDatabaseSchemaUpdate(DatabaseSchema schema, boolean isSchemaNameExists) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateSchemaNameUniqueness(schema.getSchemaName(), isSchemaNameExists, errors);
-        
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Database schema update validation failed", errors);
-        }
-    }
-
-    /**
-     * Validates database schema removal request.
-     * Entry point for: DELETE /api/v1/organizations/{id}/database-schemas/{schemaId}
-     */
-    public void validateDatabaseSchemaRemoval(Organization organization, DatabaseSchema schema) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateDatabaseSchemaRemovalFlow(organization, schema, errors);
-        
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Database schema removal validation failed", errors);
-        }
-    }
-
     // ========== CORE VALIDATION METHODS ==========
 
     private void validateDatabaseConfigUpdateFlow(Organization organization, String connectionString, String certificate, 
@@ -86,16 +47,6 @@ public class DatabaseConfigBusinessValidator {
         // We don't validate schemas here since they are managed separately
         validateConnectionStringFormat(connectionString, errors);
         validateCertificateFormat(certificate, errors);
-    }
-
-    private void validateDatabaseSchemaRemovalFlow(Organization organization, DatabaseSchema schema, 
-                                                  List<ValidationException.ValidationError> errors) {
-        // Validate that at least one schema will remain after removal
-        List<DatabaseSchema> schemas = organization.getDatabase().getSchemas();
-        if (schemas.size() <= 1) {
-            errors.add(new ValidationException.ValidationError("schemaId", 
-                "Cannot remove last database schema - at least one schema is required"));
-        }
     }
 
     // ========== FIELD VALIDATION METHODS ==========
@@ -107,14 +58,16 @@ public class DatabaseConfigBusinessValidator {
         }
 
         // Basic connection string format validation
-        if (!connectionString.toLowerCase().startsWith("mongodb://") && 
-            !connectionString.toLowerCase().startsWith("mongodb+srv://")) {
+        if (!connectionString.toLowerCase().startsWith(OrganizationConstants.MONGODB_PREFIX) && 
+            !connectionString.toLowerCase().startsWith(OrganizationConstants.MONGODB_SRV_PREFIX)) {
             errors.add(new ValidationException.ValidationError("connectionString", 
-                "Connection string must start with 'mongodb://' or 'mongodb+srv://'"));
+                String.format("Connection string must start with '%s' or '%s'", 
+                    OrganizationConstants.MONGODB_PREFIX, OrganizationConstants.MONGODB_SRV_PREFIX)));
         }
 
         // Check for invalid characters or patterns
-        if (connectionString.contains("localhost") || connectionString.contains("127.0.0.1")) {
+        if (connectionString.contains(OrganizationConstants.LOCALHOST) || 
+            connectionString.contains(OrganizationConstants.LOCALHOST_IP)) {
             errors.add(new ValidationException.ValidationError("connectionString", 
                 "Connection string cannot use localhost or local IP addresses"));
         }
@@ -126,18 +79,10 @@ public class DatabaseConfigBusinessValidator {
         }
 
         // Basic certificate format validation
-        if (!certificate.contains("-----BEGIN CERTIFICATE-----") || 
-            !certificate.contains("-----END CERTIFICATE-----")) {
+        if (!certificate.contains(OrganizationConstants.CERTIFICATE_BEGIN_MARKER) || 
+            !certificate.contains(OrganizationConstants.CERTIFICATE_END_MARKER)) {
             errors.add(new ValidationException.ValidationError("certificate", 
                 "Invalid certificate format - must be a valid PEM certificate"));
-        }
-    }
-
-    private void validateSchemaNameUniqueness(String schemaName, boolean isSchemaNameExists,
-                                             List<ValidationException.ValidationError> errors) {
-        if (StringUtils.hasText(schemaName) && isSchemaNameExists) {
-            errors.add(new ValidationException.ValidationError("schemaName", 
-                "Database schema name already exists: " + schemaName));
         }
     }
 }

@@ -2,11 +2,8 @@ package com.codzs.controller.organization;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.dto.organization.request.DatabaseConfigRequestDto;
-import com.codzs.dto.organization.request.DatabaseSchemaRequestDto;
 import com.codzs.dto.organization.response.DatabaseConfigResponseDto;
-import com.codzs.dto.organization.response.DatabaseSchemaResponseDto;
 import com.codzs.entity.organization.DatabaseConfig;
-import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
@@ -23,12 +20,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
  
 @Slf4j
@@ -36,7 +31,7 @@ import java.util.Map;
 @RequestMapping("/api/v1/organizations/{organizationId}/database")
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Database Configuration Management", description = "APIs for managing organization-specific database configurations, schemas, and connectivity")
+@Tag(name = "Database Configuration Management", description = "APIs for managing organization-specific database configurations and connectivity")
 public class DatabaseConfigController {
 
     private final DatabaseConfigService databaseConfigService;
@@ -115,19 +110,6 @@ public class DatabaseConfigController {
                 });
     }
 
-    private boolean testConnection(String organizationId) {
-        boolean testResults = false;
-        try {
-            log.info("Testing database connectivity for organization: {}", organizationId);
-            testResults = databaseConfigService.testDatabaseConnection(organizationId);
-            log.info("Database connectivity test completed for organization: {}", organizationId);
-        } catch (Exception e) {
-            log.error("Database connectivity test failed for organization: {}", organizationId, e);
-        }
-
-        return testResults;
-    }
-
     @PutMapping("/connection")
     @CommonHeaders
     @Operation(
@@ -174,59 +156,6 @@ public class DatabaseConfigController {
         return ResponseEntity.ok(response);
     }
 
-    // @PostMapping("/certificate/rotate")
-    // @CommonHeaders
-    // @Operation(
-    //     summary = "Rotate database certificate",
-    //     description = "Rotates the database SSL certificate for the organization"
-    // )
-    // @ApiResponses(value = {
-    //     @ApiResponse(
-    //         responseCode = "200",
-    //         description = "Certificate rotated successfully",
-    //         content = @Content(mediaType = "application/json", schema = @Schema(implementation = DatabaseConfigResponseDto.class))
-    //     ),
-    //     @ApiResponse(responseCode = "404", description = "Organization not found"),
-    //     @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-    //     @ApiResponse(responseCode = "500", description = "Internal server error or certificate generation failed")
-    // })
-    // public ResponseEntity<DatabaseConfigResponseDto> rotateDatabaseCertificate(
-    //         @Parameter(description = "Organization ID", required = true, example = OrganizationSwaggerConstants.EXAMPLE_ORGANIZATION_ID)
-    //         @ValidUUID(allowNull = false, fieldName = "Organization ID")
-    //         @PathVariable 
-    //         UUID organizationId,
-            
-    //         @Parameter(description = "Reason for certificate rotation", example = "Annual certificate rotation")
-    //         @RequestParam(value = "reason", required = false, defaultValue = "Manual certificate rotation") 
-    //         String reason,
-            
-    //         @Parameter(description = "Certificate validity period", example = "365d")
-    //         @RequestParam(value = "validityPeriod", required = false, defaultValue = "365d") 
-    //         String validityPeriod,
-            
-    //         @Parameter(description = "Notify users about certificate rotation", example = "true")
-    //         @RequestParam(value = "notifyUsers", required = false, defaultValue = "true") 
-    //         Boolean notifyUsers,
-            
-    //         @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-    //         @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-    //         @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
-    // {
-        
-    //     log.info("Rotating database certificate for organization: {}, reason: {}, validityPeriod: {}", 
-    //         organizationId, reason, validityPeriod);
-        
-    //     DatabaseConfig updatedConfig = databaseConfigService.rotateDatabaseCertificate(
-    //         organizationId, reason, validityPeriod, notifyUsers, 
-    //         headerOrganizationId, tenantId, correlationId
-    //     );
-        
-    //     DatabaseConfigResponseDto response = databaseConfigMapper.toResponse(updatedConfig);
-        
-    //     log.info("Successfully rotated database certificate for organization: {}", organizationId);
-    //     return ResponseEntity.ok(response);
-    // }
-
     @PostMapping("/test")
     @CommonHeaders
     @Operation(
@@ -262,192 +191,16 @@ public class DatabaseConfigController {
         return ResponseEntity.ok(testResults);
     }
 
-    @PostMapping("/schemas")
-    @CommonHeaders
-    @Operation(
-        summary = "Add database schema",
-        description = "Adds a new database schema for additional services to the organization"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "201",
-            description = "Schema creation initiated successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DatabaseSchemaResponseDto.class))
-        ),
-        @ApiResponse(responseCode = "400", description = "Invalid service type or schema already exists"),
-        @ApiResponse(responseCode = "404", description = "Organization not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<DatabaseSchemaResponseDto> addDatabaseSchema(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidObjectId(allowNull = false)
-            @PathVariable("organizationId") 
-            String organizationId,
-            
-            @Parameter(description = "Database schema creation request", required = true)
-            @Valid 
-            @RequestBody 
-            DatabaseSchemaRequestDto request,
-            
-            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
-    {
-        
-        log.info("Adding database schema for organization: {}, forService: {}", 
-            organizationId, request.getForService());
-        
-        DatabaseSchema databaseSchema = databaseConfigMapper.toSchemaEntity(request);
-        List<DatabaseSchema> allSchemas = databaseConfigService.addDatabaseSchema(
-            organizationId, databaseSchema
-        );
-        
-        // Find the newly created schema (it should be the one with the ID we set)
-        DatabaseSchema createdSchema = allSchemas.stream()
-            .filter(schema -> databaseSchema.getId().equals(schema.getId()))
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException("Created schema not found in returned list"));
-        
-        DatabaseSchemaResponseDto response = databaseConfigMapper.toSchemaResponse(createdSchema);
-        
-        log.info("Successfully initiated schema creation for organization: {}, schema: {}", 
-            organizationId, createdSchema.getSchemaName());
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
+    private boolean testConnection(String organizationId) {
+        boolean testResults = false;
+        try {
+            log.info("Testing database connectivity for organization: {}", organizationId);
+            testResults = databaseConfigService.testDatabaseConnection(organizationId);
+            log.info("Database connectivity test completed for organization: {}", organizationId);
+        } catch (Exception e) {
+            log.error("Database connectivity test failed for organization: {}", organizationId, e);
+        }
 
-    @GetMapping("/schemas")
-    @CommonHeaders
-    @Operation(
-        summary = "List database schemas",
-        description = "Retrieves all database schemas associated with the organization"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Schemas retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = List.class))
-        ),
-        @ApiResponse(responseCode = "404", description = "Organization not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<List<DatabaseSchemaResponseDto>> listDatabaseSchemas(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidObjectId(allowNull = false)
-            @PathVariable("organizationId") 
-            String organizationId,
-            
-            @Parameter(description = "Filter by service type", example = "auth")
-            @RequestParam(value = "forService", required = false) 
-            String forService,
-            
-            @Parameter(description = "Filter by schema status", example = "active")
-            @RequestParam(value = "status", required = false) 
-            String status,
-            
-            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
-    {
-        
-        log.info("Listing database schemas for organization: {}, forService: {}, status: {}", 
-            organizationId, forService, status);
-        
-        List<DatabaseSchema> schemas = databaseConfigService.listDatabaseSchemas(
-            organizationId, forService, status
-        );
-        
-        List<DatabaseSchemaResponseDto> response = schemas.stream()
-            .map(databaseConfigMapper::toSchemaResponse)
-            .toList();
-        
-        log.info("Successfully retrieved {} schemas for organization: {}", response.size(), organizationId);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/schemas/{schemaId}")
-    @CommonHeaders
-    @Operation(
-        summary = "Get database schema details",
-        description = "Retrieves detailed information about a specific database schema"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "Schema details retrieved successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DatabaseSchemaResponseDto.class))
-        ),
-        @ApiResponse(responseCode = "404", description = "Organization or schema not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<DatabaseSchemaResponseDto> getDatabaseSchemaDetails(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidObjectId(allowNull = false)
-            @PathVariable("organizationId") 
-            String organizationId,
-            
-            @Parameter(description = "Schema ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_ID)
-            @ValidObjectId(allowNull = false)
-            @PathVariable("schemaId") 
-            String schemaId,
-            
-            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
-    {
-        
-        log.info("Getting schema details for organization: {}, schema: {}", organizationId, schemaId);
-        
-        return databaseConfigService.getDatabaseSchema(organizationId, schemaId)
-                .map(schema -> {
-                    DatabaseSchemaResponseDto response = databaseConfigMapper.toSchemaResponse(schema);
-                    
-                    log.info("Successfully retrieved schema details: {} for organization: {}", schemaId, organizationId);
-                    return ResponseEntity.ok(response);
-                })
-                .orElseGet(() -> {
-                    log.warn("Database schema not found: {} for organization: {}", schemaId, organizationId);
-                    return ResponseEntity.notFound().build();
-                });
-    }
-
-    @DeleteMapping("/schemas/{schemaId}")
-    @CommonHeaders
-    @Operation(
-        summary = "Remove database schema",
-        description = "Removes a database schema from the organization (soft delete)"
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "204", description = "Schema removed successfully"),
-        @ApiResponse(responseCode = "404", description = "Organization or schema not found"),
-        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
-        @ApiResponse(responseCode = "409", description = "Schema cannot be removed due to dependencies"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<Void> removeDatabaseSchema(
-            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
-            @ValidObjectId(allowNull = false)
-            @PathVariable("organizationId") 
-            String organizationId,
-            
-            @Parameter(description = "Schema ID to remove", required = true, example = OrganizationSchemaConstants.EXAMPLE_SCHEMA_ID)
-            @PathVariable 
-            String schemaId,
-            
-            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
-    {
-        
-        log.info("Removing database schema for organization: {}, schema: {}", organizationId, schemaId);
-        
-        databaseConfigService.removeDatabaseSchema(
-            organizationId, schemaId
-        );
-        
-        log.info("Successfully removed schema: {} from organization: {}", schemaId, organizationId);
-        return ResponseEntity.noContent().build();
+        return testResults;
     }
 }

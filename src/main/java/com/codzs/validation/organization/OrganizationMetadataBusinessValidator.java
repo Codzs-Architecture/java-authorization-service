@@ -1,9 +1,9 @@
 package com.codzs.validation.organization;
 
+import com.codzs.constant.organization.OrganizationIndustryEnum;
+import com.codzs.constant.organization.OrganizationSizeEnum;
 import com.codzs.entity.organization.Organization;
-import com.codzs.entity.organization.OrganizationMetadata;
 import com.codzs.exception.validation.ValidationException;
-import com.codzs.framework.constant.CommonConstants;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -20,55 +20,28 @@ import java.util.ArrayList;
  */
 @Component
 public class OrganizationMetadataBusinessValidator {
-
-    public OrganizationMetadataBusinessValidator() {
+    private final OrganizationIndustryEnum organizationIndustryEnum;
+    private final OrganizationSizeEnum organizationSizeEnum;
+ 
+    public OrganizationMetadataBusinessValidator(
+        OrganizationIndustryEnum organizationIndustryEnum,
+        OrganizationSizeEnum organizationSizeEnum
+    ) {
+        this.organizationIndustryEnum = organizationIndustryEnum;
+        this.organizationSizeEnum = organizationSizeEnum;
     }
 
     // ========== ENTRY POINT METHODS FOR ORGANIZATION METADATA APIs ==========
 
     /**
-     * Validates metadata update for service layer.
-     * Entry point for: PUT /api/v1/organizations/{id}/metadata
-     */
-    public void validateMetadataUpdate(Organization organization, OrganizationMetadata metadata, boolean isValidIndustry, boolean isValidSize) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        
-        validateMetadataBusinessRules(metadata, isValidIndustry, isValidSize, errors);
-        validateMetadataConstraints(organization, metadata, errors);
-        
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Metadata update validation failed", errors);
-        }
-    }
-
-    /**
-     * Validates metadata update and returns skip flag.
-     * Returns true if update should be skipped (no changes), false otherwise.
-     */
-    public Boolean validateMetadataUpdateFlow(Organization organization, OrganizationMetadata metadata, boolean isValidIndustry, boolean isValidSize) {
-        // Check if metadata is unchanged (idempotent operation)
-        OrganizationMetadata currentMetadata = organization.getMetadata();
-        if (isMetadataUnchanged(currentMetadata, metadata)) {
-            return CommonConstants.SKIP_FURTHER_STEP;
-        }
-        
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateMetadataBusinessRules(metadata, isValidIndustry, isValidSize, errors);
-        validateMetadataConstraints(organization, metadata, errors);
-        
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Metadata update validation failed", errors);
-        }
-        
-        return !CommonConstants.SKIP_FURTHER_STEP;
-    }
-
-    /**
      * Validates industry update for service layer.
      * Entry point for: PUT /api/v1/organizations/{id}/metadata/industry
      */
-    public void validateIndustryUpdate(Organization organization, String industry, boolean isValidIndustry) {
+    public void validateIndustryUpdate(Organization organization, String industry) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
+        
+        // Get validation data for industry
+        boolean isValidIndustry = isValidIndustry(industry);
         
         validateIndustryBusinessRules(industry, isValidIndustry, errors);
         validateIndustryConstraints(organization, industry, errors);
@@ -76,37 +49,17 @@ public class OrganizationMetadataBusinessValidator {
         if (!errors.isEmpty()) {
             throw new ValidationException("Industry update validation failed", errors);
         }
-    }
-
-    /**
-     * Validates industry update and returns skip flag.
-     * Returns true if update should be skipped (no changes), false otherwise.
-     */
-    public Boolean validateIndustryUpdateFlow(Organization organization, String industry, boolean isValidIndustry) {
-        // Check if industry is unchanged (idempotent operation)
-        String currentIndustry = organization.getMetadata() != null ? 
-            organization.getMetadata().getIndustry() : null;
-        if (isStringUnchanged(currentIndustry, industry)) {
-            return CommonConstants.SKIP_FURTHER_STEP;
-        }
-        
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateIndustryBusinessRules(industry, isValidIndustry, errors);
-        validateIndustryConstraints(organization, industry, errors);
-        
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Industry update validation failed", errors);
-        }
-        
-        return !CommonConstants.SKIP_FURTHER_STEP;
     }
 
     /**
      * Validates size update for service layer.
      * Entry point for: PUT /api/v1/organizations/{id}/metadata/size
      */
-    public void validateSizeUpdate(Organization organization, String size, boolean isValidSize) {
+    public void validateSizeUpdate(Organization organization, String size) {
         List<ValidationException.ValidationError> errors = new ArrayList<>();
+        
+        // Get validation data for size
+        boolean isValidSize = isValidSize(size);
         
         validateSizeBusinessRules(size, isValidSize, errors);
         validateSizeConstraints(organization, size, errors);
@@ -114,44 +67,9 @@ public class OrganizationMetadataBusinessValidator {
         if (!errors.isEmpty()) {
             throw new ValidationException("Size update validation failed", errors);
         }
-    }
-
-    /**
-     * Validates size update and returns skip flag.
-     * Returns true if update should be skipped (no changes), false otherwise.
-     */
-    public Boolean validateSizeUpdateFlow(Organization organization, String size, boolean isValidSize) {
-        // Check if size is unchanged (idempotent operation)
-        String currentSize = organization.getMetadata() != null ? 
-            organization.getMetadata().getSize() : null;
-        if (isStringUnchanged(currentSize, size)) {
-            return CommonConstants.SKIP_FURTHER_STEP;
-        }
-        
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
-        validateSizeBusinessRules(size, isValidSize, errors);
-        validateSizeConstraints(organization, size, errors);
-        
-        if (!errors.isEmpty()) {
-            throw new ValidationException("Size update validation failed", errors);
-        }
-        
-        return !CommonConstants.SKIP_FURTHER_STEP;
     }
 
     // ========== CORE VALIDATION METHODS ==========
-
-    private void validateMetadataBusinessRules(OrganizationMetadata metadata, boolean isValidIndustry, boolean isValidSize,
-                                             List<ValidationException.ValidationError> errors) {
-        if (metadata == null) {
-            errors.add(new ValidationException.ValidationError("metadata", "Metadata cannot be null"));
-            return;
-        }
-
-        // Only business logic validations remain here - DTO validation handles @NotBlank etc.
-        validateIndustryBusinessRules(metadata.getIndustry(), isValidIndustry, errors);
-        validateSizeBusinessRules(metadata.getSize(), isValidSize, errors);
-    }
 
     private void validateIndustryBusinessRules(String industry, boolean isValidIndustry,
                                              List<ValidationException.ValidationError> errors) {
@@ -179,16 +97,6 @@ public class OrganizationMetadataBusinessValidator {
         }
     }
 
-    private void validateMetadataConstraints(Organization organization, OrganizationMetadata metadata,
-                                           List<ValidationException.ValidationError> errors) {
-        // Business rule: Cannot clear metadata if organization has active subscriptions
-        if ((metadata.getIndustry() == null || metadata.getIndustry().isEmpty()) &&
-            (metadata.getSize() == null || metadata.getSize().isEmpty())) {
-            // This would effectively clear all metadata - check if allowed
-            validateMetadataClearingAllowed(organization, errors);
-        }
-    }
-
     private void validateIndustryConstraints(Organization organization, String industry,
                                            List<ValidationException.ValidationError> errors) {
         // Business rule: Certain industries might have restrictions based on organization type
@@ -212,36 +120,31 @@ public class OrganizationMetadataBusinessValidator {
         }
     }
 
-    private void validateMetadataClearingAllowed(Organization organization,
-                                               List<ValidationException.ValidationError> errors) {
-        // Business rule: Cannot clear metadata if it's required for the organization type
-        if ("ENTERPRISE".equals(organization.getOrganizationType())) {
-            errors.add(new ValidationException.ValidationError("metadata", 
-                "Enterprise organizations must have industry and size metadata"));
-        }
-    }
-
     // ========== HELPER METHODS FOR SKIPFURTHERSTEP LOGIC ==========
 
-    private boolean isMetadataUnchanged(OrganizationMetadata current, OrganizationMetadata updated) {
-        if (current == null && updated == null) {
-            return true;
-        }
-        if (current == null || updated == null) {
+    public boolean isValidIndustry(String industry) {
+        if (!StringUtils.hasText(industry)) {
             return false;
         }
         
-        return isStringUnchanged(current.getIndustry(), updated.getIndustry()) &&
-               isStringUnchanged(current.getSize(), updated.getSize());
+        List<String> validIndustries = getAvailableIndustries();
+        return validIndustries.contains(industry);
     }
 
-    private boolean isStringUnchanged(String current, String updated) {
-        if (current == null && updated == null) {
-            return true;
-        }
-        if (current == null || updated == null) {
+    public boolean isValidSize(String size) {
+        if (!StringUtils.hasText(size)) {
             return false;
         }
-        return current.equals(updated);
+        
+        List<String> validSizes = getAvailableSizes();
+        return validSizes.contains(size);
+    }
+
+    public List<String> getAvailableIndustries() {
+        return organizationIndustryEnum.getOptions();
+    }
+
+    public List<String> getAvailableSizes() {
+        return organizationSizeEnum.getOptions();
     }
 }

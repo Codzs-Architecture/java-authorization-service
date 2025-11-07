@@ -5,7 +5,7 @@ import com.codzs.entity.organization.Organization;
 
 import org.springframework.stereotype.Repository;
 
-/**
+/** 
  * Repository interface for Organization Domain MongoDB operations.
  * Provides methods for managing domains as embedded objects within organizations.
  * 
