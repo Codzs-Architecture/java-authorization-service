@@ -28,7 +28,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param id the plan ID
      * @return optional plan entity
      */
-    Optional<Plan> findByIdAndDeletedOnIsNull(String id);
+    Optional<Plan> findByIdAndDeletedDateIsNull(String id);
 
     /**
      * Finds a plan by name (not soft deleted).
@@ -36,7 +36,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param name the plan name
      * @return optional plan entity
      */
-    Optional<Plan> findByNameAndDeletedOnIsNull(String name);
+    Optional<Plan> findByNameAndDeletedDateIsNull(String name);
 
     /**
      * Checks if a plan with given name exists (not soft deleted).
@@ -44,7 +44,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param name the plan name
      * @return true if exists, false otherwise
      */
-    boolean existsByNameAndDeletedOnIsNull(String name);
+    boolean existsByNameAndDeletedDateIsNull(String name);
 
     // ========== FIND BY STATUS ==========
 
@@ -53,7 +53,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      *
      * @return list of active plans
      */
-    List<Plan> findByIsActiveTrueAndDeletedOnIsNull();
+    List<Plan> findByIsActiveTrueAndDeletedDateIsNull();
 
     /**
      * Finds all plans by active status (not soft deleted).
@@ -61,7 +61,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param isActive the active status
      * @return list of plans with specified active status
      */
-    List<Plan> findByIsActiveAndDeletedOnIsNull(Boolean isActive);
+    List<Plan> findByIsActiveAndDeletedDateIsNull(Boolean isActive);
 
     // ========== FIND BY TYPE ==========
 
@@ -71,7 +71,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param type the plan type
      * @return list of plans with specified type
      */
-    List<Plan> findByTypeAndDeletedOnIsNull(String type);
+    List<Plan> findByTypeAndDeletedDateIsNull(String type);
 
     /**
      * Finds active plans by type (not soft deleted).
@@ -79,7 +79,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param type the plan type
      * @return list of active plans with specified type
      */
-    List<Plan> findByTypeAndIsActiveTrueAndDeletedOnIsNull(String type);
+    List<Plan> findByTypeAndIsActiveTrueAndDeletedDateIsNull(String type);
 
     // ========== COMPLEX QUERIES ==========
 
@@ -93,7 +93,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @return page of filtered plans
      */
     @Query("{ $and: [ " +
-           "  { 'deletedOn': null }, " +
+           "  { 'deletedDate': null }, " +
            "  { $or: [ " +
            "    { ?0: { $size: 0 } }, " +
            "    { 'isActive': { $in: ?0 } } " +
@@ -120,7 +120,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @return list of plans for autocomplete
      */
     @Query("{ $and: [ " +
-           "  { 'deletedOn': null }, " +
+           "  { 'deletedDate': null }, " +
            "  { $or: [ " +
            "    { ?0: { $size: 0 } }, " +
            "    { 'isActive': { $in: ?0 } } " +
@@ -143,7 +143,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param planId the plan ID
      * @return count of active subscriptions (placeholder)
      */
-    @Query("{ 'id': ?0, 'deletedOn': null }")
+    @Query("{ 'id': ?0, 'deletedDate': null }")
     long countActiveSubscriptionsByPlanId(String planId);
 
     /**
@@ -152,14 +152,14 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @param planIds list of plan IDs
      * @return list of plans
      */
-    List<Plan> findByIdInAndDeletedOnIsNull(List<String> planIds);
+    List<Plan> findByIdInAndDeletedDateIsNull(List<String> planIds);
 
     /**
      * Finds deprecated plans (not soft deleted).
      *
      * @return list of deprecated plans
      */
-    List<Plan> findByIsDeprecatedTrueAndDeletedOnIsNull();
+    List<Plan> findByIsDeprecatedTrueAndDeletedDateIsNull();
 
     /**
      * Finds non-deprecated active plans (not soft deleted).
@@ -167,7 +167,7 @@ public interface PlanRepository extends MongoRepository<Plan, String> {
      * @return list of non-deprecated active plans
      */
     @Query("{ $and: [ " +
-           "  { 'deletedOn': null }, " +
+           "  { 'deletedDate': null }, " +
            "  { 'isActive': true }, " +
            "  { $or: [ " +
            "    { 'isDeprecated': { $exists: false } }, " +

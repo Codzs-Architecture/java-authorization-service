@@ -79,7 +79,7 @@ Make sure you have the following installed:
     ```
     mvn clean flyway:migrate -Dflyway.user=root -Dflyway.password=Testing@123 -Dflyway.schemas=authorization -Dflyway.url=jdbc:mysql://127.0.0.1:3306/authorization
     ```
-9.  Run the Authorization Server:
+9.  Run the Authorization Server: 
     ```
     java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=4003 \
         -Dspring.profiles.active=local \
