@@ -2,6 +2,8 @@ package com.codzs.framework.annotation.header;
 
 import com.codzs.constant.organization.OrganizationSchemaConstants;
 import com.codzs.framework.constant.HeaderConstant;
+import com.codzs.logger.constant.LoggerConstant;
+
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 
@@ -54,7 +56,7 @@ import java.lang.annotation.Target;
         required = false
     ),
     @Parameter(
-        name = HeaderConstant.HEADER_CORRELATION_ID,
+        name = LoggerConstant.CORRELATION_ID,
         description = "Correlation ID for request tracing", 
         example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID,
         required = false

@@ -3,9 +3,12 @@ package com.codzs.framework.exception.handler;
 import com.codzs.framework.constant.HeaderConstant;
 import com.codzs.framework.exception.bean.ValidationError;
 import com.codzs.framework.exception.context.RequestContext;
+import com.codzs.logger.constant.LoggerConstant;
+import com.codzs.logger.context.CorrelationIdContext;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
+import org.slf4j.MDC;
 import org.springframework.validation.FieldError;
 
 import java.util.UUID;
@@ -39,16 +42,27 @@ public abstract class BaseExceptionHandler {
     // ===== CONTEXT EXTRACTION =====
 
     /**
-     * Extracts multi-tenant context information from HTTP request headers.
+     * Extracts multi-tenant context information from HTTP request headers and framework context.
+     * 
+     * Correlation ID handling strategy:
+     * 1. If correlation ID exists in ThreadLocal (from framework filter), use it
+     * 2. If not, framework will generate a new one automatically
+     * 3. Sets correlation ID in MDC for logging purposes
      * 
      * @param request the HTTP servlet request
      * @return RequestContext containing tenant, organization, and correlation information
      */
     protected RequestContext extractMultiTenantContext(HttpServletRequest request) {
+        // Framework handles correlation ID: uses header if present, generates if not
+        String correlationId = CorrelationIdContext.getOrGenerateCorrelationId();
+        
+        // Ensure correlation ID is in MDC for logging
+        MDC.put(LoggerConstant.CORRELATION_ID, correlationId);
+        
         return RequestContext.builder()
                 .organizationId(request.getHeader(HeaderConstant.HEADER_ORGANIZATION_ID))
                 .tenantId(request.getHeader(HeaderConstant.HEADER_TENANT_ID))
-                .correlationId(request.getHeader(HeaderConstant.HEADER_CORRELATION_ID))
+                .correlationId(correlationId)
                 .requestPath(request.getRequestURI())
                 .httpMethod(request.getMethod())
                 .userAgent(request.getHeader("User-Agent"))

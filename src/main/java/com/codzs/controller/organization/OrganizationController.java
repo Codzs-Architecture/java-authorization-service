@@ -66,7 +66,6 @@ public class OrganizationController {
     public ResponseEntity<OrganizationResponseDto> createOrganization(
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String organizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId,
             
             @Parameter(description = "Organization creation request", required = true)
             @Valid 
@@ -110,8 +109,7 @@ public class OrganizationController {
             List<OrganizationProjectionEnum> include,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Retrieving organization with ID: {}, include: {}", organizationId, include);
@@ -150,7 +148,6 @@ public class OrganizationController {
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId,
             
             @Parameter(description = "Organization update request", required = true)
             @Valid 
@@ -187,8 +184,7 @@ public class OrganizationController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Deleting organization with ID: {}", organizationId);
@@ -257,9 +253,7 @@ public class OrganizationController {
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) 
             String headerOrganizationId,
             @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) 
-            String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) 
-            String correlationId) 
+            String tenantId) 
     {
         
         log.info("Listing organizations - page: {}, limit: {}, search: {}", page, limit, search);
@@ -317,8 +311,7 @@ public class OrganizationController {
             Integer limit,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Getting organizations for autocomplete - query: {}, status: {}, limit: {}", query, status, limit);
@@ -357,8 +350,7 @@ public class OrganizationController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Activating organization with ID: {}", organizationId);
@@ -388,8 +380,7 @@ public class OrganizationController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Deactivating organization with ID: {}", organizationId);

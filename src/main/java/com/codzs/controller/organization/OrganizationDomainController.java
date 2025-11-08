@@ -66,8 +66,7 @@ public class OrganizationDomainController {
             DomainRequestDto request,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Adding domain '{}' to organization: {} with verification method: {}", 
             request.getName(), organizationId, request.getVerificationMethod());
@@ -119,10 +118,7 @@ public class OrganizationDomainController {
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             
             @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_TENANT_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            
-            @Parameter(description = "Correlation ID for request tracing", example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Listing domains for organization: {}, verified: {}, primary: {}", 
             organizationId, verified, primary);
@@ -182,10 +178,7 @@ public class OrganizationDomainController {
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             
             @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_TENANT_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            
-            @Parameter(description = "Correlation ID for request tracing", example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Getting domain details for organization: {}, domain: {}", organizationId, domainId);
         
@@ -232,10 +225,7 @@ public class OrganizationDomainController {
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             
             @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_TENANT_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            
-            @Parameter(description = "Correlation ID for request tracing", example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Verifying domain ownership for organization: {}, domain: {}", organizationId, domainId);
@@ -284,10 +274,7 @@ public class OrganizationDomainController {
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             
             @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_TENANT_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            
-            @Parameter(description = "Correlation ID for request tracing", example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Removing domain from organization: {}, domain: {}", organizationId, domainId);
         
@@ -335,10 +322,7 @@ public class OrganizationDomainController {
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             
             @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_TENANT_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            
-            @Parameter(description = "Correlation ID for request tracing", example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Setting domain as primary for organization: {}, domain: {}", organizationId, domainId);
         
@@ -381,10 +365,7 @@ public class OrganizationDomainController {
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
             
             @Parameter(description = "Tenant context for multi-tenant support", example = OrganizationSchemaConstants.EXAMPLE_TENANT_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            
-            @Parameter(description = "Correlation ID for request tracing", example = OrganizationSchemaConstants.EXAMPLE_CORRELATION_ID)
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Resending verification instructions for organization: {}, domain: {}", organizationId, domainId);
         

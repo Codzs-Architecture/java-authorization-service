@@ -66,8 +66,7 @@ public class DatabaseSchemaController {
             DatabaseSchemaRequestDto request,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Adding database schema for organization: {}, forService: {}", 
@@ -122,8 +121,7 @@ public class DatabaseSchemaController {
             String status,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Listing database schemas for organization: {}, forService: {}, status: {}", 
@@ -169,8 +167,7 @@ public class DatabaseSchemaController {
             String schemaId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Getting schema details for organization: {}, schema: {}", organizationId, schemaId);
@@ -218,8 +215,7 @@ public class DatabaseSchemaController {
             DatabaseSchemaRequestDto request,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Updating database schema for organization: {}, schema: {}", organizationId, schemaId);
@@ -258,8 +254,7 @@ public class DatabaseSchemaController {
             String schemaId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Removing database schema for organization: {}, schema: {}", organizationId, schemaId);

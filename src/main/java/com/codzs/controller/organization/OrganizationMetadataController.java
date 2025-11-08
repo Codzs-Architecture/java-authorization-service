@@ -58,8 +58,7 @@ public class OrganizationMetadataController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Getting metadata for organization: {}", organizationId);
         
@@ -101,8 +100,7 @@ public class OrganizationMetadataController {
             OrganizationMetadataRequestDto request,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Updating metadata for organization: {}, industry: {}, size: {}", 
             organizationId, request.getIndustry(), request.getSize());

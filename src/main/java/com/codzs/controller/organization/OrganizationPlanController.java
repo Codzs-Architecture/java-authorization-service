@@ -7,6 +7,7 @@ import com.codzs.entity.organization.OrganizationPlan;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
 import com.codzs.framework.constant.PaginationConstant;
+import com.codzs.logger.constant.LoggerConstant;
 import com.codzs.mapper.organization.OrganizationPlanMapper;
 import com.codzs.service.organization.OrganizationPlanService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,8 +69,7 @@ public class OrganizationPlanController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Getting plan for organization: {}", organizationId);
         
@@ -113,8 +113,7 @@ public class OrganizationPlanController {
             OrganizationPlanRequestDto request,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Updating plan for organization: {}, newPlanId: {}, comment: {}", 
             organizationId, request.getPlanId(), request.getComment());
@@ -174,8 +173,7 @@ public class OrganizationPlanController {
             LocalDate endDate,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
         
         log.info("Getting plan history for organization: {}, page: {}, limit: {}, startDate: {}, endDate: {}", 
             organizationId, page, limit, startDate, endDate);

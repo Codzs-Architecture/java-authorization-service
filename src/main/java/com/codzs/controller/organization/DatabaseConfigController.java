@@ -8,6 +8,7 @@ import com.codzs.entity.organization.Organization;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
 import com.codzs.framework.validation.annotation.ValidObjectId;
+import com.codzs.logger.constant.LoggerConstant;
 import com.codzs.mapper.organization.DatabaseConfigMapper;
 import com.codzs.service.organization.DatabaseConfigService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,8 +73,7 @@ public class DatabaseConfigController {
             Boolean testConnection,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId)
     {
         
         log.info("Getting database configuration for organization: {}, includeConnectionString: {}, testConnection: {}", 
@@ -139,8 +139,7 @@ public class DatabaseConfigController {
             DatabaseConfigRequestDto request,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
 
         log.info("Updating database connection for organization: {}", organizationId);
@@ -179,8 +178,7 @@ public class DatabaseConfigController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Testing database connectivity for organization: {}", organizationId);

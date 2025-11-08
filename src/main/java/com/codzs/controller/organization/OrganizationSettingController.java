@@ -6,6 +6,7 @@ import com.codzs.dto.organization.response.OrganizationSettingResponseDto;
 import com.codzs.entity.organization.OrganizationSetting;
 import com.codzs.framework.annotation.header.CommonHeaders;
 import com.codzs.framework.constant.HeaderConstant;
+import com.codzs.logger.constant.LoggerConstant;
 import com.codzs.mapper.organization.OrganizationSettingMapper;
 import com.codzs.service.organization.OrganizationSettingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,8 +60,7 @@ public class OrganizationSettingController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Getting settings for organization: {}", organizationId);
@@ -104,8 +104,7 @@ public class OrganizationSettingController {
             OrganizationSettingRequestDto request,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Updating setting(s) for organization: {}", organizationId);
@@ -137,8 +136,7 @@ public class OrganizationSettingController {
             String organizationId,
             
             @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
-            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId,
-            @RequestHeader(value = HeaderConstant.HEADER_CORRELATION_ID, required = false) String correlationId) 
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) 
     {
         
         log.info("Resetting settings to defaults for organization: {}", organizationId);
