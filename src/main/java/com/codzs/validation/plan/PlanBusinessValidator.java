@@ -2,7 +2,7 @@ package com.codzs.validation.plan;
 
 import com.codzs.constant.plan.PlanConstants;
 import com.codzs.entity.plan.Plan;
-import com.codzs.exception.type.validation.ValidationException;
+import com.codzs.framework.exception.type.ValidationException;
 import com.codzs.repository.plan.PlanRepository;
 import com.codzs.service.subscription.SubscriptionService;
 import lombok.extern.slf4j.Slf4j;

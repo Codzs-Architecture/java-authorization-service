@@ -1,5 +1,7 @@
 package com.codzs.exception.type.oauth2;
 
+import com.codzs.framework.exception.type.ServiceException;
+
 /**
  * Base exception class for OAuth2-related errors.
  * This exception serves as the root of the OAuth2 exception hierarchy
@@ -8,7 +10,7 @@ package com.codzs.exception.type.oauth2;
  * @author Nitin Khaitan
  * @since 1.1
  */
-public class OAuth2Exception extends AuthorizationServiceException {
+public class OAuth2Exception extends ServiceException {
 
     private final String oauth2ErrorCode;
     private final String oauth2ErrorDescription;

@@ -3,7 +3,7 @@ package com.codzs.service.organization;
 import com.codzs.entity.organization.DatabaseConfig;
 import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
-import com.codzs.exception.type.validation.ValidationException;
+import com.codzs.framework.exception.type.ValidationException;
 import com.codzs.repository.organization.DatabaseConfigRepository;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.util.organization.DatabaseSchemaUtil;

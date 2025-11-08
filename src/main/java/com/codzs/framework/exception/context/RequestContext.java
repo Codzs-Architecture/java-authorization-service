@@ -4,15 +4,15 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * Multi-tenant context information for error responses.
- * Captures tenant-specific context to aid in debugging and tracking.
+ * Request context information for error responses.
+ * Captures request-specific context to aid in debugging and tracking.
  * 
  * @author CodeGeneration Framework
  * @since 1.0
  */
 @Data
 @Builder
-public class MultiTenantErrorContext {
+public class RequestContext {
     
     /**
      * Organization ID from header or path

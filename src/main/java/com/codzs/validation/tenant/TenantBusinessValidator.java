@@ -1,9 +1,9 @@
 package com.codzs.validation.tenant;
 
 import com.codzs.entity.tenant.Tenant;
-import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.entity.organization.Organization;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.exception.type.ValidationException;
 import com.codzs.service.organization.OrganizationService;
 import com.codzs.service.subscription.SubscriptionService;
 import lombok.extern.slf4j.Slf4j;

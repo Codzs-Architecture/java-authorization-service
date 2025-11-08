@@ -2,7 +2,7 @@ package com.codzs.service.organization;
 
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationPlan;
-import com.codzs.exception.type.validation.ValidationException;
+import com.codzs.framework.exception.type.ValidationException;
 import com.codzs.framework.exception.util.ExceptionUtils;
 import com.codzs.repository.organization.OrganizationPlanRepository;
 import com.codzs.repository.organization.OrganizationRepository;

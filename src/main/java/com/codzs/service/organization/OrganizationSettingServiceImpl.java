@@ -3,12 +3,12 @@ package com.codzs.service.organization;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationSetting;
-import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.repository.organization.OrganizationSettingRepository;
 import com.codzs.validation.organization.OrganizationSettingBusinessValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.exception.type.ValidationException;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

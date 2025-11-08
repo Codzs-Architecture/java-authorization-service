@@ -3,8 +3,8 @@ package com.codzs.validation.organization;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.entity.organization.Organization;
-import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.exception.type.ValidationException;
 import com.codzs.service.organization.OrganizationService;
 
 import org.springframework.beans.factory.annotation.Autowired;

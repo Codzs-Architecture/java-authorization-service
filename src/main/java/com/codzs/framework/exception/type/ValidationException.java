@@ -1,10 +1,8 @@
-package com.codzs.exception.type.validation;
+package com.codzs.framework.exception.type;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import com.codzs.exception.type.oauth2.AuthorizationServiceException;
 
 /**
  * Exception thrown when validation fails.
@@ -14,7 +12,7 @@ import com.codzs.exception.type.oauth2.AuthorizationServiceException;
  * @author Nitin Khaitan
  * @since 1.1
  */
-public class ValidationException extends AuthorizationServiceException {
+public class ValidationException extends ServiceException {
 
     private final List<ValidationError> validationErrors;
 

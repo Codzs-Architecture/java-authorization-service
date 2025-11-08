@@ -1,4 +1,4 @@
-package com.codzs.exception.type.oauth2;
+package com.codzs.framework.exception.type;
 
 /**
  * Base exception class for the OAuth2 Authorization Service.
@@ -8,7 +8,7 @@ package com.codzs.exception.type.oauth2;
  * @author Nitin Khaitan
  * @since 1.1
  */
-public class AuthorizationServiceException extends RuntimeException {
+public class ServiceException extends RuntimeException {
 
     private final String errorCode;
     private final Object[] arguments;
@@ -18,7 +18,7 @@ public class AuthorizationServiceException extends RuntimeException {
      * 
      * @param message the detail message
      */
-    public AuthorizationServiceException(String message) {
+    public ServiceException(String message) {
         super(message);
         this.errorCode = null;
         this.arguments = null;
@@ -30,7 +30,7 @@ public class AuthorizationServiceException extends RuntimeException {
      * @param message the detail message
      * @param cause the cause of this exception
      */
-    public AuthorizationServiceException(String message, Throwable cause) {
+    public ServiceException(String message, Throwable cause) {
         super(message, cause);
         this.errorCode = null;
         this.arguments = null;
@@ -42,7 +42,7 @@ public class AuthorizationServiceException extends RuntimeException {
      * @param errorCode the error code for this exception
      * @param message the detail message
      */
-    public AuthorizationServiceException(String errorCode, String message) {
+    public ServiceException(String errorCode, String message) {
         super(message);
         this.errorCode = errorCode;
         this.arguments = null;
@@ -55,7 +55,7 @@ public class AuthorizationServiceException extends RuntimeException {
      * @param message the detail message
      * @param arguments the arguments for message formatting
      */
-    public AuthorizationServiceException(String errorCode, String message, Object... arguments) {
+    public ServiceException(String errorCode, String message, Object... arguments) {
         super(message);
         this.errorCode = errorCode;
         this.arguments = arguments;
@@ -69,7 +69,7 @@ public class AuthorizationServiceException extends RuntimeException {
      * @param cause the cause of this exception
      * @param arguments the arguments for message formatting
      */
-    public AuthorizationServiceException(String errorCode, String message, Throwable cause, Object... arguments) {
+    public ServiceException(String errorCode, String message, Throwable cause, Object... arguments) {
         super(message, cause);
         this.errorCode = errorCode;
         this.arguments = arguments;

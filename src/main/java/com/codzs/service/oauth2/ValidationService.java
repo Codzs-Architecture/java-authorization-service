@@ -2,7 +2,7 @@ package com.codzs.service.oauth2;
 
 import java.util.Map;
 
-import com.codzs.exception.type.validation.ValidationException;
+import com.codzs.framework.exception.type.ValidationException;
 
 /**
  * Service interface for handling validation operations.

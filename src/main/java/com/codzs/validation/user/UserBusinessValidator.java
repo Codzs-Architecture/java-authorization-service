@@ -1,9 +1,9 @@
 package com.codzs.validation.user;
 
 import com.codzs.entity.user.User;
-import com.codzs.exception.type.validation.ValidationException;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.framework.constant.CommonConstants;
+import com.codzs.framework.exception.type.ValidationException;
 import com.codzs.service.organization.OrganizationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

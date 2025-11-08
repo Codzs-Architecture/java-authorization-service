@@ -1,5 +1,7 @@
 package com.codzs.exception.type.oauth2;
 
+import com.codzs.framework.exception.type.ServiceException;
+
 /**
  * Exception thrown when authentication fails or is invalid.
  * This exception is specific to the authorization service authentication operations
@@ -8,7 +10,7 @@ package com.codzs.exception.type.oauth2;
  * @author Nitin Khaitan
  * @since 1.1
  */
-public class AuthenticationException extends AuthorizationServiceException {
+public class AuthenticationException extends ServiceException {
 
     private final String username;
     private final String authenticationType;

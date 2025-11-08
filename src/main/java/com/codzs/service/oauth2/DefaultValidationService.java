@@ -1,6 +1,6 @@
 package com.codzs.service.oauth2;
 
-import com.codzs.exception.type.validation.ValidationException;
+import com.codzs.framework.exception.type.ValidationException;
 import com.codzs.validation.oauth2.OAuth2ParameterValidator;
 import com.codzs.validation.oauth2.ParameterValidator;
 
