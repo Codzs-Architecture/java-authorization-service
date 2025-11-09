@@ -4,7 +4,8 @@ import com.codzs.constant.domain.DomainSchemaConstants;
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.domain.Domain;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -35,7 +36,7 @@ public class OrganizationDomainBusinessValidator {
      * Simplified validation for OrganizationDomainService.
      */
     public void validateDomainAddition(Organization organization, Domain domain, int maxCount, boolean isDomainAlreadyRegistered) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDomainAdditionForEntity(organization.getDomains(), domain, maxCount, isDomainAlreadyRegistered, errors);
         
         if (!errors.isEmpty()) {
@@ -48,7 +49,7 @@ public class OrganizationDomainBusinessValidator {
      * Entry point for: DELETE /api/v1/organizations/{id}/domains/{domainId}
      */
     public void validateDomainRemoval(Organization organization, String domainId, boolean hasUsersInDomain, int userCountInDomain) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         Domain domain = findDomainInEntity(organization.getDomains(), domainId, errors);
         if (domain == null) {
@@ -67,13 +68,19 @@ public class OrganizationDomainBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/domains/{domainId}
      */
     public void validateDomainUpdate(Domain existingDomain, Domain updatedDomain, boolean isDomainAlreadyRegistered) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         
         // Block direct updates to default domain pattern ({abbr}.codzs.com)
         if (isDefaultDomainPattern(existingDomain.getName()) || isDefaultDomainPattern(updatedDomain.getName())) {
             if (!existingDomain.getName().equals(updatedDomain.getName())) {
-                errors.add(new ValidationException.ValidationError("name", 
-                    "Cannot directly update default domain pattern ({abbr}.codzs.com). Please update organization abbreviation instead."));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("name")
+                        .rejectedValue(updatedDomain.getName())
+                        .message("Cannot directly update default domain pattern ({abbr}.codzs.com). Please update organization abbreviation instead.")
+                        .build()
+                );
             }
         }
         
@@ -94,7 +101,7 @@ public class OrganizationDomainBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/domains/{domainId}/verify
      */
     public void validateDomainVerificationRequest(Domain domain, String verificationMethod, String verificationToken) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         
         // Get domain verification data for validation
         boolean isValidVerificationToken = validateVerificationToken(domain, verificationToken, verificationMethod);
@@ -104,7 +111,14 @@ public class OrganizationDomainBusinessValidator {
         
         // Additional validation for verification token
         if (!isValidVerificationToken) {
-            errors.add(new ValidationException.ValidationError("verificationToken", "Invalid verification token"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("verificationToken")
+                    .rejectedValue(verificationToken)
+                    .message("Invalid verification token")
+                    .build()
+            );
         }
         
         if (!errors.isEmpty()) {
@@ -131,11 +145,17 @@ public class OrganizationDomainBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/domains/{domainId}/primary
      */
     public void validateSetPrimaryDomain(Domain domain) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         
         if (!domain.getIsVerified()) {
-            errors.add(new ValidationException.ValidationError("domainId", 
-                "Only verified domains can be set as primary"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("domainId")
+                    .rejectedValue(domain.getId())
+                    .message("Only verified domains can be set as primary")
+                    .build()
+            );
         }
         
         if (!errors.isEmpty()) {
@@ -147,10 +167,17 @@ public class OrganizationDomainBusinessValidator {
 
     private void validateDomainRemovalRules(Organization organization, Domain domain, 
                                           boolean hasUsersInDomain, int userCountInDomain,
-                                          List<ValidationException.ValidationError> errors) {
+                                          List<ValidationError> errors) {
         if (domain.getIsPrimary() && organization.getDomains() != null && organization.getDomains().size() == 1) {
-            errors.add(new ValidationException.ValidationError("domainId", 
-                "Cannot remove the only domain from organization"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("domainId")
+                    .rejectedValue(domain.getId())
+                    .message("Cannot remove the only domain from organization")
+                    .build()
+            );
+
             return;
         }
 
@@ -159,38 +186,56 @@ public class OrganizationDomainBusinessValidator {
                 .anyMatch(d -> !d.getId().equals(domain.getId()) && d.getIsPrimary());
             
             if (!hasOtherPrimary) {
-                errors.add(new ValidationException.ValidationError("domainId", 
-                    "Cannot remove primary domain. Set another domain as primary first."));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("domainId")
+                        .rejectedValue(domain.getId())
+                        .message("Cannot remove primary domain. Set another domain as primary first.")
+                        .build()
+                );
             }
         }
 
         // Check for domain usage by active users using data passed from service layer
         if (hasUsersInDomain) {
-            errors.add(new ValidationException.ValidationError("domainId", 
-                "Cannot remove domain. " + userCountInDomain + " active users are using this domain."));
+                        errors.add(
+                ValidationError
+                    .builder()
+                    .field("domainId")
+                    .rejectedValue(domain.getId())
+                    .message("Cannot remove domain. \" + userCountInDomain + \" active users are using this domain.")
+                    .build()
+            );
         }
     }
 
     // ========== SUPPORTING VALIDATION METHODS ==========
 
     private void validateDomainAdditionForEntity(List<Domain> domains, Domain domain, int maxCount, boolean isDomainAlreadyRegistered,
-                                                     List<ValidationException.ValidationError> errors) {
+                                                     List<ValidationError> errors) {
         validateDomainCountLimit(domains, maxCount, errors);
         validateDomainForCreation(domain, -1, isDomainAlreadyRegistered, errors);
         validatePrimaryDomainConstraint(domains, domain, errors);
     }
 
-    private void validateDomainCountLimit(List<Domain> domains, int maxCount, List<ValidationException.ValidationError> errors) {
+    private void validateDomainCountLimit(List<Domain> domains, int maxCount, List<ValidationError> errors) {
         int currentDomainCount = domains != null ? domains.size() : 0;
 
         if (currentDomainCount > maxCount) {
-            errors.add(new ValidationException.ValidationError("domains", 
-                "Cannot specify more than " + maxCount + " domains"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("domains")
+                    .rejectedValue(currentDomainCount)
+                    .message("Cannot specify more than \" + maxCount + \" domains")
+                    .build()
+            );
         }
     }
 
     private void validateDomainForCreation(Domain domain, int index, boolean isDomainAlreadyRegistered,
-                                         List<ValidationException.ValidationError> errors) {
+                                         List<ValidationError> errors) {
         String fieldPrefix = index >= 0 ? "domains[" + index + "]" : "";
         
         validateDomainNameFormat(domain.getName(), fieldPrefix, errors);
@@ -198,20 +243,26 @@ public class OrganizationDomainBusinessValidator {
     }
 
     private void validatePrimaryDomainConstraint(List<Domain> domains, Domain domain, 
-                                               List<ValidationException.ValidationError> errors) {
+                                               List<ValidationError> errors) {
         if (domain.getIsPrimary() != null && domain.getIsPrimary()) {
             boolean hasExistingPrimary = domains != null && 
                 domains.stream().anyMatch(Domain::getIsPrimary);
             
             if (hasExistingPrimary) {
-                errors.add(new ValidationException.ValidationError("isPrimary", 
-                    "We already has a primary domain. Only one primary domain is allowed."));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("isPrimary")
+                        .rejectedValue(domain.getIsPrimary())
+                        .message("We already has a primary domain. Only one primary domain is allowed.")
+                        .build()
+                );
             }
         }
     }
 
     private void validateDomainNameFormat(String domainName, String fieldPrefix, 
-                                        List<ValidationException.ValidationError> errors) {
+                                        List<ValidationError> errors) {
         if (!org.springframework.util.StringUtils.hasText(domainName)) {
             return;
         }
@@ -220,7 +271,7 @@ public class OrganizationDomainBusinessValidator {
     }
 
     private void validateReservedDomains(String domainName, String fieldPrefix, 
-                                       List<ValidationException.ValidationError> errors) {
+                                       List<ValidationError> errors) {
         String lowerDomain = domainName.toLowerCase();
         
         if (lowerDomain.contains(OrganizationConstants.LOCALHOST) || 
@@ -230,45 +281,85 @@ public class OrganizationDomainBusinessValidator {
             // lowerDomain.contains(OrganizationConstants.PLATFORM_DOMAIN) || 
             lowerDomain.startsWith(OrganizationConstants.API_SUBDOMAIN_PREFIX) || 
             lowerDomain.startsWith(OrganizationConstants.ADMIN_SUBDOMAIN_PREFIX)) {
-            errors.add(new ValidationException.ValidationError(
-                org.springframework.util.StringUtils.hasText(fieldPrefix) ? fieldPrefix + ".name" : "name", 
-                "Cannot use reserved or platform domain names"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("name")
+                    .rejectedValue(domainName)
+                    .message("Cannot use reserved or platform domain names")
+                    .build()
+            );
         }
     }
 
     private void validateDomainGlobalUniqueness(String domainName, String fieldPrefix, boolean isDomainAlreadyRegistered,
-                                              List<ValidationException.ValidationError> errors) {
+                                              List<ValidationError> errors) {
         if (org.springframework.util.StringUtils.hasText(domainName) && isDomainAlreadyRegistered) {
-            errors.add(new ValidationException.ValidationError(
-                org.springframework.util.StringUtils.hasText(fieldPrefix) ? fieldPrefix + ".name" : "name", 
-                "Domain is already registered"));
+                        errors.add(
+                ValidationError
+                    .builder()
+                    .field("name")
+                    .rejectedValue(domainName)
+                    .message("Domain is already registered")
+                    .build()
+            );
         }
     }
 
     private void validateDomainVerificationRules(Domain domain, String verificationMethod, boolean isVerificationExpired,
-                                                List<ValidationException.ValidationError> errors) {
+                                                List<ValidationError> errors) {
         if (domain.getIsVerified()) {
-            errors.add(new ValidationException.ValidationError("domainId", "Domain is already verified"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("domainId")
+                    .rejectedValue(domain.getId())
+                    .message("Domain is already verified")
+                    .build()
+            );
+
             return;
         }
 
         if (!domain.getVerificationMethod().equals(verificationMethod)) {
-            errors.add(new ValidationException.ValidationError("verificationMethod", 
-                "Verification method does not match domain's configured method"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("verificationMethod")
+                    .rejectedValue(verificationMethod)
+                    .message("Verification method does not match domain's configured method")
+                    .build()
+            );
+
             return;
         }
 
         if (isVerificationExpired) {
-            errors.add(new ValidationException.ValidationError("domainId", 
-                "Domain verification token has expired"));
+                        errors.add(
+                ValidationError
+                    .builder()
+                    .field("domainId")
+                    .rejectedValue(domain.getId())
+                    .message("Domain verification token has expired")
+                    .build()
+            );
+
             return;
         }
     }
 
     private Domain findDomainInEntity(List<Domain> domains, String domainId, 
-                                          List<ValidationException.ValidationError> errors) {
+                                          List<ValidationError> errors) {
         if (domains == null) {
-            errors.add(new ValidationException.ValidationError("domainId", "Domain not found"));
+                        errors.add(
+                ValidationError
+                    .builder()
+                    .field("domainId")
+                    .rejectedValue(domainId)
+                    .message("Domain not found")
+                    .build()
+            );
+
             return null;
         }
 
@@ -276,7 +367,15 @@ public class OrganizationDomainBusinessValidator {
             .filter(domain -> domainId.equals(domain.getId()))
             .findFirst()
             .orElseGet(() -> {
-                errors.add(new ValidationException.ValidationError("domainId", "Domain not found"));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("domainId")
+                        .rejectedValue(domainId)
+                        .message("Domain not found")
+                        .build()
+                );
+
                 return null;
             });
     }

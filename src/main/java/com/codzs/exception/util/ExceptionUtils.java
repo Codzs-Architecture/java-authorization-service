@@ -1,8 +1,8 @@
-package com.codzs.framework.exception.util;
+package com.codzs.exception.util;
 
-import com.codzs.framework.exception.type.DuplicateResourceException;
-import com.codzs.framework.exception.type.InvalidOperationException;
-import com.codzs.framework.exception.type.ResourceNotFoundException;
+import com.codzs.exception.type.DuplicateResourceException;
+import com.codzs.exception.type.InvalidOperationException;
+import com.codzs.exception.type.ResourceNotFoundException;
 
 /**
  * Utility class for common exception scenarios.

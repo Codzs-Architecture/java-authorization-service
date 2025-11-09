@@ -2,7 +2,8 @@ package com.codzs.validation.organization;
 
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,7 @@ public class DatabaseConfigBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/database-config
      */
     public void validateDatabaseConfigUpdate(Organization organization, String connectionString, String certificate) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDatabaseConfigUpdateFlow(organization, connectionString, certificate, errors);
         
         if (!errors.isEmpty()) {
@@ -43,7 +44,7 @@ public class DatabaseConfigBusinessValidator {
     // ========== CORE VALIDATION METHODS ==========
 
     private void validateDatabaseConfigUpdateFlow(Organization organization, String connectionString, String certificate, 
-                                                 List<ValidationException.ValidationError> errors) {
+                                                 List<ValidationError> errors) {
         // For config updates, we only validate the config fields that can be updated
         // We don't validate schemas here since they are managed separately
         validateConnectionStringFormat(connectionString, errors);
@@ -53,7 +54,7 @@ public class DatabaseConfigBusinessValidator {
     // ========== FIELD VALIDATION METHODS ==========
 
     private void validateConnectionStringFormat(String connectionString, 
-                                               List<ValidationException.ValidationError> errors) {
+                                               List<ValidationError> errors) {
         if (!StringUtils.hasText(connectionString)) {
             return;
         }
@@ -61,20 +62,31 @@ public class DatabaseConfigBusinessValidator {
         // Basic connection string format validation
         if (!connectionString.toLowerCase().startsWith(OrganizationConstants.MONGODB_PREFIX) && 
             !connectionString.toLowerCase().startsWith(OrganizationConstants.MONGODB_SRV_PREFIX)) {
-            errors.add(new ValidationException.ValidationError("connectionString", 
-                String.format("Connection string must start with '%s' or '%s'", 
-                    OrganizationConstants.MONGODB_PREFIX, OrganizationConstants.MONGODB_SRV_PREFIX)));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("connectionString")
+                    .rejectedValue(connectionString)
+                    .message(String.format("Connection string must start with '%s' or '%s'", OrganizationConstants.MONGODB_PREFIX, OrganizationConstants.MONGODB_SRV_PREFIX))
+                    .build()
+            );
         }
 
         // Check for invalid characters or patterns
         if (connectionString.contains(OrganizationConstants.LOCALHOST) || 
             connectionString.contains(OrganizationConstants.LOCALHOST_IP)) {
-            errors.add(new ValidationException.ValidationError("connectionString", 
-                "Connection string cannot use localhost or local IP addresses"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("connectionString")
+                    .rejectedValue(connectionString)
+                    .message("Connection string cannot use localhost or local IP addresses")
+                    .build()
+            );
         }
     }
 
-    private void validateCertificateFormat(String certificate, List<ValidationException.ValidationError> errors) {
+    private void validateCertificateFormat(String certificate, List<ValidationError> errors) {
         if (!StringUtils.hasText(certificate)) {
             return;
         }
@@ -82,8 +94,14 @@ public class DatabaseConfigBusinessValidator {
         // Basic certificate format validation
         if (!certificate.contains(OrganizationConstants.CERTIFICATE_BEGIN_MARKER) || 
             !certificate.contains(OrganizationConstants.CERTIFICATE_END_MARKER)) {
-            errors.add(new ValidationException.ValidationError("certificate", 
-                "Invalid certificate format - must be a valid PEM certificate"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("certificate")
+                    .rejectedValue(certificate)
+                    .message("Invalid certificate format - must be a valid PEM certificate")
+                    .build()
+            );
         }
     }
 }

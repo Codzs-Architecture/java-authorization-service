@@ -1,6 +1,6 @@
 package com.codzs.framework.validation.annotation;
 
-import com.codzs.framework.base.ConfigParameterBase;
+import com.codzs.framework.constant.ConfigParameterBase;
 import com.codzs.framework.validation.validator.DynamicEnumValidator;
 
 import jakarta.validation.Constraint;

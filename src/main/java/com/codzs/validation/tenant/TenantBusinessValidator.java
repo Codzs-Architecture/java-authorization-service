@@ -1,9 +1,9 @@
 package com.codzs.validation.tenant;
 
 import com.codzs.entity.tenant.Tenant;
-import com.codzs.entity.organization.Organization;
 import com.codzs.framework.constant.CommonConstants;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 import com.codzs.service.organization.OrganizationService;
 import com.codzs.service.subscription.SubscriptionService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +43,7 @@ public class TenantBusinessValidator {
      * Entry point for: POST /api/v1/tenants
      */
     public void validateTenantCreation(Tenant tenant) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateTenantCreationFlow(tenant, errors);
         
         if (!errors.isEmpty()) {
@@ -56,7 +56,7 @@ public class TenantBusinessValidator {
      * Entry point for: PUT /api/v1/tenants/{id}
      */
     public void validateTenantUpdate(Tenant tenant) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateTenantUpdateFlow(tenant, errors);
         
         if (!errors.isEmpty()) {
@@ -69,7 +69,7 @@ public class TenantBusinessValidator {
      * Entry point for: PUT /api/v1/tenants/{id}/activate
      */
     public void validateTenantActivation(Tenant tenant) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateTenantActivationFlow(tenant, errors);
         
         if (!errors.isEmpty()) {
@@ -91,7 +91,7 @@ public class TenantBusinessValidator {
         }
         
         // Validate organization is active using service layer
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateOrganizationForTenant(tenant.getOrganizationId(), errors);
         
         if (!errors.isEmpty()) {
@@ -107,7 +107,7 @@ public class TenantBusinessValidator {
      * Entry point for: PUT /api/v1/tenants/{id}/deactivate
      */
     public void validateTenantDeactivation(Tenant tenant) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateTenantDeactivationFlow(tenant, errors);
         
         if (!errors.isEmpty()) {
@@ -129,10 +129,16 @@ public class TenantBusinessValidator {
         }
         
         // Check for active subscriptions using service layer
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         if (subscriptionService.hasActiveSubscriptionsForTenant(tenant.getId())) {
-            errors.add(new ValidationException.ValidationError("tenantId", 
-                "Cannot deactivate tenant with active subscriptions"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("tenantId")
+                    .rejectedValue(tenant.getId())
+                    .message("Cannot deactivate tenant with active subscriptions")
+                    .build()
+            );
         }
         
         if (!errors.isEmpty()) {
@@ -148,7 +154,7 @@ public class TenantBusinessValidator {
      * Entry point for: DELETE /api/v1/tenants/{id}
      */
     public void validateTenantDeletion(Tenant tenant) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateTenantDeletionFlow(tenant, errors);
         
         if (!errors.isEmpty()) {
@@ -170,16 +176,28 @@ public class TenantBusinessValidator {
         }
         
         // Check if tenant can be deleted (must be inactive)
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         if (CommonConstants.ACTIVE.equals(tenant.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", 
-                "Cannot delete active tenant. Deactivate first."));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("status")
+                    .rejectedValue(tenant.getStatus())
+                    .message("Cannot delete active tenant. Deactivate first.")
+                    .build()
+            );
         }
         
         // Check for active subscriptions using service layer
         if (subscriptionService.hasActiveSubscriptionsForTenant(tenant.getId())) {
-            errors.add(new ValidationException.ValidationError("tenantId", 
-                "Cannot delete tenant with active subscriptions"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("tenantId")
+                    .rejectedValue(tenant.getId())
+                    .message("Cannot delete tenant with active subscriptions")
+                    .build()
+            );
         }
         
         if (!errors.isEmpty()) {
@@ -194,7 +212,7 @@ public class TenantBusinessValidator {
 
     // ========== CORE VALIDATION METHODS ==========
 
-    private void validateTenantCreationFlow(Tenant tenant, List<ValidationException.ValidationError> errors) {
+    private void validateTenantCreationFlow(Tenant tenant, List<ValidationError> errors) {
         log.debug("Validating tenant creation for tenant: {}", tenant.getName());
         
         // Validate organization exists and is active using service layer
@@ -207,7 +225,7 @@ public class TenantBusinessValidator {
         log.debug("Completed tenant creation validation for tenant: {}", tenant.getName());
     }
 
-    private void validateTenantUpdateFlow(Tenant tenant, List<ValidationException.ValidationError> errors) {
+    private void validateTenantUpdateFlow(Tenant tenant, List<ValidationError> errors) {
         log.debug("Validating tenant update for tenant: {}", tenant.getName());
         
         // Validate organization exists if changing organization
@@ -220,7 +238,7 @@ public class TenantBusinessValidator {
         log.debug("Completed tenant update validation for tenant: {}", tenant.getName());
     }
 
-    private void validateTenantActivationFlow(Tenant tenant, List<ValidationException.ValidationError> errors) {
+    private void validateTenantActivationFlow(Tenant tenant, List<ValidationError> errors) {
         log.debug("Validating tenant activation for tenant: {}", tenant.getName());
         
         // Skip validation if tenant is already active (idempotent operation)
@@ -235,7 +253,7 @@ public class TenantBusinessValidator {
         log.debug("Completed tenant activation validation for tenant: {}", tenant.getName());
     }
 
-    private void validateTenantDeactivationFlow(Tenant tenant, List<ValidationException.ValidationError> errors) {
+    private void validateTenantDeactivationFlow(Tenant tenant, List<ValidationError> errors) {
         log.debug("Validating tenant deactivation for tenant: {}", tenant.getName());
         
         // Skip validation if tenant is already inactive (idempotent operation)
@@ -246,27 +264,46 @@ public class TenantBusinessValidator {
         
         // Check for active subscriptions using service layer
         if (subscriptionService.hasActiveSubscriptionsForTenant(tenant.getId())) {
-            errors.add(new ValidationException.ValidationError("tenantId", 
-                "Cannot deactivate tenant with active subscriptions"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("tenantId")
+                    .rejectedValue(tenant.getId())
+                    .message("Cannot deactivate tenant with active subscriptions")
+                    .build()
+            );
         }
         
         log.debug("Completed tenant deactivation validation for tenant: {}", tenant.getName());
     }
 
-    private void validateTenantDeletionFlow(Tenant tenant, List<ValidationException.ValidationError> errors) {
+    private void validateTenantDeletionFlow(Tenant tenant, List<ValidationError> errors) {
         log.debug("Validating tenant deletion for tenant: {}", tenant.getName());
         
         // Check if tenant can be deleted (must be inactive)
         if (CommonConstants.ACTIVE.equals(tenant.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", 
-                "Cannot delete active tenant. Deactivate first."));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("status")
+                    .rejectedValue(tenant.getStatus())
+                    .message("Cannot delete active tenant. Deactivate first.")
+                    .build()
+            );
+
             return;
         }
         
         // Check for active subscriptions using service layer
         if (subscriptionService.hasActiveSubscriptionsForTenant(tenant.getId())) {
-            errors.add(new ValidationException.ValidationError("tenantId", 
-                "Cannot delete tenant with active subscriptions"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("tenantId")
+                    .rejectedValue(tenant.getId())
+                    .message("Cannot delete tenant with active subscriptions")
+                    .build()
+            );
         }
         
         // Active users and departments validation will be implemented when respective services are available
@@ -276,7 +313,7 @@ public class TenantBusinessValidator {
 
     // ========== HELPER VALIDATION METHODS ==========
 
-    private void validateOrganizationForTenant(String organizationId, List<ValidationException.ValidationError> errors) {
+    private void validateOrganizationForTenant(String organizationId, List<ValidationError> errors) {
         // Organization ID required validation is handled by @NotBlank annotation in Tenant entity
         
         // Use service layer to fetch organization and validate it exists and is active
@@ -284,12 +321,24 @@ public class TenantBusinessValidator {
                 .ifPresentOrElse(
                     organization -> {
                         if (!CommonConstants.ACTIVE.toString().equals(organization.getStatus().toString())) {
-                            errors.add(new ValidationException.ValidationError("organizationId", 
-                                "Cannot create tenant under inactive organization"));
+                            errors.add(
+                                ValidationError
+                                    .builder()
+                                    .field("organizationId")
+                                    .rejectedValue(organization.getStatus())
+                                    .message("Cannot create tenant under inactive organization")
+                                    .build()
+                            );
                         }
                     },
-                    () -> errors.add(new ValidationException.ValidationError("organizationId", 
-                        "Organization not found with ID: " + organizationId))
+                    () -> errors.add(
+                        ValidationError
+                            .builder()
+                            .field("organizationId")
+                            .rejectedValue(organizationId)
+                            .message("Organization not found with ID: " + organizationId)
+                            .build()
+                    )
                 );
     }
 

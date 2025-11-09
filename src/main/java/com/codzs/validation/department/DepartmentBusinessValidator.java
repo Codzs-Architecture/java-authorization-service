@@ -4,7 +4,8 @@ import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.entity.department.Department;
 import com.codzs.entity.organization.Organization;
 import com.codzs.framework.constant.CommonConstants;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 import com.codzs.service.organization.OrganizationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class DepartmentBusinessValidator {
      * Entry point for: POST /api/v1/departments
      */
     public void validateDepartmentCreation(Department department) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDepartmentCreationFlow(department, errors);
         
         if (!errors.isEmpty()) {
@@ -53,7 +54,7 @@ public class DepartmentBusinessValidator {
      * Entry point for: PUT /api/v1/departments/{id}
      */
     public void validateDepartmentUpdate(Department department) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDepartmentUpdateFlow(department, errors);
         
         if (!errors.isEmpty()) {
@@ -66,7 +67,7 @@ public class DepartmentBusinessValidator {
      * Entry point for: PUT /api/v1/departments/{id}/activate
      */
     public void validateDepartmentActivation(Department department) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDepartmentActivationFlow(department, errors);
         
         if (!errors.isEmpty()) {
@@ -79,7 +80,7 @@ public class DepartmentBusinessValidator {
      * Entry point for: PUT /api/v1/departments/{id}/deactivate
      */
     public void validateDepartmentDeactivation(Department department) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDepartmentDeactivationFlow(department, errors);
         
         if (!errors.isEmpty()) {
@@ -92,7 +93,7 @@ public class DepartmentBusinessValidator {
      * Entry point for: DELETE /api/v1/departments/{id}
      */
     public void validateDepartmentDeletion(Department department) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDepartmentDeletionFlow(department, errors);
         
         if (!errors.isEmpty()) {
@@ -102,7 +103,7 @@ public class DepartmentBusinessValidator {
 
     // ========== CORE VALIDATION METHODS ==========
 
-    private void validateDepartmentCreationFlow(Department department, List<ValidationException.ValidationError> errors) {
+    private void validateDepartmentCreationFlow(Department department, List<ValidationError> errors) {
         log.debug("Validating department creation for department: {}", department.getName());
         
         // Validate organization exists and is active using service layer
@@ -118,7 +119,7 @@ public class DepartmentBusinessValidator {
         log.debug("Completed department creation validation for department: {}", department.getName());
     }
 
-    private void validateDepartmentUpdateFlow(Department department, List<ValidationException.ValidationError> errors) {
+    private void validateDepartmentUpdateFlow(Department department, List<ValidationError> errors) {
         log.debug("Validating department update for department: {}", department.getName());
         
         // Validate organization exists if changing organization
@@ -135,7 +136,7 @@ public class DepartmentBusinessValidator {
         log.debug("Completed department update validation for department: {}", department.getName());
     }
 
-    private void validateDepartmentActivationFlow(Department department, List<ValidationException.ValidationError> errors) {
+    private void validateDepartmentActivationFlow(Department department, List<ValidationError> errors) {
         log.debug("Validating department activation for department: {}", department.getName());
         
         // Skip validation if department is already active (idempotent operation)
@@ -152,7 +153,7 @@ public class DepartmentBusinessValidator {
         log.debug("Completed department activation validation for department: {}", department.getName());
     }
 
-    private void validateDepartmentDeactivationFlow(Department department, List<ValidationException.ValidationError> errors) {
+    private void validateDepartmentDeactivationFlow(Department department, List<ValidationError> errors) {
         log.debug("Validating department deactivation for department: {}", department.getName());
         
         // Skip validation if department is already inactive (idempotent operation)
@@ -166,13 +167,19 @@ public class DepartmentBusinessValidator {
         log.debug("Completed department deactivation validation for department: {}", department.getName());
     }
 
-    private void validateDepartmentDeletionFlow(Department department, List<ValidationException.ValidationError> errors) {
+    private void validateDepartmentDeletionFlow(Department department, List<ValidationError> errors) {
         log.debug("Validating department deletion for department: {}", department.getName());
         
         // Check if department can be deleted (must be inactive)
         if (CommonConstants.ACTIVE.equals(department.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", 
-                "Cannot delete active department. Deactivate first."));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("status")
+                    .rejectedValue(department.getStatus())
+                    .message("Cannot delete active department. Deactivate first.")
+                    .build()
+            );
             return;
         }
         
@@ -183,7 +190,7 @@ public class DepartmentBusinessValidator {
 
     // ========== HELPER VALIDATION METHODS ==========
 
-    private void validateOrganizationForDepartment(String organizationId, List<ValidationException.ValidationError> errors) {
+    private void validateOrganizationForDepartment(String organizationId, List<ValidationError> errors) {
         // Organization ID required validation is handled by @NotBlank annotation in Department entity
         
         // Use service layer to fetch organization and validate it exists and is active
@@ -191,24 +198,43 @@ public class DepartmentBusinessValidator {
                 .ifPresentOrElse(
                     organization -> {
                         if (!OrganizationStatusEnum.ACTIVE.equals(organization.getStatus())) {
-                            errors.add(new ValidationException.ValidationError("organizationId", 
-                                "Cannot create department under inactive organization"));
+                            errors.add(
+                                ValidationError
+                                    .builder()
+                                    .field("organizationId")
+                                    .rejectedValue(organizationId)
+                                    .message("Cannot create department under inactive organization")
+                                    .build()
+                            );
                         }
                     },
-                    () -> errors.add(new ValidationException.ValidationError("organizationId", 
-                        "Organization not found with ID: " + organizationId))
+                    () -> errors.add(
+                        ValidationError
+                            .builder()
+                            .field("organizationId")
+                            .rejectedValue(organizationId)
+                            .message("Organization not found with ID: " + organizationId)
+                            .build()
+                    )
                 );
     }
 
-    private void validateNoCircularReference(Department department, List<ValidationException.ValidationError> errors) {
+    private void validateNoCircularReference(Department department, List<ValidationError> errors) {
         if (!StringUtils.hasText(department.getParentDepartmentId()) || !StringUtils.hasText(department.getId())) {
             return;
         }
         
         // Prevent setting self as parent
         if (department.getId().equals(department.getParentDepartmentId())) {
-            errors.add(new ValidationException.ValidationError("parentDepartmentId", 
-                "Department cannot be its own parent"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("parentDepartmentId")
+                    .rejectedValue(department.getParentDepartmentId())
+                    .message("Department cannot be its own parent")
+                    .build()
+            );
+
             return;
         }
         

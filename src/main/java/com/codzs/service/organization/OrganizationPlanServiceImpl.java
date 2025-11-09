@@ -2,8 +2,9 @@ package com.codzs.service.organization;
 
 import com.codzs.entity.organization.Organization;
 import com.codzs.entity.organization.OrganizationPlan;
-import com.codzs.framework.exception.type.ValidationException;
-import com.codzs.framework.exception.util.ExceptionUtils;
+import com.codzs.exception.util.ExceptionUtils;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 import com.codzs.repository.organization.OrganizationPlanRepository;
 import com.codzs.repository.organization.OrganizationRepository;
 import com.codzs.service.plan.PlanService;
@@ -72,7 +73,7 @@ public class OrganizationPlanServiceImpl extends BaseOrganizationServiceImpl imp
             ? getCurrentActivePlan(organization.getParentOrganizationId()) : null;
 
         // Business validation as first step
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         organizationPlanBusinessValidator.validatePlanAssociationForOrganizationWithUsageData(
             organization, 
             organizationPlan, 
@@ -244,7 +245,7 @@ public class OrganizationPlanServiceImpl extends BaseOrganizationServiceImpl imp
             ? getCurrentActivePlan(organization.getParentOrganizationId()) : null;
 
         // Business validation for plan change
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         organizationPlanBusinessValidator.validatePlanAssociationForOrganizationWithUsageData(
             organization, 
             newOrganizationPlan, 

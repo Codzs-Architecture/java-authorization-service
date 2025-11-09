@@ -2,7 +2,8 @@ package com.codzs.validation.organization;
 
 import com.codzs.entity.organization.DatabaseSchema;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -32,7 +33,7 @@ public class DatabaseSchemaBusinessValidator {
      * Entry point for: POST /api/v1/organizations/{id}/database-schemas
      */
     public void validateDatabaseSchemaAddition(DatabaseSchema schema, boolean isSchemaNameExists, boolean isServiceExists) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateSchemaNameUniqueness(schema.getSchemaName(), isSchemaNameExists, errors);
         validateServiceUniqueness(schema.getForService(), isServiceExists, errors);
         
@@ -46,7 +47,7 @@ public class DatabaseSchemaBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/database-schemas/{schemaId}
      */
     public void validateDatabaseSchemaUpdate(DatabaseSchema schema, boolean isSchemaNameExists, boolean isServiceExists) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateSchemaNameUniqueness(schema.getSchemaName(), isSchemaNameExists, errors);
         validateServiceUniqueness(schema.getForService(), isServiceExists, errors);
         
@@ -60,7 +61,7 @@ public class DatabaseSchemaBusinessValidator {
      * Entry point for: DELETE /api/v1/organizations/{id}/database-schemas/{schemaId}
      */
     public void validateDatabaseSchemaRemoval(Organization organization, DatabaseSchema schema) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateDatabaseSchemaRemovalFlow(organization, schema, errors);
         
         if (!errors.isEmpty()) {
@@ -71,30 +72,48 @@ public class DatabaseSchemaBusinessValidator {
     // ========== CORE VALIDATION METHODS ==========
 
     private void validateDatabaseSchemaRemovalFlow(Organization organization, DatabaseSchema schema, 
-                                                  List<ValidationException.ValidationError> errors) {
+                                                  List<ValidationError> errors) {
         // Validate that at least one schema will remain after removal
         List<DatabaseSchema> schemas = organization.getDatabase().getSchemas();
         if (schemas.size() <= 1) {
-            errors.add(new ValidationException.ValidationError("schemaId", 
-                "Cannot remove last database schema - at least one schema is required"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("schemaId")
+                    .rejectedValue(schemas.size())
+                    .message("Cannot remove last database schema - at least one schema is required")
+                    .build()
+            );
         }
     }
 
     // ========== FIELD VALIDATION METHODS ==========
 
     private void validateSchemaNameUniqueness(String schemaName, boolean isSchemaNameExists,
-                                             List<ValidationException.ValidationError> errors) {
+                                             List<ValidationError> errors) {
         if (StringUtils.hasText(schemaName) && isSchemaNameExists) {
-            errors.add(new ValidationException.ValidationError("schemaName", 
-                "Database schema name already exists: " + schemaName));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("schemaName")
+                    .rejectedValue(schemaName)
+                    .message("Database schema name already exists: " + schemaName)
+                    .build()
+            );
         }
     }
 
     private void validateServiceUniqueness(String forService, boolean isServiceExists,
-                                         List<ValidationException.ValidationError> errors) {
+                                         List<ValidationError> errors) {
         if (StringUtils.hasText(forService) && isServiceExists) {
-            errors.add(new ValidationException.ValidationError("forService", 
-                "Service type already exists in this organization: " + forService));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("forService")
+                    .rejectedValue(forService)
+                    .message("Service type already exists in this organization: " + forService)
+                    .build()
+            );
         }
     }
 }

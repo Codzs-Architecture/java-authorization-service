@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
-import com.codzs.framework.base.ConfigParameterBase;
+import com.codzs.framework.constant.ConfigParameterBase;
 
 /**
  * Configuration enum for DOMAIN_VERIFICATION_METHOD parameters from config server.

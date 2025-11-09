@@ -2,7 +2,8 @@ package com.codzs.validation.plan;
 
 import com.codzs.constant.plan.PlanConstants;
 import com.codzs.entity.plan.Plan;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 import com.codzs.repository.plan.PlanRepository;
 import com.codzs.service.subscription.SubscriptionService;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +47,7 @@ public class PlanBusinessValidator {
      * @throws ValidationException if business validation fails
      */
     public void validatePlanCreationFlow(Plan plan) throws ValidationException {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         validatePlanUniqueness(plan.getName(), null, errors);
         validatePlanBusinessRules(plan, errors);
@@ -65,7 +66,7 @@ public class PlanBusinessValidator {
      * @throws ValidationException if business validation fails
      */
     public void validatePlanUpdateFlow(Plan plan) throws ValidationException {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         Plan existingPlan = validatePlanExistsAndUpdatable(plan.getId(), errors);
         if (existingPlan == null) {
@@ -92,7 +93,7 @@ public class PlanBusinessValidator {
      * @throws ValidationException if business validation fails
      */
     public void validatePlanActivationFlow(String planId) throws ValidationException {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         Plan plan = validatePlanExists(planId, errors);
         if (plan == null) {
@@ -114,7 +115,7 @@ public class PlanBusinessValidator {
      * @throws ValidationException if business validation fails
      */
     public void validatePlanDeactivationFlow(String planId) throws ValidationException {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         Plan plan = validatePlanExists(planId, errors);
         if (plan == null) {
@@ -136,7 +137,7 @@ public class PlanBusinessValidator {
      * @throws ValidationException if business validation fails
      */
     public void validatePlanDeprecationFlow(String planId) throws ValidationException {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         Plan plan = validatePlanExists(planId, errors);
         if (plan == null) {
@@ -153,19 +154,25 @@ public class PlanBusinessValidator {
     // ========== CORE VALIDATION METHODS ==========
 
     private void validatePlanUniqueness(String name, String excludeId, 
-                                       List<ValidationException.ValidationError> errors) {
+                                       List<ValidationError> errors) {
         if (StringUtils.hasText(name)) {
             validatePlanNameUniqueness(name, excludeId, errors);
         }
     }
 
     private void validatePlanBusinessRules(Plan plan, 
-                                         List<ValidationException.ValidationError> errors) {
+                                         List<ValidationError> errors) {
         // Validate plan name format
         if (StringUtils.hasText(plan.getName()) && 
             !plan.getName().matches(PlanConstants.PLAN_NAME_PATTERN)) {
-            errors.add(new ValidationException.ValidationError("name", 
-                PlanConstants.PLAN_NAME_PATTERN_MESSAGE));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("name")
+                        .rejectedValue(plan.getName())
+                        .message(PlanConstants.PLAN_NAME_PATTERN_MESSAGE)
+                        .build()
+                );
         }
 
         // Validate plan type
@@ -188,18 +195,24 @@ public class PlanBusinessValidator {
     }
 
     private void validatePlanCapacityLimits(Plan plan, 
-                                          List<ValidationException.ValidationError> errors) {
+                                          List<ValidationError> errors) {
         // Validate that we don't exceed maximum number of active plans
         if (plan.getIsActive() != null && plan.getIsActive()) {
             List<Plan> activePlans = planRepository.findByIsActiveTrueAndDeletedDateIsNull();
             if (activePlans.size() >= PlanConstants.MAX_ACTIVE_PLANS) {
-                errors.add(new ValidationException.ValidationError("isActive", 
-                    "Maximum number of active plans (" + PlanConstants.MAX_ACTIVE_PLANS + ") reached"));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("isActive")
+                        .rejectedValue(plan.getIsActive())
+                        .message("Maximum number of active plans (" + PlanConstants.MAX_ACTIVE_PLANS + ") reached")
+                        .build()
+                );
             }
         }
     }
 
-    private void validatePlanType(String planType, List<ValidationException.ValidationError> errors) {
+    private void validatePlanType(String planType, List<ValidationError> errors) {
         // Plan type required validation is handled by @NotBlank annotation in Plan entity
         // Plan type enum validation should use dynamic enum from configuration
         
@@ -212,12 +225,19 @@ public class PlanBusinessValidator {
         };
 
         if (StringUtils.hasText(planType) && !Arrays.asList(validTypes).contains(planType)) {
-            errors.add(new ValidationException.ValidationError("type", "Invalid plan type"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("type")
+                    .rejectedValue(planType)
+                    .message("Invalid plan type")
+                    .build()
+            );
         }
     }
 
     private void validateValidityPeriod(Integer validityPeriod, String validityPeriodUnit, 
-                                      List<ValidationException.ValidationError> errors) {
+                                      List<ValidationError> errors) {
         // Validity period required and positive validation is handled by @NotNull and @Min annotations in Plan entity
         // Validity period unit required validation is handled by @NotBlank annotation in Plan entity
         
@@ -232,37 +252,68 @@ public class PlanBusinessValidator {
         };
 
         if (!Arrays.asList(validUnits).contains(validityPeriodUnit)) {
-            errors.add(new ValidationException.ValidationError("validityPeriodUnit", 
-                "Invalid validity period unit"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("validityPeriodUnit")
+                    .rejectedValue(validityPeriodUnit)
+                    .message("Invalid validity period unit")
+                    .build()
+            );
+
             return;
         }
 
         // Convert to days for validation
         int totalDays = calculateTotalDays(validityPeriod, validityPeriodUnit);
         if (totalDays < PlanConstants.MIN_VALIDITY_PERIOD_DAYS) {
-            errors.add(new ValidationException.ValidationError("validityPeriod", 
-                "Validity period must be at least " + PlanConstants.MIN_VALIDITY_PERIOD_DAYS + " days"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("validityPeriod")
+                    .rejectedValue(validityPeriod)
+                    .message("Validity period must be at least " + PlanConstants.MIN_VALIDITY_PERIOD_DAYS + " days")
+                    .build()
+            );
         }
 
         if (totalDays > PlanConstants.MAX_VALIDITY_PERIOD_DAYS) {
-            errors.add(new ValidationException.ValidationError("validityPeriod", 
-                "Validity period cannot exceed " + PlanConstants.MAX_VALIDITY_PERIOD_DAYS + " days"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("validityPeriod")
+                    .rejectedValue(validityPeriod)
+                    .message("Validity period cannot exceed " + PlanConstants.MAX_VALIDITY_PERIOD_DAYS + " days")
+                    .build()
+            );
         }
     }
 
     private void validateUpdateBusinessConstraints(Plan existingPlan, Plan updatedPlan, 
-                                                 List<ValidationException.ValidationError> errors) {
+                                                 List<ValidationError> errors) {
         // Check if plan has active subscriptions before allowing certain changes
         if (hasActiveSubscriptions(existingPlan.getId())) {
             if (hasFieldChanged(updatedPlan.getType(), existingPlan.getType())) {
-                errors.add(new ValidationException.ValidationError("type", 
-                    "Cannot change plan type while active subscriptions exist"));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("type")
+                        .rejectedValue(updatedPlan.getType())
+                        .message("Cannot change plan type while active subscriptions exist")
+                        .build()
+                );
             }
 
             if (hasFieldChanged(updatedPlan.getValidityPeriod(), existingPlan.getValidityPeriod()) ||
                 hasFieldChanged(updatedPlan.getValidityPeriodUnit(), existingPlan.getValidityPeriodUnit())) {
-                errors.add(new ValidationException.ValidationError("validityPeriod", 
-                    "Cannot change validity period while active subscriptions exist"));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("validityPeriod")
+                        .rejectedValue(updatedPlan.getValidityPeriod())
+                        .message("Cannot change validity period while active subscriptions exist")
+                        .build()
+                );
             }
         }
 
@@ -273,40 +324,58 @@ public class PlanBusinessValidator {
     }
 
     private void validateActivationBusinessRules(Plan plan, 
-                                                List<ValidationException.ValidationError> errors) {
+                                                List<ValidationError> errors) {
         // Skip validation if plan is already active (idempotent operation)
         if (plan.getIsActive()) {
             return;
         }
 
         if (plan.getIsDeprecated() != null && plan.getIsDeprecated()) {
-            errors.add(new ValidationException.ValidationError("isDeprecated", 
-                "Cannot activate deprecated plan"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("isDeprecated")
+                    .rejectedValue(plan.getIsDeprecated())
+                    .message("Cannot activate deprecated plan")
+                    .build()
+            );
         }
 
         // Check capacity limits
         List<Plan> activePlans = planRepository.findByIsActiveTrueAndDeletedDateIsNull();
         if (activePlans.size() >= PlanConstants.MAX_ACTIVE_PLANS) {
-            errors.add(new ValidationException.ValidationError("isActive", 
-                "Maximum number of active plans (" + PlanConstants.MAX_ACTIVE_PLANS + ") reached"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("isActive")
+                    .rejectedValue(activePlans.size())
+                    .message("Maximum number of active plans (" + PlanConstants.MAX_ACTIVE_PLANS + ") reached")
+                    .build()
+            );
         }
     }
 
     private void validateDeactivationBusinessRules(Plan plan, 
-                                                  List<ValidationException.ValidationError> errors) {
+                                                  List<ValidationError> errors) {
         // Skip validation if plan is already inactive (idempotent operation)
         if (!plan.getIsActive()) {
             return;
         }
 
         if (hasActiveSubscriptions(plan.getId())) {
-            errors.add(new ValidationException.ValidationError("activeSubscriptions", 
-                "Cannot deactivate plan with active subscriptions"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("activeSubscriptions")
+                    .rejectedValue(plan.getId())
+                    .message("Cannot deactivate plan with active subscriptions")
+                    .build()
+            );
         }
     }
 
     private void validateDeprecationBusinessRules(Plan plan, 
-                                                 List<ValidationException.ValidationError> errors) {
+                                                 List<ValidationError> errors) {
         // Skip validation if plan is already deprecated (idempotent operation)
         if (plan.getIsDeprecated() != null && plan.getIsDeprecated()) {
             return;
@@ -314,74 +383,131 @@ public class PlanBusinessValidator {
     }
 
     private void validateDowngradeConstraints(Plan existingPlan, Plan updatedPlan, 
-                                            List<ValidationException.ValidationError> errors) {
+                                            List<ValidationError> errors) {
         // Validate user limit reduction
         if (updatedPlan.getMaxUsers() != null && existingPlan.getMaxUsers() != null &&
             updatedPlan.getMaxUsers() < existingPlan.getMaxUsers()) {
-            errors.add(new ValidationException.ValidationError("maxUsers", 
-                "Cannot reduce user limit below current limit while subscriptions exist"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("maxUsers")
+                    .rejectedValue(updatedPlan.getMaxUsers())
+                    .message("Cannot reduce user limit below current limit while subscriptions exist")
+                    .build()
+            );
         }
         
         // Validate tenant limit reduction
         if (updatedPlan.getMaxTenants() != null && existingPlan.getMaxTenants() != null &&
             updatedPlan.getMaxTenants() < existingPlan.getMaxTenants()) {
-            errors.add(new ValidationException.ValidationError("maxTenants", 
-                "Cannot reduce tenant limit below current limit while subscriptions exist"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("maxTenants")
+                    .rejectedValue(updatedPlan.getMaxTenants())
+                    .message("Cannot reduce tenant limit below current limit while subscriptions exist")
+                    .build()
+            );
         }
         
         // Validate storage limit reduction
         if (updatedPlan.getStorageLimit() != null && existingPlan.getStorageLimit() != null &&
             updatedPlan.getStorageLimit() < existingPlan.getStorageLimit()) {
-            errors.add(new ValidationException.ValidationError("storageLimit", 
-                "Cannot reduce storage limit below current limit while subscriptions exist"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("storageLimit")
+                    .rejectedValue(updatedPlan.getStorageLimit())
+                    .message("Cannot reduce storage limit below current limit while subscriptions exist")
+                    .build()
+            );
         }
     }
 
     // ========== HELPER METHODS ==========
 
-    private void validateStorageLimit(Plan plan, List<ValidationException.ValidationError> errors) {
+    private void validateStorageLimit(Plan plan, List<ValidationError> errors) {
         if (plan.getStorageLimit() != null && 
             plan.getStorageLimit() > PlanConstants.MAX_PLAN_STORAGE_LIMIT_GB * 1024 * 1024 * 1024) {
-            errors.add(new ValidationException.ValidationError("storageLimit", 
-                "Plan storage limit cannot exceed " + PlanConstants.MAX_PLAN_STORAGE_LIMIT_GB + " GB"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("storageLimit")
+                    .rejectedValue(plan.getStorageLimit())
+                    .message("Plan storage limit cannot exceed " + PlanConstants.MAX_PLAN_STORAGE_LIMIT_GB + " GB")
+                    .build()
+            );
         }
     }
 
-    private void validateTenantLimits(Plan plan, List<ValidationException.ValidationError> errors) {
+    private void validateTenantLimits(Plan plan, List<ValidationError> errors) {
         if (plan.getMaxTenants() != null && plan.getMaxTenants() > PlanConstants.MAX_PLAN_TENANT_LIMIT) {
-            errors.add(new ValidationException.ValidationError("maxTenants", 
-                "Plan tenant limit cannot exceed " + PlanConstants.MAX_PLAN_TENANT_LIMIT));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("maxTenants")
+                    .rejectedValue(plan.getMaxTenants())
+                    .message("Plan tenant limit cannot exceed " + PlanConstants.MAX_PLAN_TENANT_LIMIT)
+                    .build()
+            );
         }
     }
 
-    private void validateUserLimit(Plan plan, List<ValidationException.ValidationError> errors) {
+    private void validateUserLimit(Plan plan, List<ValidationError> errors) {
         if (plan.getMaxUsers() != null && plan.getMaxUsers() > PlanConstants.MAX_PLAN_USER_LIMIT) {
-            errors.add(new ValidationException.ValidationError("maxUsers", 
-                "Plan user limit cannot exceed " + PlanConstants.MAX_PLAN_USER_LIMIT));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("maxUsers")
+                    .rejectedValue(plan.getMaxUsers())
+                    .message("Plan user limit cannot exceed " + PlanConstants.MAX_PLAN_USER_LIMIT)
+                    .build()
+            );
         }
     }
 
-    private void validatePricing(Plan plan, List<ValidationException.ValidationError> errors) {
+    private void validatePricing(Plan plan, List<ValidationError> errors) {
         if (plan.getPrice() != null && plan.getPrice() > PlanConstants.MAX_PLAN_PRICE) {
-            errors.add(new ValidationException.ValidationError("price", 
-                "Plan price cannot exceed " + PlanConstants.MAX_PLAN_PRICE));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("price")
+                    .rejectedValue(plan.getPrice())
+                    .message("Plan price cannot exceed " + PlanConstants.MAX_PLAN_PRICE)
+                    .build()
+            );
         }
     }
 
     private void validatePlanNameUniqueness(String name, String excludeId, 
-                                           List<ValidationException.ValidationError> errors) {
+                                           List<ValidationError> errors) {
         if (isNameAlreadyExists(name, excludeId)) {
-            errors.add(new ValidationException.ValidationError("name", "Plan name already exists"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("name")
+                    .rejectedValue(name)
+                    .message("Plan name already exists")
+                    .build()
+            );
         }
     }
 
     private Plan validatePlanExists(String planId, 
-                                   List<ValidationException.ValidationError> errors) {
+                                   List<ValidationError> errors) {
         // Plan ID required validation should be handled by request DTO annotations
         
         Plan plan = planRepository.findByIdAndDeletedDateIsNull(planId).orElse(null);
         if (plan == null) {
-            errors.add(new ValidationException.ValidationError("planId", "Plan not found"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("planId")
+                    .rejectedValue(plan.getId())
+                    .message("Plan not found")
+                    .build()
+            );
+
             return null;
         }
         
@@ -389,15 +515,22 @@ public class PlanBusinessValidator {
     }
 
     private Plan validatePlanExistsAndUpdatable(String planId, 
-                                               List<ValidationException.ValidationError> errors) {
+                                               List<ValidationError> errors) {
         Plan plan = validatePlanExists(planId, errors);
         if (plan == null) {
             return null;
         }
         
         if (plan.getDeletedDate() != null) {
-            errors.add(new ValidationException.ValidationError("planId", 
-                "Cannot update deleted plan"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("planId")
+                    .rejectedValue(plan.getDeletedDate())
+                    .message("Cannot update deleted plan")
+                    .build()
+            );
+
             return null;
         }
         

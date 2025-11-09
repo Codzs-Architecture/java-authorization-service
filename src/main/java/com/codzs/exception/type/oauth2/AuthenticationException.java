@@ -1,6 +1,6 @@
 package com.codzs.exception.type.oauth2;
 
-import com.codzs.framework.exception.type.ServiceException;
+import com.codzs.exception.type.ServiceException;
 
 /**
  * Exception thrown when authentication fails or is invalid.

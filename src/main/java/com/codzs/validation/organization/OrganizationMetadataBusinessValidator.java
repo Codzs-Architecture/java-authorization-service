@@ -3,7 +3,8 @@ package com.codzs.validation.organization;
 import com.codzs.constant.organization.OrganizationIndustryEnum;
 import com.codzs.constant.organization.OrganizationSizeEnum;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -39,7 +40,7 @@ public class OrganizationMetadataBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/metadata/industry
      */
     public void validateIndustryUpdate(Organization organization, String industry) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         
         // Get validation data for industry
         boolean isValidIndustry = isValidIndustry(industry);
@@ -57,7 +58,7 @@ public class OrganizationMetadataBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/metadata/size
      */
     public void validateSizeUpdate(Organization organization, String size) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         
         // Get validation data for size
         boolean isValidSize = isValidSize(size);
@@ -73,50 +74,74 @@ public class OrganizationMetadataBusinessValidator {
     // ========== CORE VALIDATION METHODS ==========
 
     private void validateIndustryBusinessRules(String industry, boolean isValidIndustry,
-                                             List<ValidationException.ValidationError> errors) {
+                                             List<ValidationError> errors) {
         if (!StringUtils.hasText(industry)) {
             return; // Allow null/empty - validation handled by DTO annotations
         }
 
         // Use validation data passed from service layer
         if (!isValidIndustry) {
-            errors.add(new ValidationException.ValidationError("industry", 
-                "Invalid industry: " + industry + ". Must be one of the supported industries."));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("industry")
+                    .rejectedValue(industry)
+                    .message("Invalid industry: " + industry + ". Must be one of the supported industries.")
+                    .build()
+            );
         }
     }
 
     private void validateSizeBusinessRules(String size, boolean isValidSize,
-                                         List<ValidationException.ValidationError> errors) {
+                                         List<ValidationError> errors) {
         if (!StringUtils.hasText(size)) {
             return; // Allow null/empty - validation handled by DTO annotations
         }
 
         // Use validation data passed from service layer
         if (!isValidSize) {
-            errors.add(new ValidationException.ValidationError("size", 
-                "Invalid organization size: " + size + ". Must be one of the supported sizes."));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("size")
+                    .rejectedValue(size)
+                    .message("Invalid organization size: " + size + ". Must be one of the supported sizes.")
+                    .build()
+            );
         }
     }
 
     private void validateIndustryConstraints(Organization organization, String industry,
-                                           List<ValidationException.ValidationError> errors) {
+                                           List<ValidationError> errors) {
         // Business rule: Certain industries might have restrictions based on organization type
         if (StringUtils.hasText(industry) && "GOVERNMENT".equals(industry)) {
             if (!"ENTERPRISE".equals(organization.getOrganizationType())) {
-                errors.add(new ValidationException.ValidationError("industry", 
-                    "Government industry is only allowed for Enterprise organizations"));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("industry")
+                        .rejectedValue(industry)
+                        .message("Government industry is only allowed for Enterprise organizations")
+                        .build()
+                );
             }
         }
     }
 
     private void validateSizeConstraints(Organization organization, String size,
-                                       List<ValidationException.ValidationError> errors) {
+                                       List<ValidationError> errors) {
         // Business rule: Validate size consistency with organization type
         if (StringUtils.hasText(size)) {
             if ("INDIVIDUAL".equals(organization.getOrganizationType()) && 
                 ("LARGE".equals(size) || "ENTERPRISE".equals(size))) {
-                errors.add(new ValidationException.ValidationError("size", 
-                    "Individual organizations cannot be set to LARGE or ENTERPRISE size"));
+                errors.add(
+                    ValidationError
+                        .builder()
+                        .field("size")
+                        .rejectedValue(size)
+                        .message("Individual organizations cannot be set to LARGE or ENTERPRISE size")
+                        .build()
+                );
             }
         }
     }

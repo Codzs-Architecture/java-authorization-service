@@ -1,6 +1,7 @@
 package com.codzs.service.oauth2;
 
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 import com.codzs.validation.oauth2.OAuth2ParameterValidator;
 import com.codzs.validation.oauth2.ParameterValidator;
 
@@ -44,7 +45,7 @@ public class DefaultValidationService implements ValidationService {
             logger.debug("Validating OAuth2 authorization request parameters");
         }
 
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         // Validate required parameters
         validateRequiredParameterInList(OAuth2ParameterNames.CLIENT_ID, parameters.get(OAuth2ParameterNames.CLIENT_ID), errors);
@@ -83,7 +84,7 @@ public class DefaultValidationService implements ValidationService {
             logger.debug("Validating OAuth2 token request parameters");
         }
 
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         // Validate required parameters
         validateRequiredParameterInList(OAuth2ParameterNames.GRANT_TYPE, parameters.get(OAuth2ParameterNames.GRANT_TYPE), errors);
@@ -103,7 +104,7 @@ public class DefaultValidationService implements ValidationService {
             logger.debug("Validating device authorization request parameters");
         }
 
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         // Validate required parameters for device flow
         validateRequiredParameterInList(OAuth2ParameterNames.CLIENT_ID, parameters.get(OAuth2ParameterNames.CLIENT_ID), errors);
@@ -131,7 +132,7 @@ public class DefaultValidationService implements ValidationService {
             logger.debug("Validating device token request parameters");
         }
 
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
 
         // Validate required parameters for device token request
         validateRequiredParameterInList(OAuth2ParameterNames.GRANT_TYPE, parameters.get(OAuth2ParameterNames.GRANT_TYPE), errors);
@@ -238,7 +239,7 @@ public class DefaultValidationService implements ValidationService {
     /**
      * Helper method to validate required parameters and collect errors.
      */
-    private void validateRequiredParameterInList(String parameterName, String value, List<ValidationException.ValidationError> errors) {
+    private void validateRequiredParameterInList(String parameterName, String value, List<ValidationError> errors) {
         try {
             validateRequiredParameter(parameterName, value);
         } catch (ValidationException e) {

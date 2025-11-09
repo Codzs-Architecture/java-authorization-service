@@ -3,7 +3,8 @@ package com.codzs.validation.user;
 import com.codzs.entity.user.User;
 import com.codzs.constant.organization.OrganizationStatusEnum;
 import com.codzs.framework.constant.CommonConstants;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 import com.codzs.service.organization.OrganizationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +40,7 @@ public class UserBusinessValidator {
      * Entry point for: POST /api/v1/users
      */
     public void validateUserCreation(User user) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateUserCreationFlow(user, errors);
         
         if (!errors.isEmpty()) {
@@ -52,7 +53,7 @@ public class UserBusinessValidator {
      * Entry point for: PUT /api/v1/users/{id}
      */
     public void validateUserUpdate(User user) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateUserUpdateFlow(user, errors);
         
         if (!errors.isEmpty()) {
@@ -65,7 +66,7 @@ public class UserBusinessValidator {
      * Entry point for: PUT /api/v1/users/{id}/activate
      */
     public void validateUserActivation(User user) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateUserActivationFlow(user, errors);
         
         if (!errors.isEmpty()) {
@@ -87,7 +88,7 @@ public class UserBusinessValidator {
         }
         
         // Validate organization is active using service layer
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateOrganizationForUser(user.getOrganizationId(), errors);
         
         if (!errors.isEmpty()) {
@@ -105,7 +106,7 @@ public class UserBusinessValidator {
      * Entry point for: PUT /api/v1/users/{id}/deactivate
      */
     public void validateUserDeactivation(User user) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateUserDeactivationFlow(user, errors);
         
         if (!errors.isEmpty()) {
@@ -138,7 +139,7 @@ public class UserBusinessValidator {
      * Entry point for: DELETE /api/v1/users/{id}
      */
     public void validateUserDeletion(User user) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         validateUserDeletionFlow(user, errors);
         
         if (!errors.isEmpty()) {
@@ -160,10 +161,16 @@ public class UserBusinessValidator {
         }
         
         // Check if user can be deleted (must be inactive)
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         if (CommonConstants.ACTIVE.equals(user.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", 
-                "Cannot delete active user. Deactivate first."));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("status")
+                    .rejectedValue(user.getStatus())
+                    .message("Cannot delete active user. Deactivate first.")
+                    .build()
+            );
         }
         
         if (!errors.isEmpty()) {
@@ -179,7 +186,7 @@ public class UserBusinessValidator {
 
     // ========== CORE VALIDATION METHODS ==========
 
-    private void validateUserCreationFlow(User user, List<ValidationException.ValidationError> errors) {
+    private void validateUserCreationFlow(User user, List<ValidationError> errors) {
         log.debug("Validating user creation for user: {}", user.getEmail());
         
         // Validate organization exists and is active using service layer
@@ -193,7 +200,7 @@ public class UserBusinessValidator {
         log.debug("Completed user creation validation for user: {}", user.getEmail());
     }
 
-    private void validateUserUpdateFlow(User user, List<ValidationException.ValidationError> errors) {
+    private void validateUserUpdateFlow(User user, List<ValidationError> errors) {
         log.debug("Validating user update for user: {}", user.getEmail());
         
         // Validate organization exists if changing organization
@@ -209,7 +216,7 @@ public class UserBusinessValidator {
         log.debug("Completed user update validation for user: {}", user.getEmail());
     }
 
-    private void validateUserActivationFlow(User user, List<ValidationException.ValidationError> errors) {
+    private void validateUserActivationFlow(User user, List<ValidationError> errors) {
         log.debug("Validating user activation for user: {}", user.getEmail());
         
         // Skip validation if user is already active (idempotent operation)
@@ -226,7 +233,7 @@ public class UserBusinessValidator {
         log.debug("Completed user activation validation for user: {}", user.getEmail());
     }
 
-    private void validateUserDeactivationFlow(User user, List<ValidationException.ValidationError> errors) {
+    private void validateUserDeactivationFlow(User user, List<ValidationError> errors) {
         log.debug("Validating user deactivation for user: {}", user.getEmail());
         
         // Skip validation if user is already inactive (idempotent operation)
@@ -241,13 +248,20 @@ public class UserBusinessValidator {
         log.debug("Completed user deactivation validation for user: {}", user.getEmail());
     }
 
-    private void validateUserDeletionFlow(User user, List<ValidationException.ValidationError> errors) {
+    private void validateUserDeletionFlow(User user, List<ValidationError> errors) {
         log.debug("Validating user deletion for user: {}", user.getEmail());
         
         // Check if user can be deleted (must be inactive)
         if (CommonConstants.ACTIVE.equals(user.getStatus())) {
-            errors.add(new ValidationException.ValidationError("status", 
-                "Cannot delete active user. Deactivate first."));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("status")
+                    .rejectedValue(user.getStatus())
+                    .message("Cannot delete active user. Deactivate first.")
+                    .build()
+            );
+
             return;
         }
         
@@ -259,7 +273,7 @@ public class UserBusinessValidator {
 
     // ========== HELPER VALIDATION METHODS ==========
 
-    private void validateOrganizationForUser(String organizationId, List<ValidationException.ValidationError> errors) {
+    private void validateOrganizationForUser(String organizationId, List<ValidationError> errors) {
         // Organization ID required validation is handled by @NotBlank annotation in User entity
         
         // Use service layer to fetch organization and validate it exists and is active
@@ -267,17 +281,29 @@ public class UserBusinessValidator {
                 .ifPresentOrElse(
                     organization -> {
                         if (!OrganizationStatusEnum.ACTIVE.equals(organization.getStatus())) {
-                            errors.add(new ValidationException.ValidationError("organizationId", 
-                                "Cannot create user under inactive organization"));
+                            errors.add(
+                                ValidationError
+                                    .builder()
+                                    .field("status")
+                                    .rejectedValue(organization.getStatus())
+                                    .message("Cannot create user under inactive organization")
+                                    .build()
+                            );
                         }
                     },
-                    () -> errors.add(new ValidationException.ValidationError("organizationId", 
-                        "Organization not found with ID: " + organizationId))
+                    () -> errors.add(
+                        ValidationError
+                            .builder()
+                            .field("organizationId")
+                            .rejectedValue(organizationId)
+                            .message("Organization not found with ID: " + organizationId)
+                            .build()
+                    )
                 );
     }
 
     private void validateEmailDomainForOrganization(String email, String organizationId, 
-                                                   List<ValidationException.ValidationError> errors) {
+                                                   List<ValidationError> errors) {
         if (!StringUtils.hasText(email) || !StringUtils.hasText(organizationId)) {
             return;
         }
@@ -297,8 +323,14 @@ public class UserBusinessValidator {
                             .anyMatch(domain -> domain.getName().equalsIgnoreCase(emailDomain) && domain.getIsVerified());
                     
                     if (!domainMatches) {
-                        errors.add(new ValidationException.ValidationError("email", 
-                            "Email domain '" + emailDomain + "' is not registered or verified for this organization"));
+                        errors.add(
+                            ValidationError
+                                .builder()
+                                .field("email")
+                                .rejectedValue(emailDomain)
+                                .message("Email domain '" + emailDomain + "' is not registered or verified for this organization")
+                                .build()
+                        );
                     }
                 });
     }

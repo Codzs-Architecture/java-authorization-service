@@ -2,7 +2,8 @@ package com.codzs.validation.organization;
 
 import com.codzs.constant.organization.OrganizationConstants;
 import com.codzs.entity.organization.Organization;
-import com.codzs.framework.exception.type.ValidationException;
+import com.codzs.exception.bean.ValidationError;
+import com.codzs.exception.type.ValidationException;
 import com.codzs.framework.service.localization.LocalizationCodeService;
 
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class OrganizationSettingBusinessValidator {
      * Entry point for: PUT /api/v1/organizations/{id}/settings/{settingKey}
      */
     public void validateSettingUpdate(Organization organization, String settingKey, Object settingValue, boolean isValidKey, boolean isValidValue) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         
         validateSettingKeyAndValue(settingKey, settingValue, isValidKey, isValidValue, errors);
         validateSettingConstraints(organization, settingKey, settingValue, errors);
@@ -50,7 +51,7 @@ public class OrganizationSettingBusinessValidator {
      * Entry point for: POST /api/v1/organizations/{id}/settings/reset
      */
     public void validateSettingReset(Organization organization) {
-        List<ValidationException.ValidationError> errors = new ArrayList<>();
+        List<ValidationError> errors = new ArrayList<>();
         
         validateSettingResetConstraints(organization, errors);
         
@@ -62,33 +63,51 @@ public class OrganizationSettingBusinessValidator {
     // ========== CORE VALIDATION METHODS ==========
 
     private void validateSettingKeyAndValue(String settingKey, Object settingValue, boolean isValidKey, boolean isValidValue,
-                                          List<ValidationException.ValidationError> errors) {
+                                          List<ValidationError> errors) {
         // Use validation data passed from service layer
         if (!isValidKey) {
-            errors.add(new ValidationException.ValidationError("settingKey", 
-                "Invalid setting key: " + settingKey));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("settingKey")
+                    .rejectedValue(settingKey)
+                    .message("Invalid setting key: " + settingKey)
+                    .build()
+            );
             return;
         }
 
         // Use validation data passed from service layer
         if (!isValidValue) {
-            errors.add(new ValidationException.ValidationError("settingValue", 
-                "Invalid setting value for key: " + settingKey));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("settingValue")
+                    .rejectedValue(settingValue)
+                    .message("Invalid setting value for key: " + settingKey)
+                    .build()
+            );
         }
     }
 
     private void validateSettingConstraints(Organization organization, String settingKey, Object settingValue,
-                                          List<ValidationException.ValidationError> errors) {
+                                          List<ValidationError> errors) {
         // Business rule: Cannot clear essential settings for certain organization types
         if ("ENTERPRISE".equals(organization.getOrganizationType()) && 
             (settingValue == null || settingValue.toString().trim().isEmpty())) {
-            errors.add(new ValidationException.ValidationError("settingValue", 
-                "Enterprise organizations cannot have empty " + settingKey + " setting"));
+            errors.add(
+                ValidationError
+                    .builder()
+                    .field("settingValue")
+                    .rejectedValue(settingValue)
+                    .message("Enterprise organizations cannot have empty " + settingKey + " setting")
+                    .build()
+            );
         }
     }
 
     private void validateSettingResetConstraints(Organization organization,
-                                                List<ValidationException.ValidationError> errors) {
+                                                List<ValidationError> errors) {
         // Business rule: Cannot reset settings if organization has active international operations
         // This would be determined by checking if organization has users in multiple countries
         // For now, just log that this business rule needs implementation

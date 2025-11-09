@@ -1,9 +1,9 @@
 package com.codzs.exception.handler;
 
-import com.codzs.framework.exception.handler.BaseExceptionHandler;
-import com.codzs.framework.exception.type.ServiceException;
-import com.codzs.framework.exception.bean.StandardErrorResponse;
-import com.codzs.framework.exception.context.RequestContext;
+import com.codzs.exception.handler.BaseExceptionHandler;
+import com.codzs.exception.type.ServiceException;
+import com.codzs.exception.bean.StandardErrorResponse;
+import com.codzs.exception.context.RequestContext;
 import com.codzs.exception.type.oauth2.OAuth2Exception;
 import com.codzs.exception.type.oauth2.InvalidClientException;
 import com.codzs.exception.type.oauth2.AuthenticationException;
