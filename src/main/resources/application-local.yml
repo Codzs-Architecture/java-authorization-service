@@ -1,0 +1,43 @@
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/authorization
+      # Override any placeholder-based configuration from config server
+      host: localhost
+      port: 27017
+      database: authorization
+      username: ""
+      password: ""
+# server: 
+#   ssl:
+#     enabled: true
+#     key-store: classpath:local.codzs.com.p12
+#     key-store-type: PKCS12
+#     key-store-password: localpassword
+#     key-alias: local.codzs.com
+#   port: 5003
+
+mongock:
+  migration-scan-package: com.codzs.migration
+  enabled: true
+
+# Platform configuration to avoid missing placeholder errors  
+platform:
+  type: AWS_EC2_INSTANCE
+
+# Security configuration to avoid CORS configuration errors
+app:
+  security:
+    device-cors:
+      allowed-origins: "http://localhost:4200,https://local.codzs.com:4200"
+      max-age-seconds: 3600
+    hsts:
+      max-age-seconds: 31536000
+    csp:
+      default-src: "'self'"
+      script-src: "'self' 'unsafe-inline'"
+      style-src: "'self' 'unsafe-inline'"
+      img-src: "'self' data:"
+      font-src: "'self'"
+      form-action: "'self'"
+      base-uri: "'self'"

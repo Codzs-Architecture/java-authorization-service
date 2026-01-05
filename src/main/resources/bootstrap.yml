@@ -1,0 +1,5 @@
+# Start: Spring Config Client
+spring:
+  bus:
+    enabled: true
+# End: Spring Config Client

@@ -1,0 +1,37 @@
+{
+  "id": "organization-api-environment",
+  "name": "Organization API - Local Environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "https://local.codzs.com:7002",
+      "description": "Base URL for the Organization API",
+      "enabled": true
+    },
+    {
+      "key": "auth_token",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "description": "JWT Bearer token for authentication",
+      "enabled": true
+    },
+    {
+      "key": "tenant_id",
+      "value": "YOUR_TENANT_ID_HERE",
+      "description": "Tenant ID for multi-tenant context",
+      "enabled": true
+    },
+    {
+      "key": "org_id",
+      "value": "",
+      "description": "Organization ID (will be set automatically during tests)",
+      "enabled": true
+    },
+    {
+      "key": "domain_id",
+      "value": "",
+      "description": "Domain ID (will be set automatically during tests)",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

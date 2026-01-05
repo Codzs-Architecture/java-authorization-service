@@ -1,0 +1,81 @@
+spring:
+  application:
+    name: java-authorization-service
+
+  # OAuth2 and security headers configurations moved to config server
+  # See: java-codzs-config/management-domain/java-authorization-service/
+
+  profiles:
+    include: keystore,config-service
+
+  main:
+    allow-bean-definition-overriding: true
+
+  session:
+      redis:
+        serializer: java  # or configure custom serializer
+
+  # MongoDB and Mongock configuration handled in config server
+  # See: java-codzs-config/management-domain/java-authorization-service/
+  
+  data:
+    mongodb:
+      # Enable query logging (local override)
+      # This can be overridden by config server settings
+      repositories:
+        enabled: true
+
+# Entry to show this information on spring boot admin
+#info:
+#  app:
+#    encoding: @project.build.sourceEncoding@
+#    java:
+#      source: @java.version@
+#      target: @java.version@
+
+# Management-specific configuration
+management:
+  server:
+    port: 6003
+
+server:
+  port: 5003
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+    org.springframework.web.method.HandlerMethodMappingNamingStrategy: ERROR
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+    org.springframework.security.web: DEBUG
+    org.springframework.security.authentication: DEBUG
+    org.springframework.security.authorization: DEBUG
+    org.springframework.security.web.authentication: DEBUG
+    org.springframework.security.web.access: DEBUG
+    org.springframework.security.oauth2.server.authorization: DEBUG
+    org.springframework.security.oauth2.server.authorization.web: DEBUG
+    org.springframework.security.oauth2.server.authorization.authentication: DEBUG
+    org.springframework.security.oauth2.server.authorization.client: DEBUG
+    org.springframework.security.oauth2.server.authorization.oidc: DEBUG
+    org.springframework.security.oauth2.core: DEBUG
+    org.springframework.security.oauth2.jose: DEBUG
+    org.springframework.security.oauth2.jwt: DEBUG
+    org.springframework.jdbc: DEBUG
+    org.springframework.web.client: DEBUG
+    org.springframework.http: DEBUG
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    org.springframework.data.mongodb.repository: DEBUG
+    org.springframework.data.mongodb.core.QueryOperations: DEBUG
+    org.springframework.data.mongodb.core.ReactiveMongoTemplate: DEBUG
+    com.codzs: DEBUG
+
+acl:
+  redis:
+    cache:
+      key: com.codzs.acl.cache.local
+
+# Security headers, CORS, and device security configurations moved to config server
+# for environment-specific customization

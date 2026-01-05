@@ -1,0 +1,116 @@
+package com.codzs.controller.organization;
+
+import com.codzs.constant.organization.OrganizationSchemaConstants;
+import com.codzs.dto.organization.request.OrganizationMetadataRequestDto;
+import com.codzs.dto.organization.response.OrganizationMetadataResponseDto;
+import com.codzs.entity.organization.OrganizationMetadata;
+import com.codzs.framework.annotation.header.CommonHeaders;
+import com.codzs.framework.constant.HeaderConstant;
+import com.codzs.mapper.organization.OrganizationMetadataMapper;
+import com.codzs.service.organization.OrganizationMetadataService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+
+@Slf4j
+@RestController
+@RequestMapping("/api/v1/organizations/{organizationId}/metadata")
+@RequiredArgsConstructor
+@Validated
+@Tag(name = "Organization Metadata Management", description = "APIs for managing organization metadata including industry, size, and custom attributes")
+public class OrganizationMetadataController {
+
+    private final OrganizationMetadataService organizationMetadataService;
+    private final OrganizationMetadataMapper organizationMetadataMapper;
+
+    @GetMapping
+    @CommonHeaders
+    @Operation(
+        summary = "Get organization metadata",
+        description = "Retrieves metadata information for the specified organization"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Metadata retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrganizationMetadataResponseDto.class))
+        ),
+        @ApiResponse(responseCode = "404", description = "Organization not found"),
+        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<OrganizationMetadataResponseDto> getOrganizationMetadata(
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @NotNull(message = "Organization ID is required") 
+            @PathVariable("organizationId")
+            String organizationId,
+            
+            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
+        
+        log.info("Getting metadata for organization: {}", organizationId);
+        
+        return organizationMetadataService.getOrganizationMetadata(organizationId)
+                .map(metadata -> {
+                    OrganizationMetadataResponseDto response = organizationMetadataMapper.toResponse(metadata);
+                    
+                    log.info("Successfully retrieved metadata for organization: {}", organizationId);
+                    return ResponseEntity.ok(response);
+                })
+                .orElseGet(() -> {
+                    log.warn("Organization metadata not found for organization: {}", organizationId);
+                    return ResponseEntity.notFound().build();
+                });
+    }
+
+    @PatchMapping
+    @CommonHeaders
+    @Operation(
+        summary = "Update organization metadata",
+        description = "Updates metadata information for the specified organization (full update)"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Metadata updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid metadata values"),
+        @ApiResponse(responseCode = "404", description = "Organization not found"),
+        @ApiResponse(responseCode = "403", description = "Access denied to organization"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<Void> updateOrganizationMetadata(
+            @Parameter(description = "Organization ID", required = true, example = OrganizationSchemaConstants.EXAMPLE_ORGANIZATION_ID)
+            @NotNull(message = "Organization ID is required") 
+            @PathVariable("organizationId")
+            String organizationId,
+             
+            @Parameter(description = "Metadata update request", required = true)
+            @Valid 
+            @RequestBody 
+            OrganizationMetadataRequestDto request,
+            
+            @RequestHeader(value = HeaderConstant.HEADER_ORGANIZATION_ID, required = false) String headerOrganizationId,
+            @RequestHeader(value = HeaderConstant.HEADER_TENANT_ID, required = false) String tenantId) {
+        
+        log.info("Updating metadata for organization: {}, industry: {}, size: {}", 
+            organizationId, request.getIndustry(), request.getSize());
+        
+        OrganizationMetadata metadataEntity = organizationMetadataMapper.toEntity(request);
+        organizationMetadataService.updateOrganizationMetadata(
+            organizationId, metadataEntity
+        );
+        
+        log.info("Successfully updated metadata for organization: {}", organizationId);
+        return ResponseEntity.noContent().build();
+    }
+}

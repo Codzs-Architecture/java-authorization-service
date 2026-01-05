@@ -1,0 +1,13 @@
+spring:
+  # Start: Spring Config Client
+  config:
+    import: optional:configserver:${config.server.url}
+  cloud:
+    config:
+      # uri: custom
+      profile: ${spring.profiles.active}
+      label: main,MF_SYSTEM,MF_AUTHORIZATION
+      send-all-labels: true
+      username: config-service-user
+      password: ${config.password}
+  # End: Spring Config Client
